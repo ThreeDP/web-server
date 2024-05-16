@@ -15,14 +15,17 @@
 NAME										= 	webServer
 ######################## PATHS ###############################
 OBJS_PATH									= 	objs/
-VPATH										= 	./Server		
+VPATH										= 	./Server	\
+												./Parser	
 
 ######################## FLAGS ###############################
 FLAGS										= 	-Wall -Wextra -Werror -std=c++98
 ######################## SOURCES #############################
 SRC_SERVER									=	Route.cpp Server.cpp
-SRC											= 	server.cpp				\
-												$(SRC_SERVER)
+SRC_PARSER									=	Parser.cpp
+SRC											= 	test_methods_rewrite.cpp	\
+												$(SRC_PARSER)				\
+												$(SRC_SERVER)		
 ######################## OBJECTS #############################
 OBJ											=	$(patsubst %.cpp, $(OBJS_PATH)%.o, $(SRC))
 DEB											=	$(patsubst %.cpp, $(OBJS_PATH)%.d, $(SRC))
