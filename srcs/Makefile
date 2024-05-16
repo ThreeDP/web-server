@@ -15,8 +15,8 @@
 NAME										= 	webServer
 ######################## PATHS ###############################
 OBJS_PATH									= 	objs/
-VPATH										= 	./Server	\
-												./Parser	
+VPATH										= 	./Server				\
+												./Parser
 
 ######################## FLAGS ###############################
 FLAGS										= 	-Wall -Wextra -Werror -std=c++98
