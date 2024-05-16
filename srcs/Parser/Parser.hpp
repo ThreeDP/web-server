@@ -1,6 +1,7 @@
 #ifndef __PARSER_HPP__
 #define __PARSER_HPP__
 
+#include "Server.hpp"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -13,16 +14,17 @@ class Parser
 	private:
 		Parser(void){}
         std::ifstream _fd;
-		std::map<std::string, std::string>	parseRewrites(void);
-		std::vector<std::string>			parseAllowMethods(void);
+		std::pair<std::string, std::string>	parseRewrites(std::istringstream &iss);
+		std::vector<std::string>			parseAllowMethods(std::istringstream &iss);
 	
 	public:
         Parser(char *fileName);
 		Parser& operator=(const Parser& other);
 		~Parser();
 
-		std::map<std::string, std::string>	test_parseRewrites(void);
-		std::vector<std::string>			test_parseAllowMethods(void);
+		// std::map<std::string, std::string>	test_parseRewrites(void);
+		// std::vector<std::string>			test_parseAllowMethods(void);
+		std::vector<Server>					ParserServer(void);
 
         class Except: virtual public std::exception {
 			protected:
