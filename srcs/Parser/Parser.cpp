@@ -1,30 +1,36 @@
+<<<<<<< HEAD
 #include "Parser.hpp"
 
-Parser::Parser(void){}
+Parser::Parser(char *fileName) : _fd(fileName) {
+    if (!this->_fd) {
+        throw (Except("Configuration File Not Found!"));
+    }
+}
 
 Parser& Parser::operator=(const Parser& other){
     if (this == &other){return *this;}
     return *this;
 }
 
-Parser::~Parser(){}
+Parser::~Parser(){
+	this._fd.close();
+}
 
-std::map<std::string, std::string> Parser::parseRewrites(char *configFile){
+std::map<std::string, std::string> Parser::parseRewrites(void){
 
     std::map<std::string, std::string>	rewrites;
-	std::ifstream						file(configFile);
 	std::string							line;
 	std::string							word;
 	std::string							location;
 	std::string							rewrite;
 	bool								inLocation = false;
 
-	if(!file.is_open()){
+	if(!this._fd.is_open()){
 		std::cerr << "Error opening configuration file." << std::endl;
 		return rewrites;
 	}
 
-	while(std::getline(file, line)){
+	while(std::getline(this._fd, line)){
 
 		std::istringstream	iss(line);
 		std::string			token;
@@ -46,23 +52,21 @@ std::map<std::string, std::string> Parser::parseRewrites(char *configFile){
 			}
 		}
 	}
-	file.close();
 	return (rewrites);
 }
 
-std::vector<std::string>    Parser::parseAllowMethods(char *configFile){
+std::vector<std::string>    Parser::parseAllowMethods(void){
     
     std::vector<std::string>	allow_methods;
 	bool						inLocation = false;
-	std::ifstream				file(configFile);
 	std::string					line;
 
-	if(!file.is_open()){
+	if(!this._fd.is_open()){
 		std::cerr << "Error opening configuration file." << std::endl;
 		return allow_methods;
 	}
 
-	while (std::getline(file, line)){
+	while (std::getline(this._fd, line)){
 		std::istringstream	iss(line);
 		std::string			token;
 
@@ -82,15 +86,14 @@ std::vector<std::string>    Parser::parseAllowMethods(char *configFile){
 			}
 		}
 	}
-	file.close();
 	return allow_methods;
 }
 
 
-std::map<std::string, std::string>	Parser::test_parseRewrites(char *file){
-    return parseRewrites(file);
+std::map<std::string, std::string>	Parser::test_parseRewrites(void){
+    return parseRewrites();
 }
 
-std::vector<std::string> Parser::test_parseAllowMethods(char *file){
-    return parseAllowMethods(file);
+std::vector<std::string> Parser::test_parseAllowMethods(void){
+    return parseAllowMethods();
 }
