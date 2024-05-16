@@ -1,6 +1,9 @@
 #ifndef __ROUTE_HPP__
 # define __ROUTE_HPP__
 
+#include <iostream>
+#include <vector>
+
 class Route {
     private:
         std::vector<std::string>            _allowMethods;
@@ -9,6 +12,6 @@ class Route {
 
     public:
         Route(std::vector<std::string> methods, std::string redirect, std::string directory);
-}
+};
 
 #endif
