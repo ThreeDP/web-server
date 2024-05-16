@@ -20,6 +20,6 @@ class Server {
     public:
         ~Server() {}
         Server(std::vector<std::string> serv, unsigned short port);
-}
+};
 
 #endif
