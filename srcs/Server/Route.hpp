@@ -3,15 +3,22 @@
 
 #include <iostream>
 #include <vector>
+#include <map>
 
 class Route {
     private:
         std::vector<std::string>            _allowMethods;
-        std::string                         _redirectPath;
+        std::map<std::string, std::string>  _redirectPath;
         std::string                         _directory;
 
     public:
-        Route(std::vector<std::string> methods, std::string redirect, std::string directory);
+        std::map<std::string, std::string> &GetRedirectPath(void);
+        std::vector<std::string>    &GetAllowMethods(void);
+        void    SetAllowMethods(std::vector<std::string> methods);
+        void    SetRedirectPath(std::pair<std::string, std::string> redirect);
+
+        Route(){}
+        //Route(std::vector<std::string> methods, std::string redirect, std::string directory);
 };
 
 #endif

@@ -15,17 +15,19 @@
 NAME										= 	webServer
 ######################## PATHS ###############################
 OBJS_PATH									= 	objs/
-VPATH										= 	./Server	\
-												./Parser	
+VPATH										= 	Server/						\
+												Parser/
 
 ######################## FLAGS ###############################
 FLAGS										= 	-Wall -Wextra -Werror -std=c++98
 ######################## SOURCES #############################
 SRC_SERVER									=	Route.cpp Server.cpp
 SRC_PARSER									=	Parser.cpp
-SRC											= 	test_methods_rewrite.cpp	\
+SRC_HTTP									=	Http.cpp
+SRC											= 	$(SRC_HTTP)					\
+												$(SRC_SERVER)				\
 												$(SRC_PARSER)				\
-												$(SRC_SERVER)		
+												test_methods_rewrite.cpp				
 ######################## OBJECTS #############################
 OBJ											=	$(patsubst %.cpp, $(OBJS_PATH)%.o, $(SRC))
 DEB											=	$(patsubst %.cpp, $(OBJS_PATH)%.d, $(SRC))
@@ -34,6 +36,10 @@ RED											= 	\e[91m
 GREEN										= 	\e[92m
 YELLOW										= 	\e[93m
 RC											= 	\e[0m
+
+######################## COLORS ##############################
+GOOGLE_TEST									=	googletest
+TEST_BUILD									=	Tests/build
 
 all: $(NAME)
 
@@ -61,4 +67,22 @@ fclean: clean
 
 re: fclean all
 
-.PHONY: all clean fclean re 
+.PHONY: all clean fclean re
+
+$(GOOGLE_TEST):
+	@			git clone https://github.com/google/googletest.git
+
+test_build:
+	@			cmake -S . -B $(TEST_BUILD)
+	@			cmake --build $(TEST_BUILD)
+
+test_run:
+	@			cd $(TEST_BUILD) && ctest --rerun-failed --output-on-failure
+
+test: $(GOOGLE_TEST) test_build test_run
+
+t_clean:
+	@			rm -rf $(TEST_BUILD)
+
+t_fclean: t_clean
+	@			rm -rf $(GOOGLE_TEST)
