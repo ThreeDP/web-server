@@ -21,6 +21,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - uses: actions/setup-googletest@v1
 
     - name: Run Tests
       # working-directory: ${{github.workspace}}/srcs
