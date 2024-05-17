@@ -21,7 +21,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-googletest@v1
+
+    - name: Install GTest Library
+      run: sudo apt-get install libgtest-dev
 
     - name: Run Tests
       # working-directory: ${{github.workspace}}/srcs
