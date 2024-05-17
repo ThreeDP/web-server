@@ -32,3 +32,5 @@
 *.app
 
 webServer
+build
+googletest

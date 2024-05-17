@@ -18,7 +18,7 @@ class Parser
 		std::vector<std::string>			parseAllowMethods(std::istringstream &iss);
 	
 	public:
-        Parser(char *fileName);
+        Parser(const char *fileName);
 		Parser& operator=(const Parser& other);
 		~Parser();
 

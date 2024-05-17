@@ -35,6 +35,10 @@ GREEN										= 	\e[92m
 YELLOW										= 	\e[93m
 RC											= 	\e[0m
 
+######################## COLORS ##############################
+GOOGLE_TEST									=	googletest
+TEST_BUILD									=	Tests/build
+
 all: $(NAME)
 
 $(OBJS_PATH)%.o: %.cpp $(HEADER)
@@ -61,4 +65,22 @@ fclean: clean
 
 re: fclean all
 
-.PHONY: all clean fclean re 
+.PHONY: all clean fclean re
+
+$(GOOGLE_TEST):
+	@			git clone https://github.com/google/googletest.git
+
+test_build:
+	@			cmake -S . -B $(TEST_BUILD)
+	@			cmake --build $(TEST_BUILD)
+
+test_run:
+	@			cd $(TEST_BUILD) && ctest
+
+test: $(GOOGLE_TEST) test_build test_run
+
+t_clean:
+	@			rm -rf $(TEST_BUILD)
+
+t_fclean: t_clean
+	@			rm -rf $(GOOGLE_TEST)

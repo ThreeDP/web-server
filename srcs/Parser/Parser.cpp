@@ -1,6 +1,6 @@
 #include "Parser.hpp"
 
-Parser::Parser(char *fileName) : _fd(fileName) {
+Parser::Parser(const char *fileName) : _fd(fileName) {
     if (!this->_fd) {
         throw (Except("Configuration File Not Found!"));
     }
