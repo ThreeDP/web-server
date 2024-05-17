@@ -1,30 +1,30 @@
 #ifndef __PARSER_HPP__
-#define __PARSER_HPP__
+# define __PARSER_HPP__
 
-#include "Server.hpp"
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <string>
-#include <vector>
-#include <map>
+# include <iostream>
+# include <fstream>
+# include <sstream>
+# include <string>
+# include <vector>
+# include <map>
+
+# include "Http.hpp"
 
 class Parser
 {
 	private:
 		Parser(void){}
         std::ifstream _fd;
-		std::pair<std::string, std::string>	parseRewrites(std::istringstream &iss);
-		std::vector<std::string>			parseAllowMethods(std::istringstream &iss);
+		std::pair<std::string, std::string>	_parseRewrites(std::istringstream &iss);
+		std::vector<std::string>			_parseAllowMethods(std::istringstream &iss);
+		void								_parserServerName(std::istringstream &iss, Http &http, Server *server);
 	
 	public:
         Parser(const char *fileName);
 		Parser& operator=(const Parser& other);
 		~Parser();
 
-		// std::map<std::string, std::string>	test_parseRewrites(void);
-		// std::vector<std::string>			test_parseAllowMethods(void);
-		std::vector<Server>					ParserServer(void);
+		void					ParserServer(Http &http);
 
         class Except: virtual public std::exception {
 			protected:

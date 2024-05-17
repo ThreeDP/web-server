@@ -3,12 +3,12 @@
 
 # include <iostream>
 # include <vector>
-# include "Route.hpp"
 # include <map>
 
+# include "Route.hpp"
 
 class Server {
-    private:
+    public:
         std::vector<std::string>        server_names;
         unsigned short                  listen;
         int                             limit_client_body_size;

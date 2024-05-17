@@ -15,7 +15,7 @@ Parser::~Parser(){
 	this->_fd.close();
 }
 
-std::pair<std::string, std::string> Parser::parseRewrites(std::istringstream &iss){
+std::pair<std::string, std::string> Parser::_parseRewrites(std::istringstream &iss){
 
     std::pair<std::string, std::string>	rewrites;
 	std::string							location;
@@ -25,7 +25,6 @@ std::pair<std::string, std::string> Parser::parseRewrites(std::istringstream &is
 	for (std::string::iterator it = location.begin(); it != location.end(); ++it){
 		if (*it == '^'){
 			location.erase(it);
-			std::cout << "Test: "<< location << " " << rewrite << std::endl;
 			--it;
 		}
 	}
@@ -33,7 +32,7 @@ std::pair<std::string, std::string> Parser::parseRewrites(std::istringstream &is
 	return (rewrites);
 }
 
-std::vector<std::string>    Parser::parseAllowMethods(std::istringstream &iss) {
+std::vector<std::string>    Parser::_parseAllowMethods(std::istringstream &iss) {
     
     std::vector<std::string>	allow_methods;
 	std::string			methodsLine;
@@ -47,32 +46,54 @@ std::vector<std::string>    Parser::parseAllowMethods(std::istringstream &iss) {
 	return allow_methods;
 }
 
-std::vector<Server>		Parser::ParserServer(void) {
+void	Parser::_parserServerName(std::istringstream &iss, Http &http, Server *server) {
+	std::string token;
+
+	while ((iss >> token) && token != ";") {
+		bool endWith = false;
+		if (!token.empty() && token[token.size() - 1] == ';') {
+			token = token.substr(0, token.size() - 1);
+			endWith = true;
+		}
+		http.SetServer(token, server);
+		server->server_names.push_back(token);
+		if (endWith == true)
+			break;
+	}
+}
+
+void	Parser::ParserServer(Http &http) {
 	std::string					line;
 	bool						inLocation = false;
-	std::string					actualRoute;
-	std::vector<Server>			servers;
+	std::string					actualRoute;						
+	Server						*server;
+
 	while (std::getline(this->_fd, line)) {
 		std::istringstream	iss(line);
 		std::string			token;
+	
 		while (iss >> token) {
 			if (token == "server") {
-				servers.push_back(Server());
+				server = new Server();
+				if ((iss >> token) && token != "{") {
+					throw (Except("Error: Server expected '{'."));
+				}
+			} else if (token == "server_name") {
+				this->_parserServerName(iss, http, server);
 			} else if (token == "location" && (iss >> token)) {
 				actualRoute = token;
-				servers.back().routes[actualRoute] = new Route();
+				server->routes[actualRoute] = new Route();
 				inLocation = true;
 			} else if (token == "}") {
 				inLocation = false;
 			} else if (token == "allow_methods" && inLocation) {
-				servers.back().routes[actualRoute]->SetAllowMethods(this->parseAllowMethods(iss));
+				server->routes[actualRoute]->SetAllowMethods(this->_parseAllowMethods(iss));
 			} else if (token == "rewrite" && inLocation) {
-				servers.back().routes[actualRoute]->SetRedirectPath(this->parseRewrites(iss));
+				server->routes[actualRoute]->SetRedirectPath(this->_parseRewrites(iss));
 			}
 			break;
 		}
 	}
-	return servers;
 }
 
 // std::map<std::string, std::string>	Parser::test_parseRewrites(void){

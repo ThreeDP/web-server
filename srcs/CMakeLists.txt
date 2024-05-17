@@ -8,14 +8,15 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 enable_testing()
 
 set(INCLUDE_DIR 
-"${CMAKE_CURRENT_SOURCE_DIR}/Parser"
-"${CMAKE_CURRENT_SOURCE_DIR}/Server"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Parser"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Server"
 )
 
 set(HEADERS
     Parser/Parser.hpp
     Server/Server.hpp
     Server/Route.hpp
+    Server/Http.hpp
 )
 
 # Source files
@@ -23,6 +24,7 @@ set(SOURCE_FILES
     Parser/Parser.cpp
     Server/Server.cpp
     Server/Route.cpp
+    Server/Http.cpp
 )
 
 add_library(${PROJECT_NAME} STATIC ${SOURCE_FILES})
