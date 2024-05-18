@@ -28,14 +28,5 @@ int main()
         return 1;
     }
 
-
-
-    // std::map<std::string, std::string> rewrites = obj.test_parseRewrites();
-
-    // std::cout << "Resultado: " << std::endl;
-    // for(std::map<std::string, std::string>::const_iterator it = rewrites.begin(); it != rewrites.end(); ++it){
-    //     std::cout << "De: " << it->first << " Para: " << it->second << std::endl;
-    // }
-
 	return(0);
 }

@@ -15,7 +15,7 @@ Parser::~Parser(){
 	this->_fd.close();
 }
 
-std::pair<std::string, std::string> Parser::_parseRewrites(std::istringstream &iss){
+std::pair<std::string, std::string> Parser::_parserRewrites(std::istringstream &iss){
 
     std::pair<std::string, std::string>	rewrites;
 	std::string							location;
@@ -32,7 +32,7 @@ std::pair<std::string, std::string> Parser::_parseRewrites(std::istringstream &i
 	return (rewrites);
 }
 
-std::vector<std::string>    Parser::_parseAllowMethods(std::istringstream &iss) {
+std::vector<std::string>    Parser::_parserAllowMethods(std::istringstream &iss) {
     
     std::vector<std::string>	allow_methods;
 	std::string			methodsLine;
@@ -87,19 +87,45 @@ void	Parser::ParserServer(Http &http) {
 			} else if (token == "}") {
 				inLocation = false;
 			} else if (token == "allow_methods" && inLocation) {
-				server->routes[actualRoute]->SetAllowMethods(this->_parseAllowMethods(iss));
+				server->routes[actualRoute]->SetAllowMethods(this->_parserAllowMethods(iss));
 			} else if (token == "rewrite" && inLocation) {
-				server->routes[actualRoute]->SetRedirectPath(this->_parseRewrites(iss));
+				server->routes[actualRoute]->SetRedirectPath(this->_parserRewrites(iss));
 			}
 			break;
 		}
 	}
 }
 
-// std::map<std::string, std::string>	Parser::test_parseRewrites(void){
-//     return parseRewrites();
-// }
+unsigned short	Parser::_parserServerPort(std::istringstream &iss){
+	std::string		token;
+	unsigned short	port = 0;
 
-// std::vector<std::string> Parser::test_parseAllowMethods(void){
-//     return parseAllowMethods();
-// }
+	iss >> token >> port;
+	return port;
+}
+
+std::pair<std::string, std::string> Parser::_parserErrorPage(std::istringstream &iss){
+
+    std::pair<std::string, std::string>	map;
+	std::string							value;
+	std::string							key;
+	std::string							error_page;
+
+	iss >> error_page >> key >> value;
+	map =  std::make_pair(key, value);
+	return (map);
+}
+
+unsigned long Parser::_parserClientMaxMessage(std::istringstream &iss){
+	std::string		token;
+	unsigned long	size;
+	char			unit;
+
+	iss >> token >> size >> unit;
+	switch (unit){
+		case 'K': size = 1024; break;
+		case 'M': size = 1048576; break;
+		case 'G': size = 1073741824; break;
+	}
+	return (size);
+}
