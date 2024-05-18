@@ -10,7 +10,7 @@ class Route {
         std::vector<std::string>            _allowMethods;
         std::map<std::string, std::string>  _redirectPath;
         std::string                         _directory;
-
+        
     public:
         std::map<std::string, std::string> &GetRedirectPath(void);
         std::vector<std::string>    &GetAllowMethods(void);

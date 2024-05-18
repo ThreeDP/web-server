@@ -15,9 +15,12 @@ class Parser
 	private:
 		Parser(void){}
         std::ifstream _fd;
-		std::pair<std::string, std::string>	_parseRewrites(std::istringstream &iss);
-		std::vector<std::string>			_parseAllowMethods(std::istringstream &iss);
+		std::pair<std::string, std::string>	_parserRewrites(std::istringstream &iss);
+		std::vector<std::string>			_parserAllowMethods(std::istringstream &iss);
 		void								_parserServerName(std::istringstream &iss, Http &http, Server *server);
+		unsigned short						_parserServerPort(std::istringstream &iss);
+		std::pair<std::string, std::string> _parserErrorPage(std::istringstream &iss);
+		unsigned long						_parserClientMaxMessage(std::istringstream &iss);
 	
 	public:
         Parser(const char *fileName);
