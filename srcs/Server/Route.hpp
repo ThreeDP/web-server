@@ -12,6 +12,7 @@ class Route {
         std::string                         _directory;
         
     public:
+        std::map<int, std::string>           _error_page;
         std::map<std::string, std::string> &GetRedirectPath(void);
         std::vector<std::string>    &GetAllowMethods(void);
         void    SetAllowMethods(std::vector<std::string> methods);

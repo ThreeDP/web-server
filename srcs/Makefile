@@ -77,7 +77,7 @@ test_build:
 	@			cmake --build $(TEST_BUILD)
 
 test_run:
-	@			cd $(TEST_BUILD) && ctest --rerun-failed --output-on-failure
+	@			cd $(TEST_BUILD) && ctest --gtest_continue_on_failure
 
 test: $(GOOGLE_TEST) test_build test_run
 

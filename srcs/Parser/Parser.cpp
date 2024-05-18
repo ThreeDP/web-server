@@ -90,7 +90,11 @@ void	Parser::ParserServer(Http &http) {
 				server->routes[actualRoute]->SetAllowMethods(this->_parserAllowMethods(iss));
 			} else if (token == "rewrite" && inLocation) {
 				server->routes[actualRoute]->SetRedirectPath(this->_parserRewrites(iss));
-			}
+			} // else if (token == "error_page" && inLocation) {
+			// 	server->routes[actualRoute]->_error_page.insert(this->_parserErrorPage(iss));
+			// } else if (token == "error_page") {
+			// 	server->default_error_page.insert(this->_parserErrorPage(iss));
+			// }
 			break;
 		}
 	}
