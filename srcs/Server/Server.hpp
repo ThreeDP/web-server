@@ -1,13 +1,15 @@
 #ifndef __SERVER_HPP__
 # define __SERVER_HPP__
 
+# include "HttpResponse.hpp"
+
 # include <iostream>
 # include <vector>
-# include <map>
 
 #include <string>
 #include <iostream>
 #include <sstream>
+
 
 # include "Route.hpp"
 
@@ -51,7 +53,15 @@ class Server {
             this->result = NULL;
         }
 
-        
+        std::string ProcessResponse(void) {
+            HttpResponse send_msg(
+                "<!DOCTYPE html><html><body><h1>Hello beaaa!</h1></body></html>",
+                "200",
+                "text/html"
+            );
+            return send_msg.CreateResponse();
+        }
+
         class Except: virtual public std::exception {
 			protected:
 			std::string error_message;

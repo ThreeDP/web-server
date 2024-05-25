@@ -2,12 +2,6 @@
 # define __HTTP_HPP__
 
 # include "Server.hpp"
-# include <map>
-#include <sys/socket.h>
-#include <iomanip>
-#include <ctime>
-
-#include <string>
 
 typedef struct HttpRequest_s {
     char        method[5];
@@ -22,23 +16,15 @@ typedef struct HttpRequest_s {
     // std::string cacheControl;
 } HttpRequest_t;
 
-typedef struct HttpResponse_s {
-  char statusCode[22];
-  char date[36];
-  char contentType[26];
-  char contentLegth[23];
-  char body[66];
-} HttpResponse;
-
 class Http {
     // Parser Response
     std::map<std::string, Server *>  servers;
+    std::map<int, Server *> clientFD_Server;
 
     const static int eventsLimit = 10;
     
     // epoll config
     int                     _epollFD;
-    struct epoll_event      serverEvents[eventsLimit];
     struct epoll_event      clientEvents[eventsLimit];
 
     public:
@@ -47,7 +33,10 @@ class Http {
         void                        StartPollList(void);
         void                        StartWatchSockets(void);
         void                        ClientHandShake(Server *server);
-
+        void                        HandleResponse(int client_fd);
+        bool                        ConnectClientToServer(int i);
+        void                        DisconnectClientToServer(int client_fd);
+        ssize_t                     HandleRequest(int client_fd);
 
         // Seter
         void SetServer(std::string serverName, Server *server);
