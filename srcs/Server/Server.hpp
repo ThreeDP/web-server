@@ -2,9 +2,13 @@
 # define __SERVER_HPP__
 
 # include "HttpResponse.hpp"
+# include "HttpRequest.hpp"
+ # include <sys/types.h>
+       # include <dirent.h>
 
 # include <iostream>
 # include <vector>
+#include <fstream>
 
 #include <string>
 #include <iostream>
@@ -27,6 +31,8 @@ class Server {
 
         int                             listener;
         const static int                backlog = 10;
+
+        std::map<int, HttpResponse>  ClientsResponse;
     
     public:
         std::map<std::string, Route *>  routes;
@@ -53,13 +59,50 @@ class Server {
             this->result = NULL;
         }
 
-        std::string ProcessResponse(void) {
-            HttpResponse send_msg(
-                "<!DOCTYPE html><html><body><h1>Hello beaaa!</h1></body></html>",
+        std::string ProcessResponse(int client_fd) {
+            // HttpResponse send_msg(
+            //     "<!DOCTYPE html><html><body><h1>Hello beaaa!</h1></body></html>",
+            //     "200",
+            //     "text/html"
+            // );
+            std::string response = this->ClientsResponse[client_fd].CreateResponse();
+            this->ClientsResponse.erase(client_fd);
+            return response;
+        }
+
+        void     ProcessRequest(std::string buffer, int client_fd) {
+            HttpRequest     res;
+            DIR             *dir = NULL;
+            res.ParserRequest(buffer);
+            std::string     path = std::string("." + res._path);
+
+            dir = opendir(path.c_str());
+            if (dir != NULL) {
+                struct dirent* entry;
+
+                while ((entry = readdir(dir)) != NULL) {
+                    std::string d_name = entry->d_name; 
+                    if (d_name == "index.html") {
+                        path += "/" + d_name;
+                    }
+                    std::cout << path << std::endl;
+                }
+                closedir(dir);
+            }
+            std::string body;
+            std::ifstream file(path.c_str());
+            if (file.is_open()) {
+                std::string line;
+                while (std::getline(file, line)) {
+                    body += line;
+                }
+                file.close();
+            }
+            this->ClientsResponse[client_fd] = HttpResponse(
+                body,
                 "200",
                 "text/html"
             );
-            return send_msg.CreateResponse();
         }
 
         class Except: virtual public std::exception {

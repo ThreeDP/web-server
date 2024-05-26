@@ -14,9 +14,9 @@ class HttpResponse {
     std::map<std::string, std::string>  _payload;
     std::string                         _Body;
 
-    HttpResponse(){}
 
     public:
+    HttpResponse(){}
         ~HttpResponse(){}
         HttpResponse(std::string body, std::string statusCode, std::string contentType) {
             this->_HTTPVersion = "HTTP/1.1";

@@ -37,7 +37,7 @@ void    Http::StartWatchSockets(void) {
                 // Verifica se for feito um handshake e da continuidade pra o proximo fd.
                 if (this->ConnectClientToServer(i))
                     continue;
-                ssize_t numbytes = this->HandleRequest();  
+                ssize_t numbytes = this->HandleRequest(this->clientEvents[i].data.fd);  
                 if (numbytes == -1)
                     throw Except("error recv");
                 else if (numbytes == 0) {
@@ -50,14 +50,6 @@ void    Http::StartWatchSockets(void) {
             break;
         }
     }
-}
-
-ssize_t    Http::HandleRequest(int client_fd) {
-    char buffer[1000000];
-    memset(&buffer, 0, sizeof(HttpRequest_t));
-    ssize_t numbytes = recv(client_fd, &buffer, sizeof(char) * 1000000, 0);
-    std::cout << "header: \n" << std::string(buffer) << std::endl;
-    return numbytes;
 }
 
 void    Http::DisconnectClientToServer(int client_fd) {
@@ -87,10 +79,23 @@ bool    Http::ConnectClientToServer(int i) {
     return hasHandShake;
 }
 
+ssize_t    Http::HandleRequest(int client_fd) {
+    char        buffer[1000000];
+    HttpRequest res;
+    Server      *server = this->clientFD_Server[client_fd];
+
+    memset(&buffer, 0, sizeof(HttpRequest_t));
+    ssize_t numbytes = recv(client_fd, &buffer, sizeof(char) * 1000000, 0);
+
+    server->ProcessRequest(buffer, client_fd);
+    res.ParserRequest(buffer);
+    return numbytes;
+}
+
 void    Http::HandleResponse(int client_fd) {
     // Envia pra o server processar a resposta.
     Server *server = this->clientFD_Server[client_fd];
-    std::string message = server->ProcessResponse();
+    std::string message = server->ProcessResponse(client_fd);
     // Realiza o envio para o client.
     if (send(client_fd, message.c_str(), message.size(), 0) == -1) {
         throw Except("Error on send Response");
