@@ -17,6 +17,9 @@
 # include <sys/types.h>
 # include <sys/socket.h>
 
+#include <fstream>
+# include <dirent.h>
+
 # include <cstdlib>
 
 #include <stdio.h>
@@ -45,7 +48,42 @@ class Route {
         void    SetAllowMethods(std::vector<std::string> methods);
         void    SetRedirectPath(std::pair<std::string, std::string> redirect);
 
-        Route(){}
+        Route() : _directory("."){}
+
+        std::string     IsADirectory(std::string path) {
+            DIR *dir = NULL;
+    
+            dir = opendir(path.c_str());
+            if (dir != NULL) {
+                struct dirent* entry;
+
+                while ((entry = readdir(dir)) != NULL) {
+                    std::string d_name = entry->d_name; 
+                    if (d_name == "index.html") {
+                        path += "/" + d_name;
+                    }
+                }
+                closedir(dir);
+            }
+            return path;
+        }
+
+        std::string    ProcessRoute(std::string path) {
+            std::string body;
+            std::string newP = this->_directory;
+            newP += path;
+
+            newP = this->IsADirectory(newP);
+            std::ifstream file(newP.c_str());
+            if (file.is_open()) {
+                std::string line;
+                while (std::getline(file, line)) {
+                    body += line;
+                }
+                file.close();
+            }
+            return body;
+        }
         //Route(std::vector<std::string> methods, std::string redirect, std::string directory);
 };
 

@@ -18,6 +18,9 @@ int main() {
     servers.push_back(std::string("localhost"));
     Server *newServer = new Server(servers, 8080);
     http.SetServer("localhost", newServer);
+    newServer->routes["/"] = new Route();
+    newServer->routes["/static"] = new Route();
+    newServer->routes["/static/imagens"] = new Route();
 
     try {
         http.StartPollList();

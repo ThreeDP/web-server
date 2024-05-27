@@ -3,8 +3,8 @@
 
 # include "HttpResponse.hpp"
 # include "HttpRequest.hpp"
- # include <sys/types.h>
-       # include <dirent.h>
+# include <sys/types.h>
+
 
 # include <iostream>
 # include <vector>
@@ -64,6 +64,7 @@ class Server {
         // Server Process
         std::string             ProcessResponse(int client_fd);
         void                    ProcessRequest(std::string buffer, int client_fd);
+        std::string             FindMatchRoute(HttpRequest &res);
 
         // Base Methods
         Server(void);
