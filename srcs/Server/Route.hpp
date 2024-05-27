@@ -1,6 +1,8 @@
 #ifndef __ROUTE_HPP__
 # define __ROUTE_HPP__
 
+# include "define.hpp"
+
 // I/O
 # include <iostream>
 

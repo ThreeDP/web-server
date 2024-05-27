@@ -17,8 +17,26 @@
 
 # include "Route.hpp"
 
+enum ServerStages {
+    S_START,
+    S_LISTEN,
+    S_CLIENT_CONNECT,
+    S_CLIENT_REQUEST,
+    S_SERVER_RESPONSE,
+    S_CLIENT_DISCONNECT,
+    S_END
+};
+
 class Server {
+    private:
+        std::string     _ip;
+        std::string     _ipVersion;
+        ServerStages    _stage;
+
+        int             _actualClientFD;
+
     public:
+
         // Parser Result
         std::vector<std::string>        server_names;
         unsigned short                  listen_port;
@@ -36,75 +54,37 @@ class Server {
     
     public:
         std::map<std::string, Route *>  routes;
-        
-        // Geters
-        int             GetListener(void) const;
-
-        // Seters
 
         // Server Methods
-        void            SetAddrInfo(void);
-        void            CreateSocketAndBind(void);
-        int             StartListen(void);
-        
+        void                    SetAddrInfo(void);
+        void                    CreateSocketAndBind(void);
+        int                     StartListen(void);
+        int                     AcceptClientConnect(void);
+
+        // Server Process
+        std::string             ProcessResponse(int client_fd);
+        void                    ProcessRequest(std::string buffer, int client_fd);
+
         // Base Methods
         Server(void);
         ~Server(void);
-        Server(std::vector<std::string> serv, unsigned short port) : server_names(serv), listen_port(port) {
-            memset(&hints, 0, sizeof(struct addrinfo));
-            this->hints.ai_family = AF_UNSPEC;
-            this->hints.ai_socktype = SOCK_STREAM;
-            this->hints.ai_flags = AI_PASSIVE;
+        Server(std::vector<std::string> serv, unsigned short port);
 
-            this->result = NULL;
-        }
+        // Geters
+        int             GetListener(void) const;
+        std::string     GetHosts(void) const;
+        std::string     GetIP(void) const;
+        std::string     GetIPVersion(void) const;
+        std::string     GetListenPort(void) const;
+        ServerStages    GetStage(void) const;
+        int             GetClientFD(void) const;
 
-        std::string ProcessResponse(int client_fd) {
-            // HttpResponse send_msg(
-            //     "<!DOCTYPE html><html><body><h1>Hello beaaa!</h1></body></html>",
-            //     "200",
-            //     "text/html"
-            // );
-            std::string response = this->ClientsResponse[client_fd].CreateResponse();
-            this->ClientsResponse.erase(client_fd);
-            return response;
-        }
-
-        void     ProcessRequest(std::string buffer, int client_fd) {
-            HttpRequest     res;
-            DIR             *dir = NULL;
-            res.ParserRequest(buffer);
-            std::string     path = std::string("." + res._path);
-
-            dir = opendir(path.c_str());
-            if (dir != NULL) {
-                struct dirent* entry;
-
-                while ((entry = readdir(dir)) != NULL) {
-                    std::string d_name = entry->d_name; 
-                    if (d_name == "index.html") {
-                        path += "/" + d_name;
-                    }
-                    std::cout << path << std::endl;
-                }
-                closedir(dir);
-            }
-            std::string body;
-            std::ifstream file(path.c_str());
-            if (file.is_open()) {
-                std::string line;
-                while (std::getline(file, line)) {
-                    body += line;
-                }
-                file.close();
-            }
-            this->ClientsResponse[client_fd] = HttpResponse(
-                body,
-                "200",
-                "text/html"
-            );
-        }
-
+        // Seters
+    private:
+        void            _setServerIpInfos(struct addrinfo *result);
+    
+    public:
+        void            UpdateState(ServerStages st, int client_fd);
         class Except: virtual public std::exception {
 			protected:
 			std::string error_message;
@@ -114,5 +94,7 @@ class Server {
 				virtual const char* what() const throw () { return error_message.c_str();}
 		};
 };
+
+std::ostream &operator<<(std::ostream &os, Server const &server);
 
 #endif

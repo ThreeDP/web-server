@@ -5,10 +5,12 @@
 void    Http::StartPollList(void) {
     struct epoll_event  event;
 
+    this->_stage = H_ADD_SERVERS;
     int &epollFD = this->GetEPollFD();
     if (epollFD == -1) {
         throw Except("Error on create Epoll");
     }
+    std::cout << *this;    
     std::map<std::string, Server*>::iterator it = this->servers.begin();
     for (; it != this->servers.end(); ++it) {
         memset(&event, 0, sizeof(struct epoll_event));
@@ -22,6 +24,8 @@ void    Http::StartPollList(void) {
 }
 
 void    Http::StartWatchSockets(void) {
+    this->_stage = H_STAND_BY;
+    std::cout << *this;
     while (true) {
         int number_of_ready_fds = epoll_wait(
             this->GetEPollFD(),
@@ -53,16 +57,18 @@ void    Http::StartWatchSockets(void) {
 }
 
 void    Http::DisconnectClientToServer(int client_fd) {
-    std::cerr << "Socket " << client_fd << " closed by client\n" << std::endl;
     struct epoll_event  event;
     event.data.fd = client_fd;
     event.events = EPOLLIN;
 
-    this->clientFD_Server.erase(client_fd);
     if (epoll_ctl (this->GetEPollFD(), EPOLL_CTL_DEL, client_fd, &event) == -1)
         throw Except("epoll_ctl");
     if (close(client_fd) == -1)
         throw Except("close");
+    Server *server = this->clientFD_Server[client_fd];
+    server->UpdateState(S_CLIENT_DISCONNECT, client_fd);
+    this->clientFD_Server.erase(client_fd);
+    std::cout << *server; 
 }
 
 bool    Http::ConnectClientToServer(int i) {
@@ -84,11 +90,11 @@ ssize_t    Http::HandleRequest(int client_fd) {
     HttpRequest res;
     Server      *server = this->clientFD_Server[client_fd];
 
-    memset(&buffer, 0, sizeof(HttpRequest_t));
+    memset(&buffer, 0, sizeof(char) * 1000000);
     ssize_t numbytes = recv(client_fd, &buffer, sizeof(char) * 1000000, 0);
-
     server->ProcessRequest(buffer, client_fd);
     res.ParserRequest(buffer);
+    std::cout << *server;
     return numbytes;
 }
 
@@ -100,31 +106,21 @@ void    Http::HandleResponse(int client_fd) {
     if (send(client_fd, message.c_str(), message.size(), 0) == -1) {
         throw Except("Error on send Response");
     }
+    std::cout << *server;
 }
 
 void    Http::ClientHandShake(Server *server) {
     int                         client_fd;
-    socklen_t                   addrlen;
     struct epoll_event          event;
-    struct sockaddr_storage     client_saddr;
-    std::cout << "HandShake" << std::endl;
-    memset(&event, 0, sizeof(struct epoll_event));
-    addrlen = sizeof(struct sockaddr_storage);
 
-    client_fd = accept(
-        server->GetListener(),
-        (struct sockaddr *) &client_saddr,
-        &addrlen
-    );
-    if (client_fd == -1) {
-        throw Except("Error on accept client");
-    }
+    client_fd = server->AcceptClientConnect();
     event.events = EPOLLIN;
     event.data.fd = client_fd;
     if (epoll_ctl(this->GetEPollFD(), EPOLL_CTL_ADD, client_fd, &event) == 1) {
         throw Except("Error on add client on epoll.");
     }
     this->clientFD_Server[client_fd] = server;
+    std::cout << *server;
 }
 
 /* Geters
@@ -142,6 +138,10 @@ int &Http::GetEPollFD(void) {
     return epollFD;
 }
 
+HttpStages  Http::GetStage(void) const {
+    return this->_stage;
+}
+
 /* Seters
 =================================================*/
 void Http::SetServer(std::string serverName, Server *server) {
@@ -151,9 +151,30 @@ void Http::SetServer(std::string serverName, Server *server) {
 /* Base Methods
 =================================================*/
 Http::Http(void) {
-
+    this->_stage = H_START;
+    std::cout << *this;
 }
 
 Http::~Http(void) {
 
+}
+
+std::ostream &operator<<(std::ostream &os, Http const &http) {
+    switch (http.GetStage()) {
+    case H_START:
+        os << HGRN "[ Starting service... ]" reset << std::endl;
+        break;
+    case H_CONFIG:
+        os << HGRN "[ Reading configuration file and creating server configuration rules. ]" reset << std::endl;
+        break;
+    case H_ADD_SERVERS:
+        os << HGRN "[ Adding services in listening mode... ]" reset << std::endl;
+        break;
+    case H_STAND_BY:
+        os << HGRN "[ Observing changes to file descriptors... ]" reset << std::endl;
+        break;
+    default:
+        os << "Error";
+    }
+	return (os);
 }

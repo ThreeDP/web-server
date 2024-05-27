@@ -3,20 +3,17 @@
 
 # include "Server.hpp"
 
-typedef struct HttpRequest_s {
-    char        method[5];
-    char        target[32];
-    // std::string httpVersion;
-    // std::map<std::string, std::string> headers; // Key-value pairs for header fields
-
-    // // Optional fields (depending on your specific needs)
-    // std::string referrer;
-    // std::string ifModifiedSince;
-    // std::string ifNoneMatch;
-    // std::string cacheControl;
-} HttpRequest_t;
+enum HttpStages {
+    H_START,
+    H_CONFIG,
+    H_ADD_SERVERS,
+    H_STAND_BY,
+    H_END
+};
 
 class Http {
+    HttpStages _stage;
+
     // Parser Response
     std::map<std::string, Server *>  servers;
     std::map<int, Server *> clientFD_Server;
@@ -44,6 +41,7 @@ class Http {
         // Geters
         Server                      *GetServer(std::string server);
         int                         &GetEPollFD(void);
+        HttpStages                  GetStage(void) const;
 
         // Base Methods
         Http(void);
@@ -59,5 +57,7 @@ class Http {
 		};
 
 };
+
+std::ostream &operator<<(std::ostream &os, Http const &http);
 
 #endif

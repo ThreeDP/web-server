@@ -23,7 +23,7 @@ FLAGS										= 	-Wall -Wextra -Werror -std=c++98
 ######################## SOURCES #############################
 SRC_SERVER									=	Route.cpp Server.cpp
 SRC_PARSER									=	Parser.cpp
-SRC_HTTP									=	Http.cpp
+SRC_HTTP									=	Http.cpp HttpRequest.cpp HttpResponse.cpp
 SRC											= 	$(SRC_HTTP)					\
 												$(SRC_SERVER)				\
 												$(SRC_PARSER)				\
