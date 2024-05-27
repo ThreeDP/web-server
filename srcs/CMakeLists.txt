@@ -17,6 +17,8 @@ set(HEADERS
     Server/Server.hpp
     Server/Route.hpp
     Server/Http.hpp
+    Server/HttpRequest.hpp
+    Server/HttpResponse.hpp
 )
 
 # Source files
@@ -25,6 +27,8 @@ set(SOURCE_FILES
     Server/Server.cpp
     Server/Route.cpp
     Server/Http.cpp
+    Server/HttpRequest.cpp
+    Server/HttpResponse.cpp
 )
 
 add_library(${PROJECT_NAME} STATIC ${SOURCE_FILES})
