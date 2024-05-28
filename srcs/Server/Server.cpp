@@ -83,7 +83,7 @@ std::string         Server::ProcessResponse(int client_fd) {
 }
 
 std::string         Server::FindMatchRoute(HttpRequest &res) {
-    std::string keyPath;
+    std::string keyPath = "";
     std::map<std::string, Route *>::iterator it = this->routes.begin();
 
     for (; it != this->routes.end(); ++it) {
@@ -97,6 +97,8 @@ std::string         Server::FindMatchRoute(HttpRequest &res) {
         if (comp == subPath)
             keyPath = it->first;
     }
+    if (keyPath == "")
+        keyPath = "/";
     return keyPath;
 }
 
