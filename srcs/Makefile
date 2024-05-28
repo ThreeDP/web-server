@@ -23,11 +23,11 @@ FLAGS										= 	-Wall -Wextra -Werror -std=c++98
 ######################## SOURCES #############################
 SRC_SERVER									=	Route.cpp Server.cpp
 SRC_PARSER									=	Parser.cpp
-SRC_HTTP									=	Http.cpp
+SRC_HTTP									=	Http.cpp HttpRequest.cpp HttpResponse.cpp
 SRC											= 	$(SRC_HTTP)					\
 												$(SRC_SERVER)				\
 												$(SRC_PARSER)				\
-												test_methods_rewrite.cpp				
+												main.cpp				
 ######################## OBJECTS #############################
 OBJ											=	$(patsubst %.cpp, $(OBJS_PATH)%.o, $(SRC))
 DEB											=	$(patsubst %.cpp, $(OBJS_PATH)%.d, $(SRC))
@@ -51,7 +51,7 @@ $(OBJS_PATH):
 	@			mkdir $@
 
 $(NAME): $(OBJS_PATH) $(OBJ)
-	@			printf "\n$(YELLOW)Creating Project$(RC)\n"
+	@			printf "\n$(YELLOW)Creating Project '$(OBJ)'$(RC)\n" 
 	@			c++ $(FLAGS) $(OBJ) -o $(NAME)
 	@			printf "$(GREEN)$(NAME) created$(RC)\n"
 
