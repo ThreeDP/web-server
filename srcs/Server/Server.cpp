@@ -82,33 +82,32 @@ std::string         Server::ProcessResponse(int client_fd) {
     return response;
 }
 
+std::string         Server::FindMatchRoute(HttpRequest &res) {
+    std::string keyPath;
+    std::map<std::string, Route *>::iterator it = this->routes.begin();
+
+    for (; it != this->routes.end(); ++it) {
+        int size = it->first.size();
+        std::string comp = it->first;
+        if (comp[size - 1] != '/' && size++)
+            comp += "/";
+        std::string subPath = res.GetPath().substr(0, size);
+        if (subPath[size - 1] != '/')
+            continue;
+        if (comp == subPath)
+            keyPath = it->first;
+    }
+    return keyPath;
+}
+
 void                Server::ProcessRequest(std::string buffer, int client_fd) {
     HttpRequest     res;
-    DIR             *dir = NULL;
+    std::string keyPath; 
     res.ParserRequest(buffer);
-    std::string     path = std::string("." + res.GetPath());
 
-    dir = opendir(path.c_str());
-    if (dir != NULL) {
-        struct dirent* entry;
-
-        while ((entry = readdir(dir)) != NULL) {
-            std::string d_name = entry->d_name; 
-            if (d_name == "index.html") {
-                path += "/" + d_name;
-            }
-        }
-        closedir(dir);
-    }
-    std::string body;
-    std::ifstream file(path.c_str());
-    if (file.is_open()) {
-        std::string line;
-        while (std::getline(file, line)) {
-            body += line;
-        }
-        file.close();
-    }
+    keyPath = this->FindMatchRoute(res);
+    std::cout << "keyPath: " << keyPath << std::endl;
+    std::string body = this->routes[keyPath]->ProcessRoute(res.GetPath());
     this->ClientsResponse[client_fd] = HttpResponse(
         body,
         "200",
