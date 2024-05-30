@@ -70,13 +70,57 @@ server {
 ```
 
 ### Allow Methods
-`allow_methods:`
+`allow_methods:` descreve os metodos permitidos.
+- recebe uma lista com os metodos.
+
+```
+server {
+    allow_methods GET;
+
+    location /images {
+        allow_methods GET POST DELETE;
+    }
+}
+```
 
 ### Redirect
-`rewrite:`
+`rewrite:` redireciona para outro location.
+- pode ser definido em server, nesse caso os paramentros são <caminho atual, caminho desejado>
+- pode ser definido em location, nesse caso o parametro é o caminho desejado.
+
+```
+server {
+
+    location /jogo /games;
+
+    location /img {
+        rewrite /images;
+    }
+
+    location /jogo {
+
+    }
+
+    location /games {
+
+    }
+}
+```
 
 ### Define a Root
-`root:`
+`root:` define o diretorio que será o root da aplicação.
+- recebe como parametro o caminho partindo da raiz do sistema.
+- pode ser definido no server e em location.
+
+```
+server {
+    root /app/
+
+    location /images {
+        /images
+    }
+}
+```
 
 ### Directory Listing
 `autoindex:` Permite a exibição dos arquivos de um diretorio caso nenhum arquivo de index seja encontrato.
