@@ -38,6 +38,7 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include <ctype.h>
+#include <ctime>
 #include <stdint.h>
 #include <set>
 // #include <time.h>
@@ -55,12 +56,13 @@ class Route {
     public:
 
         // Route Methods
-        std::vector<std::string>    *CatDirectorysFiles(std::string path);
+        std::set<std::string>       *CatDirectorysFiles(std::string path, std::vector<struct dirent *> &dirs);
         std::string                 ProcessRoute(std::string path);
         std::string                 ReturnFileRequest(std::string path);
         mode_t                      CatFileMode(std::string path);
-        bool                        FindFilePattern(std::string &path, std::vector<std::string> *dirs);
+        bool                        FindFilePattern(std::string &path, std::set<std::string> *dirs);
         std::string                 DetermineOutputFile(std::string path);
+        std::string                 GenerateAutoindex(std::vector<struct dirent *> dirs, std::string path);
 
         // Geters
         std::string GetRedirectPath(void);
@@ -81,7 +83,21 @@ class Route {
 				virtual ~Except() throw () {}
 				virtual const char* what() const throw () { return error_message.c_str();}
 		};
+        // Static functions
+        static std::string          getActualDir(std::string path);
+        static std::string	        getLastModifiedOfFile(const std::string &filename);
+        static std::string          getFileSize(const std::string &filename);
+        static time_t	            convertTimeToGMT(time_t t);
+        static std::string	        formatTimeString(time_t	time);
+        static std::string          getCurrentTimeInGMT(void);
         //Route(std::vector<std::string> methods, std::string redirect, std::string directory);
 };
+
+template<typename T>
+std::string	toString(const T& value) {
+	std::ostringstream oss;
+	oss << value;
+	return (oss.str());
+}
 
 #endif

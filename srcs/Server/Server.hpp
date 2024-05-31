@@ -64,6 +64,7 @@ class Server : public CommonParameters {
             this->_limit_client_body_size = 2 * 1024;
             this->_root = "../home";
             this->_index.insert("index.html");
+            this->_index.insert("new.html");
             this->_autoindex = false;
         }
     
