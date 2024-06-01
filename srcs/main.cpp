@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   server.cpp                                         :+:      :+:    :+:   */
+/*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: dapaulin <dapaulin@student.42sp.org.br>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/03 17:50:41 by dapaulin          #+#    #+#             */
-/*   Updated: 2023/11/03 19:31:08 by dapaulin         ###   ########.fr       */
+/*   Updated: 2024/06/01 14:05:48 by dapaulin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,18 +14,16 @@
 
 int main() {
 	Http http;
-    std::vector<std::string> servers;
-    servers.push_back(std::string("localhost"));
-    Server *newServer = new Server(servers, 8080);
+    Server *newServer = new Server("localhost");
     http.SetServer("localhost", newServer);
-    newServer->routes["/"] = new Route();
-    newServer->routes["/static"] = new Route();
-    newServer->routes["/static/imagens"] = new Route();
+    newServer->routes["/"] = new Route(newServer, "/");
+    newServer->routes["/app"] = new Route(newServer, "/app");
+    newServer->routes["/static/imagens"] = new Route(newServer, "/static/imagens");
 
-    try {
+    //try {
         http.StartPollList();
         http.StartWatchSockets();
-    } catch (const std::exception &e) {
-        std::cout << e.what() << std::endl;
-    }
+    //} catch (const std::exception &e) {
+      //  std::cout << e.what() << std::endl;
+    //}
 } 

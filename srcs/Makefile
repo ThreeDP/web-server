@@ -6,7 +6,7 @@
 #    By: dapaulin <dapaulin@student.42sp.org.br>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/11/03 15:04:07 by dapaulin          #+#    #+#              #
-#    Updated: 2023/11/03 19:30:27 by dapaulin         ###   ########.fr        #
+#    Updated: 2024/05/30 16:16:07 by dapaulin         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -19,11 +19,11 @@ VPATH										= 	Server/						\
 												Parser/
 
 ######################## FLAGS ###############################
-FLAGS										= 	-Wall -Wextra -Werror -std=c++98
+FLAGS										= 	-Wall -Wextra -std=c++98
 ######################## SOURCES #############################
 SRC_SERVER									=	Route.cpp Server.cpp
 SRC_PARSER									=	Parser.cpp
-SRC_HTTP									=	Http.cpp HttpRequest.cpp HttpResponse.cpp
+SRC_HTTP									=	Http.cpp HttpRequest.cpp HttpResponse.cpp CommonParameters.cpp
 SRC											= 	$(SRC_HTTP)					\
 												$(SRC_SERVER)				\
 												$(SRC_PARSER)				\

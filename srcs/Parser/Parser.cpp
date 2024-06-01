@@ -32,16 +32,20 @@ std::pair<std::string, std::string> Parser::_parserRewrites(std::istringstream &
 	return (rewrites);
 }
 
-std::vector<std::string>    Parser::_parserAllowMethods(std::istringstream &iss) {
+std::string Parser::_parserRewritesLoc(std::istringstream &iss){
+	return std::string("/test");
+}
+
+std::set<std::string>    Parser::_parserAllowMethods(std::istringstream &iss) {
     
-    std::vector<std::string>	allow_methods;
+    std::set<std::string>	allow_methods;
 	std::string			methodsLine;
 	std::getline(iss, 	methodsLine, ';');
 	std::istringstream	sstream(methodsLine);
 	std::string			method;
 
 	while (sstream >> method){
-		allow_methods.push_back(method);
+		allow_methods.insert(method);
 	}
 	return allow_methods;
 }
@@ -56,7 +60,7 @@ void	Parser::_parserServerName(std::istringstream &iss, Http &http, Server *serv
 			endWith = true;
 		}
 		http.SetServer(token, server);
-		server->server_names.push_back(token);
+		server->SetServerName(token);
 		if (endWith == true)
 			break;
 	}
@@ -82,14 +86,16 @@ void	Parser::ParserServer(Http &http) {
 				this->_parserServerName(iss, http, server);
 			} else if (token == "location" && (iss >> token)) {
 				actualRoute = token;
-				server->routes[actualRoute] = new Route();
+				server->routes[actualRoute] = new Route(server, actualRoute);
 				inLocation = true;
 			} else if (token == "}") {
 				inLocation = false;
 			} else if (token == "allow_methods" && inLocation) {
-				server->routes[actualRoute]->SetAllowMethods(this->_parserAllowMethods(iss));
+				std::set<std::string> alm = this->_parserAllowMethods(iss);
+				server->routes[actualRoute]->SetAllowMethods(alm);
 			} else if (token == "rewrite" && inLocation) {
-				server->routes[actualRoute]->SetRedirectPath(this->_parserRewrites(iss));
+				std::string inloc = this->_parserRewritesLoc(iss);
+				server->routes[actualRoute]->SetRedirectPath(inloc);
 			}
 			break;
 		}

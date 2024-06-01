@@ -1,6 +1,161 @@
 # web-server
 
 
+## Arquivo de configuração
+
+### Server Name
+`server_name:` Será o nome DNS dado para o ip.
+- pode receber um ou mais nomes que terão como destino esse server.
+- Se não por informando um server name padrão é atribuido.
+
+```
+server {
+    server_name domain.com www.domain.com
+}
+```
+
+### Listen
+`listen:` Listen recebe dois parametros, IP:PORT, um ip default assume se o IP não for especificado.
+
+```
+server {
+    listen 192.168.1.100:8081
+}
+
+server {
+    listen 8082; # Sem especificar IP.
+}
+```
+
+### Error page
+
+`error_page:` define uma paǵina de erro padrão para o server ou para a location.
+- Pode receber um ou mais códigos de erros que fazer referência a um arquivo a ser retornado.
+
+```
+server {
+    error_page 404 /404.html;
+    error_page 500 502 503 504 /50x.html;
+
+    location /home {
+        error_page 404 /home/errors/home-404.html;
+    }
+}
+```
+- Caso o acesso seja realizado em `/` o 404.html será retornado.
+- Caso o acesso seja realizado em `/home` o home-404.html será retornado.
+
+### Client Max Body Size
+
+`client_max_body_size:` Define o tamanho maximo do body de request do client e recebe como paramento o valor e uma letra com a unidade de medida.
+- `K` para Kilo bytes.
+- `M` para Mega bytes.
+- `G` para Giga bytes.
+
+```
+server {
+        location /app/crash-limit-m {
+            client_max_body_size 2M;
+        }
+
+        location /app/crash-limit-g {
+            client_max_body_size 1G;
+            
+        }
+
+        location /app/crash-limit-k {
+            client_max_body_size 2K;
+        }
+}
+```
+
+### Allow Methods
+`allow_methods:` descreve os metodos permitidos.
+- recebe uma lista com os metodos.
+
+```
+server {
+    allow_methods GET;
+
+    location /images {
+        allow_methods GET POST DELETE;
+    }
+}
+```
+
+### Redirect
+`rewrite:` redireciona para outro location.
+- pode ser definido em server, nesse caso os paramentros são <caminho atual, caminho desejado>
+- pode ser definido em location, nesse caso o parametro é o caminho desejado.
+
+```
+server {
+
+    location /jogo /games;
+
+    location /img {
+        rewrite /images;
+    }
+
+    location /jogo {
+
+    }
+
+    location /games {
+
+    }
+}
+```
+
+### Define a Root
+`root:` define o diretorio que será o root da aplicação.
+- recebe como parametro o caminho partindo da raiz do sistema.
+- pode ser definido no server e em location.
+
+```
+server {
+    root /app/
+
+    location /images {
+        /images
+    }
+}
+```
+
+### Directory Listing
+`autoindex:` Permite a exibição dos arquivos de um diretorio caso nenhum arquivo de index seja encontrato.
+- recebe como paramentro `on` ou `off`.
+- por padrão vem como `off`.
+- pode ser definido no server ou em location especificas.
+
+```
+server {
+    autoindex on;
+
+    location /home {
+        autoindex off;
+    }
+
+    location / {
+
+    }
+}
+```
+
+
+### Default file for response
+`index:` Define uma lista de arquivos que podem ser devolvidos caso o caminho seja uma pasta.
+- recebe como paramentro uma lista de nomes.
+
+```
+server {
+    index index.html index.htm default.html;
+}
+```
+
+### 
+
+
 `strerror:`
 
 `gai_strerror:`

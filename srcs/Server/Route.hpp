@@ -2,6 +2,7 @@
 # define __ROUTE_HPP__
 
 # include "define.hpp"
+# include "CommonParameters.hpp"
 
 // I/O
 # include <iostream>
@@ -12,6 +13,7 @@
 
 // epoll
 # include <sys/epoll.h>
+# include <sys/stat.h>
 
 // socket
 # include <sys/types.h>
@@ -19,6 +21,9 @@
 
 #include <fstream>
 # include <dirent.h>
+
+# include <vector>
+# include <sstream>  
 
 # include <cstdlib>
 
@@ -33,58 +38,67 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include <ctype.h>
+#include <ctime>
 #include <stdint.h>
+#include <set>
 // #include <time.h>
+# include "RouteResponse.hpp"
 
 class Route {
     private:
-        std::vector<std::string>            _allowMethods;
-        std::map<std::string, std::string>  _redirectPath;
-        std::string                         _directory;
+        std::set<std::string>                       &_allow_methods;
+        std::map<int, std::string>                  &_error_page;
+        int                                         _limit_client_body_size;
+        std::string                                 _redirectPath;
+        std::string                                 _directory;
+        bool                                        _autoIndex;
+        std::set<std::string>                       &_index;
         
     public:
-        std::map<std::string, std::string> &GetRedirectPath(void);
-        std::vector<std::string>    &GetAllowMethods(void);
-        void    SetAllowMethods(std::vector<std::string> methods);
-        void    SetRedirectPath(std::pair<std::string, std::string> redirect);
 
-        Route() : _directory("."){}
+        // Route Methods
+        std::set<std::string>       *CatDirectorysFiles(std::string path, std::vector<struct dirent *> &dirs);
+        RouteResponse               *ProcessRoute(std::string path);
+        std::string                 ReturnFileRequest(std::string path);
+        mode_t                      CatFileMode(std::string &path, int &statusCode);
+        bool                        FindFilePattern(std::string &path, std::set<std::string> *dirs);
+        RouteResponse               *DetermineOutputFile(std::string path);
+        std::string                 GenerateAutoindex(std::vector<struct dirent *> dirs, std::string path);
 
-        std::string     IsADirectory(std::string path) {
-            DIR *dir = NULL;
-    
-            dir = opendir(path.c_str());
-            if (dir != NULL) {
-                struct dirent* entry;
+        // Geters
+        std::string                 GetRedirectPath(void);
+        std::set<std::string>       &GetAllowMethods(void);
 
-                while ((entry = readdir(dir)) != NULL) {
-                    std::string d_name = entry->d_name; 
-                    if (d_name == "index.html") {
-                        path += "/" + d_name;
-                    }
-                }
-                closedir(dir);
-            }
-            return path;
-        }
+        // Seters
+        void                        SetAllowMethods(std::set<std::string> &methods);
+        void                        SetRedirectPath(std::string redirect);
 
-        std::string    ProcessRoute(std::string path) {
-            std::string body;
-            std::string newP = this->_directory;
-            newP += path;
+        // Base methods
+        Route(CommonParameters *server, std::string server_name);
 
-            newP = this->IsADirectory(newP);
-            std::ifstream file(newP.c_str());
-            if (file.is_open()) {
-                std::string line;
-                while (std::getline(file, line)) {
-                    body += line;
-                }
-                file.close();
-            }
-            return body;
-        }
+        class Except: virtual public std::exception {
+			protected:
+			std::string error_message;
+			public:
+				explicit Except(const std::string& msg) : error_message(msg) {}
+				virtual ~Except() throw () {}
+				virtual const char* what() const throw () { return error_message.c_str();}
+		};
+        // Static functions
+        static std::string          getActualDir(std::string path);
+        static std::string	        getLastModifiedOfFile(const std::string &filename);
+        static std::string          getFileSize(const std::string &filename);
+        static time_t	            convertTimeToGMT(time_t t);
+        static std::string	        formatTimeString(time_t	time);
+        static std::string          getCurrentTimeInGMT(void);
         //Route(std::vector<std::string> methods, std::string redirect, std::string directory);
 };
+
+template<typename T>
+std::string	toString(const T& value) {
+	std::ostringstream oss;
+	oss << value;
+	return (oss.str());
+}
 
 #endif
