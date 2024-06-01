@@ -24,7 +24,7 @@ std::set<std::string>     *Route::CatDirectorysFiles(std::string path, std::vect
     return dirNames;
 }
 
-RouteResponse    Route::ProcessRoute(std::string path) {
+RouteResponse    *Route::ProcessRoute(std::string path) {
     std::string body;
     std::string newP = this->_directory;
     newP += path;
@@ -46,13 +46,25 @@ std::string Route::ReturnFileRequest(std::string path) {
     return body;
 }
 
-mode_t Route::CatFileMode(std::string path) {
+mode_t Route::CatFileMode(std::string &path, int &statusCode) {
     struct stat sb;
+    std::string newPath;
+    bool        error = false;
 
     memset(&sb, 0, sizeof(struct stat));
-    if (stat(path.c_str(), &sb) == -1) {
-        std::cerr << "Error on check file type";
+    newPath = path;
+    while (1) {
+        if (stat(newPath.c_str(), &sb) == -1 && error == false) {
+            statusCode = 404;
+            newPath += this->_error_page[statusCode];
+            error = true;
+            continue ;
+        } else {
+            path = newPath;
+        }
+        break;
     }
+
     return sb.st_mode;
 }
 
@@ -97,15 +109,18 @@ std::string Route::GenerateAutoindex(std::vector<struct dirent *> dirs, std::str
     return body.str();
 }
 
-RouteResponse Route::DetermineOutputFile(std::string path) {
+
+
+RouteResponse *Route::DetermineOutputFile(std::string path) {
     std::stringstream   body;
     int                 statusCode = 200;
     bool                exitCheck = false;
+    RouteResponse       *res = NULL;
 
     while (1) {
         std::set<std::string> *dirNames = NULL;
         std::vector<struct dirent *> dirs;
-        switch (CatFileMode(path) & S_IFMT) {
+        switch (CatFileMode(path, statusCode) & S_IFMT) {
         case S_IFDIR:
             dirNames = this->CatDirectorysFiles(path, dirs);
             if (dirNames != NULL && !this->FindFilePattern(path, dirNames)) {
@@ -114,6 +129,7 @@ RouteResponse Route::DetermineOutputFile(std::string path) {
                 delete dirNames;
                 statusCode = 200;
                 exitCheck = true;
+                res = new RouteResponse(body.str(), statusCode);
             }
             break;
         case S_IFREG:
@@ -121,17 +137,16 @@ RouteResponse Route::DetermineOutputFile(std::string path) {
             body << this->ReturnFileRequest(path);
             statusCode = 200;
             exitCheck = true;
+            res = new RouteResponse(body.str(), statusCode);
             break;
         default:
-            statusCode = 404;
             exitCheck = true;
-            std::cout << "default" << std::endl;
+            res = new RouteResponse(statusCode);
             break;
         }
         if (exitCheck)
             break;
     }
-    RouteResponse res(body.str(), statusCode);
     return res;
 }
 
