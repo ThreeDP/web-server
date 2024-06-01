@@ -109,12 +109,8 @@ void                Server::ProcessRequest(std::string buffer, int client_fd) {
 
     keyPath = this->FindMatchRoute(res);
     std::cout << "keyPath: " << keyPath << std::endl;
-    std::string body = this->routes[keyPath]->ProcessRoute(res.GetPath());
-    this->ClientsResponse[client_fd] = HttpResponse(
-        body,
-        "200",
-        "text/html"
-    );
+    RouteResponse routeRes = this->routes[keyPath]->ProcessRoute(res.GetPath());
+    this->ClientsResponse[client_fd] = HttpResponse(routeRes);
     this->UpdateState(S_CLIENT_REQUEST, client_fd);
 }
 
@@ -159,7 +155,6 @@ int             Server::GetClientFD(void) const {
 
 /* Seters
 =======================================*/
-
 void    Server::_setServerIpInfos(struct addrinfo *result) {
     void    *addr;
     char ipStr[INET6_ADDRSTRLEN];

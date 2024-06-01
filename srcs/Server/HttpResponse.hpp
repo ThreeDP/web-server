@@ -5,7 +5,8 @@
 # include <ctime>
 # include <map>
 # include <cstring>
-# include <sstream> 
+# include <sstream>
+# include "RouteResponse.hpp"
 
 class HttpResponse {
     protected:
@@ -19,6 +20,7 @@ class HttpResponse {
         // Base Methods
         HttpResponse();
         ~HttpResponse();
+        HttpResponse(RouteResponse &rr);
         HttpResponse(std::string body, std::string statusCode, std::string contentType);
 
         // Create Response

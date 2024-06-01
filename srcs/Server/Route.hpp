@@ -42,6 +42,7 @@
 #include <stdint.h>
 #include <set>
 // #include <time.h>
+# include "RouteResponse.hpp"
 
 class Route {
     private:
@@ -57,11 +58,11 @@ class Route {
 
         // Route Methods
         std::set<std::string>       *CatDirectorysFiles(std::string path, std::vector<struct dirent *> &dirs);
-        std::string                 ProcessRoute(std::string path);
+        RouteResponse               ProcessRoute(std::string path);
         std::string                 ReturnFileRequest(std::string path);
         mode_t                      CatFileMode(std::string path);
         bool                        FindFilePattern(std::string &path, std::set<std::string> *dirs);
-        std::string                 DetermineOutputFile(std::string path);
+        RouteResponse               DetermineOutputFile(std::string path);
         std::string                 GenerateAutoindex(std::vector<struct dirent *> dirs, std::string path);
 
         // Geters
