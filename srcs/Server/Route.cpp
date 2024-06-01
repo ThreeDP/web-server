@@ -1,9 +1,5 @@
 #include "Route.hpp"
 
-// Route::Route(std::vector<std::string> methods, std::string redirect, std::string directory) : _allowMethods(methods), _redirectPath(redirect), _directory(directory) {
-//     std::cout << "Start a route!" << std::endl;
-// }
-
 // Route Methods
 std::set<std::string>     *Route::CatDirectorysFiles(std::string path, std::vector<struct dirent *> &dirs) {
     DIR                         *dir = NULL;
@@ -24,12 +20,12 @@ std::set<std::string>     *Route::CatDirectorysFiles(std::string path, std::vect
     return dirNames;
 }
 
-RouteResponse    *Route::ProcessRoute(std::string path) {
+RouteResponse    *Route::ProcessRoute(HttpRequest &httpReq) {
     std::string body;
     std::string newP = this->_directory;
-    newP += path;
+    httpReq._path = this->_directory + httpReq._path;
 
-    return this->DetermineOutputFile(newP);
+    return this->DetermineOutputFile(httpReq);
 }
 
 std::string Route::ReturnFileRequest(std::string path) {
@@ -56,6 +52,7 @@ mode_t Route::CatFileMode(std::string &path, int &statusCode) {
     while (1) {
         if (stat(newPath.c_str(), &sb) == -1 && error == false) {
             statusCode = 404;
+            this->pathReset(newPath);
             newPath += this->_error_page[statusCode];
             error = true;
             continue ;
@@ -64,7 +61,6 @@ mode_t Route::CatFileMode(std::string &path, int &statusCode) {
         }
         break;
     }
-
     return sb.st_mode;
 }
 
@@ -73,7 +69,7 @@ bool Route::FindFilePattern(std::string &path, std::set<std::string> *dirs) {
     for ( ; it != this->_index.end(); ++it) {
         std::set<std::string>::iterator i = dirs->find(*it);
         if (i != dirs->end()) {
-            path += *i;
+            Route::checkPathEnd(path, *it);
             delete dirs;
             return true;
         }
@@ -109,35 +105,39 @@ std::string Route::GenerateAutoindex(std::vector<struct dirent *> dirs, std::str
     return body.str();
 }
 
-
-
-RouteResponse *Route::DetermineOutputFile(std::string path) {
+RouteResponse *Route::DetermineOutputFile(HttpRequest &httpReq) {
     std::stringstream   body;
     int                 statusCode = 200;
     bool                exitCheck = false;
     RouteResponse       *res = NULL;
 
+    this->_stage = R_REQUEST;
+    std::cout << *this; 
     while (1) {
         std::set<std::string> *dirNames = NULL;
         std::vector<struct dirent *> dirs;
-        switch (CatFileMode(path, statusCode) & S_IFMT) {
+        switch (CatFileMode(httpReq._path, statusCode) & S_IFMT) {
         case S_IFDIR:
-            dirNames = this->CatDirectorysFiles(path, dirs);
-            if (dirNames != NULL && !this->FindFilePattern(path, dirNames)) {
-                // int status = this->checkFilePermission(path);
-                body << GenerateAutoindex(dirs, path);
-                delete dirNames;
-                statusCode = 200;
-                exitCheck = true;
-                res = new RouteResponse(body.str(), statusCode);
+            dirNames = this->CatDirectorysFiles(httpReq._path, dirs);
+            if (dirNames != NULL && !this->FindFilePattern(httpReq._path, dirNames)) {
+                if ((res = this->checkFilePermission(httpReq, statusCode)))
+                    exitCheck = true;
+                if (statusCode == 200) {
+                    body << GenerateAutoindex(dirs, httpReq._path);
+                    delete dirNames;
+                    exitCheck = true;
+                    res = new RouteResponse(body.str(), statusCode);
+                }
             }
             break;
         case S_IFREG:
-            // int status = this->checkFilePermission(path);
-            body << this->ReturnFileRequest(path);
-            statusCode = 200;
-            exitCheck = true;
-            res = new RouteResponse(body.str(), statusCode);
+            if ((res = this->checkFilePermission(httpReq, statusCode)))
+                exitCheck = true;
+            if (statusCode == 200) {
+                body << this->ReturnFileRequest(httpReq._path);
+                exitCheck = true;
+                res = new RouteResponse(body.str(), statusCode);
+            }
             break;
         default:
             exitCheck = true;
@@ -150,6 +150,30 @@ RouteResponse *Route::DetermineOutputFile(std::string path) {
     return res;
 }
 
+RouteResponse *Route::checkFilePermission(HttpRequest &httpReq, int &statusCode) {
+    struct stat sb;
+
+    memset(&sb, 0, sizeof(struct stat));
+    stat(httpReq._path.c_str(), &sb);
+    if (httpReq._method == "GET" && !(sb.st_mode & S_IRUSR)) {
+        statusCode = 403;
+        std::map<int, std::string>::iterator it = this->_error_page.find(statusCode);
+        if (it == this->_error_page.end()) {
+            return new RouteResponse(statusCode);
+        } else {
+            this->pathReset(httpReq._path);
+            Route::checkPathEnd(httpReq._path, it->second);
+        }
+        return NULL;
+    }
+    statusCode = 200;
+    return NULL;
+}
+
+void    Route::pathReset(std::string &path) {
+    path = this->_directory;
+    path += this->_route_name; 
+}
 
 // Geters
 std::set<std::string>    *Route::GetAllowMethods(void) {
@@ -169,6 +193,10 @@ void    Route::SetRedirectPath(std::string redirect) {
     this->_redirectPath = redirect;
 }
 
+std::string                 Route::GetRouteName(void) const {
+    return this->_route_name;
+}
+
 // Base Methods
 Route::Route(CommonParameters *server, std::string server_name)  : 
     _allow_methods(server->GetDefaultAllowMethods()),
@@ -176,12 +204,14 @@ Route::Route(CommonParameters *server, std::string server_name)  :
     _limit_client_body_size(2048),
     _directory(server->GetRoot()),
     _autoIndex(server->GetAutoIndex()),
-    _index(server->GetIndex())
+    _index(server->GetIndex()),
+    _stage(R_START)
 {
     std::map<std::string, std::string>::iterator it = server->GetReWrites().find(server_name);
     if (server->GetReWrites().find(server_name) != server->GetReWrites().end())
         this->_redirectPath = server->GetReWrites()[server_name];
-    std::cout << "Create Route: " << server_name << std::endl;
+    this->_route_name = server_name;
+    std::cout << *this;
 }
 
 // Statics Functions
@@ -217,7 +247,6 @@ time_t	Route::convertTimeToGMT(time_t t) {
 	return (mktime(gmtTime));
 }
 
-
 std::string	Route::formatTimeString(time_t	time) {
 	char	buffer[80];
 	std::strftime(buffer, sizeof(buffer), "%c", localtime(&time));
@@ -229,4 +258,29 @@ std::string	Route::formatTimeString(time_t	time) {
 std::string	Route::getCurrentTimeInGMT(void) {
 	time_t	now = Route::convertTimeToGMT(time(0));
 	return (Route::formatTimeString(now));
+}
+
+void   Route::checkPathEnd(std::string &path, std::string append) {
+    if (!path.empty() && path[path.size() - 1] == '/')
+        path += append;
+    else if (!append.empty() && append[0] == '/'){
+        path += append;
+    } else {
+        path += "/"; 
+        path += append;
+    }
+}
+
+std::ostream &operator<<(std::ostream &os, Route const &route) {
+    switch (route._stage) {
+    case R_START:
+        os << HYEL "[ Create Route: " << route.GetRouteName() << " ]" reset << std::endl;
+        break;
+    case R_REQUEST:
+        os << HYEL "[ Request sent to route: " << route.GetRouteName() << " ]" reset << std::endl; 
+        break;
+    default:
+        os << "Error";
+    }
+	return (os);
 }
