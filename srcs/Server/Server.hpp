@@ -69,7 +69,6 @@ class Server : public CommonParameters {
         }
     
     public:
-        
 
         // Server Methods
         void                    SetAddrInfo(void);

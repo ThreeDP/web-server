@@ -24,7 +24,7 @@ std::set<std::string>     *Route::CatDirectorysFiles(std::string path, std::vect
     return dirNames;
 }
 
-std::string    Route::ProcessRoute(std::string path) {
+RouteResponse    Route::ProcessRoute(std::string path) {
     std::string body;
     std::string newP = this->_directory;
     newP += path;
@@ -97,9 +97,11 @@ std::string Route::GenerateAutoindex(std::vector<struct dirent *> dirs, std::str
     return body.str();
 }
 
-std::string Route::DetermineOutputFile(std::string path) {
-    std::stringstream body;
-    bool exitCheck = false;
+RouteResponse Route::DetermineOutputFile(std::string path) {
+    std::stringstream   body;
+    int                 statusCode = 200;
+    bool                exitCheck = false;
+
     while (1) {
         std::set<std::string> *dirNames = NULL;
         std::vector<struct dirent *> dirs;
@@ -110,15 +112,18 @@ std::string Route::DetermineOutputFile(std::string path) {
                 // int status = this->checkFilePermission(path);
                 body << GenerateAutoindex(dirs, path);
                 delete dirNames;
+                statusCode = 200;
                 exitCheck = true;
             }
             break;
         case S_IFREG:
             // int status = this->checkFilePermission(path);
             body << this->ReturnFileRequest(path);
+            statusCode = 200;
             exitCheck = true;
             break;
         default:
+            statusCode = 404;
             exitCheck = true;
             std::cout << "default" << std::endl;
             break;
@@ -126,7 +131,8 @@ std::string Route::DetermineOutputFile(std::string path) {
         if (exitCheck)
             break;
     }
-    return body.str();
+    RouteResponse res(body.str(), statusCode);
+    return res;
 }
 
 
