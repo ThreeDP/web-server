@@ -34,3 +34,4 @@
 webServer
 build
 googletest
+.vscode

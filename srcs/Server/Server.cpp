@@ -7,9 +7,9 @@ void    Server::SetAddrInfo(void) {
     int status = 0;
     std::stringstream port;
 
-    port << this->listen_port;
+    port << this->_listen_port;
     status = getaddrinfo(
-        this->server_names[0].c_str(),
+        this->_server_names[0].c_str(),
         port.str().c_str(),
         &this->hints,
         &this->result
@@ -83,7 +83,7 @@ std::string         Server::ProcessResponse(int client_fd) {
 }
 
 std::string         Server::FindMatchRoute(HttpRequest &res) {
-    std::string keyPath;
+    std::string keyPath = "";
     std::map<std::string, Route *>::iterator it = this->routes.begin();
 
     for (; it != this->routes.end(); ++it) {
@@ -97,6 +97,8 @@ std::string         Server::FindMatchRoute(HttpRequest &res) {
         if (comp == subPath)
             keyPath = it->first;
     }
+    if (keyPath == "")
+        keyPath = "/";
     return keyPath;
 }
 
@@ -124,10 +126,10 @@ int   Server::GetListener(void) const {
 
 std::string Server::GetHosts(void) const {
     std::stringstream   hosts;
-    int                 size = this->server_names.size();
+    int                 size = this->_server_names.size();
 
     for (int i = 0; i < size; i++) {
-        hosts << this->server_names[i] << " ";
+        hosts << this->_server_names[i] << " ";
     }
     return hosts.str();
 }
@@ -143,7 +145,7 @@ std::string Server::GetIPVersion(void) const {
 std::string Server::GetListenPort(void) const {
     std::stringstream ls_port;
 
-    ls_port << this->listen_port;
+    ls_port << this->_listen_port;
     return ls_port.str();
 }
 
@@ -195,7 +197,7 @@ Server::Server(void) {
     std::cout << *this;
 }
 
-Server::Server(std::vector<std::string> serv, unsigned short port) : server_names(serv), listen_port(port) {
+Server::Server(std::vector<std::string> serv, unsigned short port) : CommonParameters(serv, port) {
     memset(&hints, 0, sizeof(struct addrinfo));
     this->hints.ai_family = AF_UNSPEC;
     this->hints.ai_socktype = SOCK_STREAM;

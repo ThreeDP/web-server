@@ -3,16 +3,20 @@
 
 # include "HttpResponse.hpp"
 # include "HttpRequest.hpp"
+# include "CommonParameters.hpp"
 # include <sys/types.h>
 
 
 # include <iostream>
-# include <vector>
+
 #include <fstream>
 
 #include <string>
 #include <iostream>
 #include <sstream>
+
+# include <set>
+# include <vector>
 
 
 # include "Route.hpp"
@@ -27,7 +31,7 @@ enum ServerStages {
     S_END
 };
 
-class Server {
+class Server : public CommonParameters {
     private:
         std::string     _ip;
         std::string     _ipVersion;
@@ -37,23 +41,35 @@ class Server {
 
     public:
 
-        // Parser Result
-        std::vector<std::string>        server_names;
-        unsigned short                  listen_port;
-        int                             limit_client_body_size;
-        std::map<int, std::string>      default_error_page;
+        std::map<std::string, Route *>          routes;
         
         // socket config
-        struct addrinfo                 hints;
-        struct addrinfo                 *result;
+        struct addrinfo                         hints;
+        struct addrinfo                         *result;
 
-        int                             listener;
-        const static int                backlog = 10;
+        int                                     listener;
+        const static int                        backlog = 10;
 
-        std::map<int, HttpResponse>  ClientsResponse;
+        std::map<int, HttpResponse>             ClientsResponse;
+
+        Server(std::string name){
+            this->_listen_host = "127.0.0.1";
+            this->_listen_port = 8081;
+            this->_server_names.push_back(name);
+            this->_default_error_page[404] = "/404.html";
+            this->_default_error_page[500] = "/50x.html";
+            this->_default_error_page[502] = "/50x.html";
+            this->_default_error_page[503] = "/50x.html";
+            this->_default_error_page[504] = "/50x.html";
+            this->_limit_client_body_size = 2 * 1024;
+            this->_root = "../home";
+            this->_index.insert("index.html");
+            this->_index.insert("new.html");
+            this->_autoindex = false;
+        }
     
     public:
-        std::map<std::string, Route *>  routes;
+        
 
         // Server Methods
         void                    SetAddrInfo(void);
