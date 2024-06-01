@@ -1,13 +1,29 @@
 # include "CommonParameters.hpp"
 
-// Seters
+// ==================== Seters
 void		CommonParameters::SetServerName(std::string server_name) {
+	static bool defaultSet = true;
+
+	if (defaultSet == true) {
+		this->_server_names = std::vector<std::string>();
+		defaultSet = false;
+	}
 	this->_server_names.push_back(server_name);
 }
 
-// Geters
-std::set<std::string>	&CommonParameters::GetDefaultAllowMethods(void) {
-	return this->_default_allow_methods;
+void		CommonParameters::SetRewrites(std::pair<std::string, std::string> rewrite) {
+	static bool defaultSet = true;
+
+	if (defaultSet == true) {
+		this->_rewrites = std::map<std::string, std::string>();
+		defaultSet = false;
+	}
+	this->_rewrites.insert(rewrite);
+}
+
+// ====================  Geters
+std::set<std::string>	*CommonParameters::GetDefaultAllowMethods(void) {
+	return &this->_default_allow_methods;
 }
 
 std::map<int, std::string>	&CommonParameters::GetDefaultErrorPage(void) {
@@ -33,6 +49,12 @@ std::set<std::string> &CommonParameters::GetIndex(void) {
 bool CommonParameters::GetAutoIndex(void) {
 	return this->_autoindex;
 }
+
+std::vector<std::string>    CommonParameters::GetServerNames(void){
+    return this->_server_names;
+}
+
+//=================================
 
 // Base Methods
 CommonParameters::CommonParameters(void) : 

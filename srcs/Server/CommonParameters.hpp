@@ -18,21 +18,21 @@ class CommonParameters {
         std::string                             _root;
         std::set<std::string>                   _index;
         bool                                    _autoindex;
-
+		
 	public:
 
 		// Seters
 		void		SetServerName(std::string server_name);
-
+		void		SetRewrites(std::pair<std::string, std::string> rewrite);
 		// Geters
-		std::set<std::string>				&GetDefaultAllowMethods(void);
+		std::set<std::string>				*GetDefaultAllowMethods(void);
 		std::map<int, std::string>			&GetDefaultErrorPage(void);
 		int 								GetLimitClientBodySize(void);
 		std::map<std::string, std::string>	&GetReWrites(void);
 		std::string 						GetRoot(void);
 		std::set<std::string> 				&GetIndex(void);
 		bool 								GetAutoIndex(void);
-
+		std::vector<std::string>			GetServerNames(void);
 		// Base Methods
 		CommonParameters(void);
 		CommonParameters(std::vector<std::string> serv, unsigned short port);

@@ -21,7 +21,12 @@ std::pair<std::string, std::string> Parser::_parserRewrites(std::istringstream &
 	std::string							location;
 	std::string							rewrite;
 
+	std::cout << "estou aqui: " << std::endl;	
+
 	iss >> location >> rewrite;
+
+	std::cout << "path: " << location << " new_path: " << rewrite << std::endl;	
+
 	for (std::string::iterator it = location.begin(); it != location.end(); ++it){
 		if (*it == '^'){
 			location.erase(it);
@@ -32,20 +37,36 @@ std::pair<std::string, std::string> Parser::_parserRewrites(std::istringstream &
 	return (rewrites);
 }
 
-std::string Parser::_parserRewritesLoc(std::istringstream &iss){
-	return std::string("/test");
+std::string Parser::_parserAlocationRewrite(std::istringstream &iss){
+	std::string token;
+	std::string	path;
+
+	iss >> token >> path;
+	std::cout << "test: " << token << "-> " << path << std::endl;
+	if (token.empty()){
+		std::cout << "cade a except" << std::endl;
+		throw Except("Rewrite without argument.");
+	}
+	if (path.empty()){
+		std::cout << "token rewrite: "<< token << std::endl;
+		return std::string(token);
+	} else{
+		std::cout << "path rewrite: "<< token << std::endl;
+
+		return std::string(path);
+	}
 }
 
-std::set<std::string>    Parser::_parserAllowMethods(std::istringstream &iss) {
+std::set<std::string>    *Parser::_parserAllowMethods(std::istringstream &iss) {
     
-    std::set<std::string>	allow_methods;
+    std::set<std::string>	*allow_methods = new std::set<std::string>;
 	std::string			methodsLine;
 	std::getline(iss, 	methodsLine, ';');
 	std::istringstream	sstream(methodsLine);
 	std::string			method;
 
 	while (sstream >> method){
-		allow_methods.insert(method);
+		allow_methods->insert(method);
 	}
 	return allow_methods;
 }
@@ -91,11 +112,14 @@ void	Parser::ParserServer(Http &http) {
 			} else if (token == "}") {
 				inLocation = false;
 			} else if (token == "allow_methods" && inLocation) {
-				std::set<std::string> alm = this->_parserAllowMethods(iss);
+				std::set<std::string> *alm = this->_parserAllowMethods(iss);
 				server->routes[actualRoute]->SetAllowMethods(alm);
 			} else if (token == "rewrite" && inLocation) {
-				std::string inloc = this->_parserRewritesLoc(iss);
+				std::string inloc = this->_parserAlocationRewrite(iss);
 				server->routes[actualRoute]->SetRedirectPath(inloc);
+			} else if (token == "rewrite" && !inLocation) {
+				std::pair<std::string, std::string> inloc = this->_parserRewrites(iss);
+				server->SetRewrites(inloc);
 			}
 			break;
 		}
