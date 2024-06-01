@@ -109,8 +109,9 @@ void                Server::ProcessRequest(std::string buffer, int client_fd) {
 
     keyPath = this->FindMatchRoute(res);
     std::cout << "keyPath: " << keyPath << std::endl;
-    RouteResponse routeRes = this->routes[keyPath]->ProcessRoute(res.GetPath());
-    this->ClientsResponse[client_fd] = HttpResponse(routeRes);
+    RouteResponse *routeRes = this->routes[keyPath]->ProcessRoute(res.GetPath());
+    this->ClientsResponse[client_fd] = HttpResponse(*routeRes);
+    std::cout << routeRes->getBody() << std::endl;
     this->UpdateState(S_CLIENT_REQUEST, client_fd);
 }
 

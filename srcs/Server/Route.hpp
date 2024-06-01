@@ -58,20 +58,20 @@ class Route {
 
         // Route Methods
         std::set<std::string>       *CatDirectorysFiles(std::string path, std::vector<struct dirent *> &dirs);
-        RouteResponse               ProcessRoute(std::string path);
+        RouteResponse               *ProcessRoute(std::string path);
         std::string                 ReturnFileRequest(std::string path);
-        mode_t                      CatFileMode(std::string path);
+        mode_t                      CatFileMode(std::string &path, int &statusCode);
         bool                        FindFilePattern(std::string &path, std::set<std::string> *dirs);
-        RouteResponse               DetermineOutputFile(std::string path);
+        RouteResponse               *DetermineOutputFile(std::string path);
         std::string                 GenerateAutoindex(std::vector<struct dirent *> dirs, std::string path);
 
         // Geters
-        std::string GetRedirectPath(void);
-        std::set<std::string>    &GetAllowMethods(void);
+        std::string                 GetRedirectPath(void);
+        std::set<std::string>       &GetAllowMethods(void);
 
         // Seters
-        void    SetAllowMethods(std::set<std::string> &methods);
-        void    SetRedirectPath(std::string redirect);
+        void                        SetAllowMethods(std::set<std::string> &methods);
+        void                        SetRedirectPath(std::string redirect);
 
         // Base methods
         Route(CommonParameters *server, std::string server_name);
