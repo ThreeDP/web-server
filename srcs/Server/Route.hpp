@@ -43,9 +43,16 @@
 #include <set>
 // #include <time.h>
 # include "RouteResponse.hpp"
+# include "HttpRequest.hpp"
+
+enum RouteStages {
+    R_START,
+    R_REQUEST
+};
 
 class Route {
     private:
+        std::string                                 _route_name;
         std::set<std::string>                       *_allow_methods;
         std::map<int, std::string>                  &_error_page;
         int                                         _limit_client_body_size;
@@ -55,20 +62,22 @@ class Route {
         std::set<std::string>                       &_index;
         
     public:
+        RouteStages                                 _stage;
 
         // Route Methods
         std::set<std::string>       *CatDirectorysFiles(std::string path, std::vector<struct dirent *> &dirs);
-        RouteResponse               *ProcessRoute(std::string path);
+        RouteResponse               *ProcessRoute(HttpRequest &httpReq);
         std::string                 ReturnFileRequest(std::string path);
         mode_t                      CatFileMode(std::string &path, int &statusCode);
         bool                        FindFilePattern(std::string &path, std::set<std::string> *dirs);
-        RouteResponse               *DetermineOutputFile(std::string path);
+        RouteResponse               *DetermineOutputFile(HttpRequest &httpReq);
         std::string                 GenerateAutoindex(std::vector<struct dirent *> dirs, std::string path);
-
+        RouteResponse               *checkFilePermission(HttpRequest &httpReq, int &statusCode);
         // Geters
-        std::string              GetRedirectPath(void);
-        std::set<std::string>    *GetAllowMethods(void);
-
+        std::string                 GetRedirectPath(void);
+        std::set<std::string>       *GetAllowMethods(void);
+        void                        pathReset(std::string &path);
+        std::string                 GetRouteName(void) const;
         // Seters
         void    SetAllowMethods(std::set<std::string> *methods);
         void    SetRedirectPath(std::string redirect);
@@ -91,8 +100,10 @@ class Route {
         static time_t	            convertTimeToGMT(time_t t);
         static std::string	        formatTimeString(time_t	time);
         static std::string          getCurrentTimeInGMT(void);
-        //Route(std::vector<std::string> methods, std::string redirect, std::string directory);
+        static void                 checkPathEnd(std::string &path, std::string append);
 };
+
+std::ostream &operator<<(std::ostream &os, Route const &route);
 
 template<typename T>
 std::string	toString(const T& value) {

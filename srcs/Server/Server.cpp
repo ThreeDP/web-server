@@ -107,12 +107,11 @@ void                Server::ProcessRequest(std::string buffer, int client_fd) {
     std::string keyPath; 
     res.ParserRequest(buffer);
 
-    keyPath = this->FindMatchRoute(res);
-    std::cout << "keyPath: " << keyPath << std::endl;
-    RouteResponse *routeRes = this->routes[keyPath]->ProcessRoute(res.GetPath());
-    this->ClientsResponse[client_fd] = HttpResponse(*routeRes);
-    std::cout << routeRes->getBody() << std::endl;
     this->UpdateState(S_CLIENT_REQUEST, client_fd);
+    std::cout << *this;
+    keyPath = this->FindMatchRoute(res);
+    RouteResponse *routeRes = this->routes[keyPath]->ProcessRoute(res);
+    this->ClientsResponse[client_fd] = HttpResponse(*routeRes);
 }
 
 /* Geters
@@ -204,6 +203,37 @@ Server::Server(std::vector<std::string> serv, unsigned short port) : CommonParam
     std::cout << *this;
 }
 
+Server::Server(std::string name) : CommonParameters(){
+    this->_default_error_page[403] = "/errors/403.html";
+    this->_default_error_page[404] = "/404.html";
+    this->_default_error_page[500] = "/50x.html";
+    this->_default_error_page[502] = "/50x.html";
+    this->_default_error_page[503] = "/50x.html";
+    this->_default_error_page[504] = "/50x.html";
+    this->_root = "../home";
+    this->_index.insert("index.html");
+    this->_index.insert("new.html");
+    this->_autoindex = false;
+    this->_stage = S_START;
+    std::cout << *this;
+}
+
+Server::Server(std::string name, int port, std::string root) : CommonParameters(){
+    this->_default_error_page[403] = "/errors/403.html";
+    this->_default_error_page[404] = "/404.html";
+    this->_default_error_page[500] = "/50x.html";
+    this->_default_error_page[502] = "/50x.html";
+    this->_default_error_page[503] = "/50x.html";
+    this->_default_error_page[504] = "/50x.html";
+    this->_listen_port = port;
+    this->_root = root;
+    this->_index.insert("index.html");
+    this->_index.insert("new.html");
+    this->_autoindex = false;
+    this->_stage = S_START;
+    std::cout << *this;
+}
+
 Server::~Server(void) {
     if (this->result != NULL) {
         freeaddrinfo(this->result);
@@ -213,7 +243,7 @@ Server::~Server(void) {
 std::ostream &operator<<(std::ostream &os, Server const &server) {
     switch (server.GetStage()) {
     case S_START:
-        os << HBLU "[ Create Server: ]" reset << std::endl;
+        os << HBLU "[ Create Server: " << server.GetIP() << ":" << server.GetListenPort() << " ]" reset << std::endl;
         break;
     case S_LISTEN:
         os << HBLU "[ Start Server with Hosts: " << server.GetHosts() << 
