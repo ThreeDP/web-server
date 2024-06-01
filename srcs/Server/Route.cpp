@@ -152,7 +152,7 @@ RouteResponse *Route::DetermineOutputFile(std::string path) {
 
 
 // Geters
-std::set<std::string>    &Route::GetAllowMethods(void) {
+std::set<std::string>    *Route::GetAllowMethods(void) {
     return this->_allow_methods;
 }
 
@@ -161,7 +161,7 @@ std::string Route::GetRedirectPath(void) {
 }
 
 // Seters
-void    Route::SetAllowMethods(std::set<std::string> &methods) {
+void    Route::SetAllowMethods(std::set<std::string> *methods) {
     this->_allow_methods = methods;
 }
 
@@ -181,7 +181,7 @@ Route::Route(CommonParameters *server, std::string server_name)  :
     std::map<std::string, std::string>::iterator it = server->GetReWrites().find(server_name);
     if (server->GetReWrites().find(server_name) != server->GetReWrites().end())
         this->_redirectPath = server->GetReWrites()[server_name];
-    std::cout << "Create Route" << std::endl;
+    std::cout << "Create Route: " << server_name << std::endl;
 }
 
 // Statics Functions

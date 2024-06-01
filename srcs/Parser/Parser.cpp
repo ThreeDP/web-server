@@ -18,34 +18,60 @@ Parser::~Parser(){
 std::pair<std::string, std::string> Parser::_parserRewrites(std::istringstream &iss){
 
     std::pair<std::string, std::string>	rewrites;
-	std::string							location;
-	std::string							rewrite;
+	std::string							oldPath;
+	std::string							newPath;
 
-	iss >> location >> rewrite;
-	for (std::string::iterator it = location.begin(); it != location.end(); ++it){
+
+	iss >> oldPath >> newPath;
+	if (oldPath.empty() || oldPath == ";" || newPath.empty() || newPath == ";" || !endsWithSemicolon(newPath)){
+		throw Except("Syntax error.");
+	}
+	for (std::string::iterator it = oldPath.begin(); it != oldPath.end(); ++it){
 		if (*it == '^'){
-			location.erase(it);
+			oldPath.erase(it);
 			--it;
 		}
 	}
-	rewrites =  std::make_pair(location, rewrite);
+	fixPath(oldPath);
+	fixPath(newPath);
+	rewrites =  std::make_pair(oldPath, newPath);
 	return (rewrites);
 }
 
-std::string Parser::_parserRewritesLoc(std::istringstream &iss){
-	return std::string("/test");
+std::string Parser::_parserAlocationRewrite(std::istringstream &iss){
+	std::string token;
+	std::string	path;
+
+	iss >> token >> path;
+	if (token.empty() || token == ";"){throw Except("Syntax error.");}
+	if (path.empty()){
+		if (!endsWithSemicolon(token)){throw Except("Syntax error.");}
+		fixPath(token);
+		return std::string(token);
+	} else{
+		if (!endsWithSemicolon(path)){throw Except("Syntax error.");}
+		fixPath(path);
+		return std::string(path);
+	}
 }
 
-std::set<std::string>    Parser::_parserAllowMethods(std::istringstream &iss) {
+std::set<std::string>    *Parser::_parserAllowMethods(std::istringstream &iss) {
     
-    std::set<std::string>	allow_methods;
+    std::set<std::string>	*allow_methods = new std::set<std::string>;
 	std::string			methodsLine;
 	std::getline(iss, 	methodsLine, ';');
 	std::istringstream	sstream(methodsLine);
 	std::string			method;
+	std::string 		token;
 
+	std::string content = iss.str();
+	if (content.find(';') == std::string::npos){throw Except("Syntax error.");}
+	if (methodsLine.empty() || methodsLine == ";"){
+		throw Except("Syntax error.");
+	}
 	while (sstream >> method){
-		allow_methods.insert(method);
+		fixPath(method);
+		allow_methods->insert(method);
 	}
 	return allow_methods;
 }
@@ -91,11 +117,16 @@ void	Parser::ParserServer(Http &http) {
 			} else if (token == "}") {
 				inLocation = false;
 			} else if (token == "allow_methods" && inLocation) {
-				std::set<std::string> alm = this->_parserAllowMethods(iss);
+				std::set<std::string> *alm = this->_parserAllowMethods(iss);
 				server->routes[actualRoute]->SetAllowMethods(alm);
 			} else if (token == "rewrite" && inLocation) {
-				std::string inloc = this->_parserRewritesLoc(iss);
+				std::string inloc = this->_parserAlocationRewrite(iss);
 				server->routes[actualRoute]->SetRedirectPath(inloc);
+			} else if (token == "rewrite" && !inLocation) {
+				std::pair<std::string, std::string> inloc = this->_parserRewrites(iss);
+				server->SetRewrites(inloc);
+			} else {
+				throw Except("Syntax error.");
 			}
 			break;
 		}

@@ -1,6 +1,7 @@
 #ifndef __PARSER_HPP__
 # define __PARSER_HPP__
 
+# include "../utils/Utils.hpp"
 # include <iostream>
 # include <fstream>
 # include <sstream>
@@ -16,8 +17,8 @@ class Parser
 		Parser(void){}
         std::ifstream _fd;
 		std::pair<std::string, std::string>	_parserRewrites(std::istringstream &iss);
-		std::string							_parserRewritesLoc(std::istringstream &iss);
-		std::set<std::string>				_parserAllowMethods(std::istringstream &iss);
+		std::string							_parserAlocationRewrite(std::istringstream &iss);
+		std::set<std::string>				*_parserAllowMethods(std::istringstream &iss);
 		void								_parserServerName(std::istringstream &iss, Http &http, Server *server);
 		unsigned short						_parserServerPort(std::istringstream &iss);
 		std::pair<std::string, std::string> _parserErrorPage(std::istringstream &iss);

@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: dapaulin <dapaulin@student.42sp.org.br>    +#+  +:+       +#+         #
+#    By: rleslie- <rleslie-@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/11/03 15:04:07 by dapaulin          #+#    #+#              #
-#    Updated: 2024/05/30 16:16:07 by dapaulin         ###   ########.fr        #
+#    Updated: 2024/06/01 19:45:32 by rleslie-         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -16,7 +16,8 @@ NAME										= 	webServer
 ######################## PATHS ###############################
 OBJS_PATH									= 	objs/
 VPATH										= 	Server/						\
-												Parser/
+												Parser/						\
+												utils/
 
 ######################## FLAGS ###############################
 FLAGS										= 	-Wall -Wextra -std=c++98
@@ -24,10 +25,12 @@ FLAGS										= 	-Wall -Wextra -std=c++98
 SRC_SERVER									=	Route.cpp Server.cpp
 SRC_PARSER									=	Parser.cpp
 SRC_HTTP									=	Http.cpp HttpRequest.cpp HttpResponse.cpp CommonParameters.cpp
+SRC_UTILS									=	Utils.cpp
 SRC											= 	$(SRC_HTTP)					\
 												$(SRC_SERVER)				\
 												$(SRC_PARSER)				\
-												main.cpp				
+												$(SRC_UTILS)				\
+												test_methods_rewrite.cpp				
 ######################## OBJECTS #############################
 OBJ											=	$(patsubst %.cpp, $(OBJS_PATH)%.o, $(SRC))
 DEB											=	$(patsubst %.cpp, $(OBJS_PATH)%.d, $(SRC))
