@@ -24,6 +24,8 @@ class CommonParameters {
 		// Seters
 		void		SetServerName(std::string server_name);
 		void		SetRewrites(std::pair<std::string, std::string> rewrite);
+		void		SetErrorPage(std::pair<std::string, std::string> rewrite);
+
 		// Geters
 		std::set<std::string>				*GetDefaultAllowMethods(void);
 		std::map<int, std::string>			&GetDefaultErrorPage(void);

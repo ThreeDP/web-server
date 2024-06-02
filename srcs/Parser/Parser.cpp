@@ -125,6 +125,8 @@ void	Parser::ParserServer(Http &http) {
 			} else if (token == "rewrite" && !inLocation) {
 				std::pair<std::string, std::string> inloc = this->_parserRewrites(iss);
 				server->SetRewrites(inloc);
+			} else if (token == "error_page" && inLocation){
+
 			} else {
 				throw Except("Syntax error.");
 			}
@@ -141,15 +143,26 @@ unsigned short	Parser::_parserServerPort(std::istringstream &iss){
 	return port;
 }
 
-std::pair<std::string, std::string> Parser::_parserErrorPage(std::istringstream &iss){
+std::pair<int, std::string> Parser::_parserErrorPage(std::istringstream &iss, Server *server, std::string actualRoute){
 
-    std::pair<std::string, std::string>	map;
+    std::pair<int, std::string>			map;
 	std::string							value;
-	std::string							key;
+	int									key;
 	std::string							error_page;
 
+
+	//fazer um laço para que pegue todos os ints e jogue a string que direciona o error
 	iss >> error_page >> key >> value;
 	map =  std::make_pair(key, value);
+	if (actualRoute.empty()){
+
+		server->SetErrorPage(map);
+	}else {
+		server->routes[actualRoute]->SetRedirectPath(map);
+	}
+	//fazer a lista para jogar no error_page
+	//server->routes[actualRoute]->SetRedirectPath(inloc);
+	//server->SetRewrites(inloc);
 	return (map);
 }
 

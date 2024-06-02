@@ -21,6 +21,16 @@ void		CommonParameters::SetRewrites(std::pair<std::string, std::string> rewrite)
 	this->_rewrites.insert(rewrite);
 }
 
+void		CommonParameters::SetErrorPage(std::pair<std::string, std::string> rewrite){
+	static bool defaultSet = true;
+
+	if (defaultSet == true) {
+		this->_rewrites = std::map<std::string, std::string>();
+		defaultSet = false;
+	}
+	this->_rewrites.insert(rewrite);
+}
+
 // ====================  Geters
 std::set<std::string>	*CommonParameters::GetDefaultAllowMethods(void) {
 	return &this->_default_allow_methods;
