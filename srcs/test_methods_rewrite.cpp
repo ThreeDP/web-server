@@ -129,21 +129,65 @@ void runTest5(){
     }
 }
 
-void runTest6(){
+void runTest6() {
     Http http;
 
-    try{
+    try {
         Parser parser("./file_config_test/test_error6.conf");
         parser.ParserServer(http);
-        //Server *server = http.GetServer("teste");
+        Server *server = http.GetServer("teste");
 
-        //std::map<int, std::string> error_page = server->GetDefaultErrorPage();
-        //std::cout << "error_page: "<< error_page[404] << std::endl;
+        // Print default error pages
+        std::cout << "Server default error page: " << std::endl;
+        std::map<int, std::string> default_error_pages = server->GetDefaultErrorPage();
+        std::cout << "Default error pages:" << std::endl;
+        for (std::map<int, std::string>::iterator it = default_error_pages.begin(); it != default_error_pages.end(); ++it) {
+            std::cout << "Error " << it->first << ": " << it->second << std::endl;
+        }
 
-    }catch (const std::exception &e){
+        Route *rootRoute = server->routes["/"];
+        Route *imgRoute = server->routes["/img"];
+        Route *staticRoute = server->routes["/static"];
+        Route *homeRoute = server->routes["/home"];
+
+
+
+        // route root
+        std::cout << "root error_page: " << std::endl;
+        std::map<int, std::string> root_error_pages = rootRoute->GetErrorPage();
+        for (std::map<int, std::string>::iterator it = root_error_pages.begin(); it != root_error_pages.end(); ++it) {
+            std::cout << "Error " << it->first << ": " << it->second << std::endl;
+        }
+
+        // route img
+        std::cout << "\n\nimg error_page: " << std::endl;
+        std::map<int, std::string> img_error_pages = imgRoute->GetErrorPage();
+        for (std::map<int, std::string>::iterator it = img_error_pages.begin(); it != img_error_pages.end(); ++it) {
+            std::cout << "Error " << it->first << ": " << it->second << std::endl;
+        }
+
+        // route static
+        std::cout << "\n\nstatic error_page: " << std::endl;
+        std::map<int, std::string> static_error_pages = staticRoute->GetErrorPage();
+        for (std::map<int, std::string>::iterator it = static_error_pages.begin(); it != static_error_pages.end(); ++it) {
+            std::cout << "Error " << it->first << ": " << it->second << std::endl;
+        }
+
+
+        // route home
+        std::cout << "\n\nhome error_page: " << std::endl;
+        std::map<int, std::string> home_error_pages = homeRoute->GetErrorPage();
+        for (std::map<int, std::string>::iterator it2 = home_error_pages.begin(); it2 != home_error_pages.end(); ++it2) {
+            std::cout << "Error " << it2->first << ": " << it2->second << std::endl;
+        }
         std::cout << "\033[1m" << "\033[92m" << "==============  Sucesso Test6 =============" << std::endl;
+    } catch (const std::exception &e) {
+        std::cout << "\033[1m" << "\033[91m" << "==============  Error Test6 =============" << std::endl;
+        std::cerr << e.what() << std::endl;
     }
 }
+
+
 
 int main() {
     // runParserTests();

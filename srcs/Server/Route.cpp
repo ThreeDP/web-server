@@ -160,6 +160,10 @@ std::string Route::GetRedirectPath(void) {
     return this->_redirectPath;
 }
 
+std::map<int, std::string>  Route::GetErrorPage(){
+    return this->_error_page;
+}
+
 // Seters
 void    Route::SetAllowMethods(std::set<std::string> *methods) {
     this->_allow_methods = methods;
@@ -169,10 +173,14 @@ void    Route::SetRedirectPath(std::string redirect) {
     this->_redirectPath = redirect;
 }
 
+void		Route::SetErrorPageRoute(std::pair<int, std::string> error_page){
+    this->_error_page.insert(std::make_pair(error_page.first, error_page.second));
+}
+
 // Base Methods
 Route::Route(CommonParameters *server, std::string server_name)  : 
     _allow_methods(server->GetDefaultAllowMethods()),
-    _error_page(server->GetDefaultErrorPage()),
+    _error_page(std::map<int, std::string>()),
     _limit_client_body_size(2048),
     _directory(server->GetRoot()),
     _autoIndex(server->GetAutoIndex()),

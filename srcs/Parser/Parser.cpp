@@ -126,7 +126,9 @@ void	Parser::ParserServer(Http &http) {
 				std::pair<std::string, std::string> inloc = this->_parserRewrites(iss);
 				server->SetRewrites(inloc);
 			} else if (token == "error_page" && inLocation){
-
+				_parserErrorPage(iss, server, actualRoute);
+			} else if (token == "error_page" && !inLocation){
+				_parserErrorPage(iss, server, "");
 			} else {
 				throw Except("Syntax error.");
 			}
@@ -143,27 +145,43 @@ unsigned short	Parser::_parserServerPort(std::istringstream &iss){
 	return port;
 }
 
-std::pair<int, std::string> Parser::_parserErrorPage(std::istringstream &iss, Server *server, std::string actualRoute){
+void	Parser::_parserErrorPage(std::istringstream &iss, Server *server, std::string actualRoute){
 
     std::pair<int, std::string>			map;
-	std::string							value;
-	int									key;
-	std::string							error_page;
+	std::vector<int>					keys;
+	std::string							value, line;
 
-
-	//fazer um laço para que pegue todos os ints e jogue a string que direciona o error
-	iss >> error_page >> key >> value;
-	map =  std::make_pair(key, value);
-	if (actualRoute.empty()){
-
-		server->SetErrorPage(map);
-	}else {
-		server->routes[actualRoute]->SetRedirectPath(map);
+	if (actualRoute.empty())
+		std::cout << "esta vazio" << actualRoute << std::endl;
+	std::getline(iss, line);
+	if (!endsWithSemicolon(line)){
+		throw Except("Syntax error.");
 	}
-	//fazer a lista para jogar no error_page
-	//server->routes[actualRoute]->SetRedirectPath(inloc);
-	//server->SetRewrites(inloc);
-	return (map);
+
+	std::istringstream lineStream(line);
+	while (lineStream >> value){
+		if (isdigit(value[0])){
+			keys.push_back(atoi(value.c_str()));
+		} else if (value.find(".html") != std::string::npos){
+			break;
+		} else {
+			throw Except("Syntaxe error.");
+		}
+	}
+
+	if (keys.empty() || value.empty() || value.find(".html") == std::string::npos){
+		throw Except("Syntax error.");
+	}
+
+	fixPath(value);
+	for (size_t i = 0; i < keys.size(); ++i){
+		map = std::make_pair(keys[i], value);
+		if (actualRoute.empty()){
+			server->SetErrorPage(map);
+		} else {
+			server->routes[actualRoute]->SetErrorPageRoute(map);
+		}
+	}
 }
 
 unsigned long Parser::_parserClientMaxMessage(std::istringstream &iss){
