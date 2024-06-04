@@ -94,7 +94,6 @@ ssize_t    Http::HandleRequest(int client_fd) {
     ssize_t numbytes = recv(client_fd, &buffer, sizeof(char) * 1000000, 0);
     server->ProcessRequest(buffer, client_fd);
     res.ParserRequest(buffer);
-    std::cout << *server;
     return numbytes;
 }
 

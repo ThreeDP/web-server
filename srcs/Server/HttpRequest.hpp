@@ -6,7 +6,7 @@
 # include <sstream>
 
 class HttpRequest {
-    protected:
+    public:
         std::string                         _method;
         std::string                         _path;
         std::string                         _HTTPVersion;

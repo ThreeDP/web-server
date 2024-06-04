@@ -84,6 +84,8 @@ class Server : public CommonParameters {
         // Base Methods
         Server(void);
         ~Server(void);
+        Server(std::string name);
+        Server(std::string name, int port, std::string root);
         Server(std::vector<std::string> serv, unsigned short port);
 
         // Geters

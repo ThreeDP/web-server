@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: rleslie- <rleslie-@student.42.fr>          +#+  +:+       +#+         #
+#    By: dapaulin <dapaulin@student.42sp.org.br>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/11/03 15:04:07 by dapaulin          #+#    #+#              #
-#    Updated: 2024/06/01 19:45:32 by rleslie-         ###   ########.fr        #
+#    Updated: 2024/06/01 20:06:04 by dapaulin         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -30,7 +30,7 @@ SRC											= 	$(SRC_HTTP)					\
 												$(SRC_SERVER)				\
 												$(SRC_PARSER)				\
 												$(SRC_UTILS)				\
-												test_methods_rewrite.cpp				
+												main.cpp				
 ######################## OBJECTS #############################
 OBJ											=	$(patsubst %.cpp, $(OBJS_PATH)%.o, $(SRC))
 DEB											=	$(patsubst %.cpp, $(OBJS_PATH)%.d, $(SRC))
