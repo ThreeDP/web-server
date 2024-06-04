@@ -52,6 +52,21 @@ class Server : public CommonParameters {
 
         std::map<int, HttpResponse>             ClientsResponse;
 
+        Server(std::string name){
+            this->_listen_host = "127.0.0.1";
+            this->_listen_port = 8081;
+            this->_server_names.push_back(name);
+            // this->_default_error_page[404] = "/404.html";
+            // this->_default_error_page[500] = "/50x.html";
+            // this->_default_error_page[502] = "/50x.html";
+            // this->_default_error_page[503] = "/50x.html";
+            // this->_default_error_page[504] = "/50x.html";
+            this->_limit_client_body_size = 2 * 1024;
+            this->_root = "../home";
+            this->_index.insert("index.html");
+            this->_index.insert("new.html");
+            this->_autoindex = false;
+        }
     
     public:
 

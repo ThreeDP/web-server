@@ -125,6 +125,10 @@ void	Parser::ParserServer(Http &http) {
 			} else if (token == "rewrite" && !inLocation) {
 				std::pair<std::string, std::string> inloc = this->_parserRewrites(iss);
 				server->SetRewrites(inloc);
+			} else if (token == "error_page" && inLocation){
+				_parserErrorPage(iss, server, actualRoute);
+			} else if (token == "error_page" && !inLocation){
+				_parserErrorPage(iss, server, "");
 			} else {
 				throw Except("Syntax error.");
 			}
@@ -141,16 +145,43 @@ unsigned short	Parser::_parserServerPort(std::istringstream &iss){
 	return port;
 }
 
-std::pair<std::string, std::string> Parser::_parserErrorPage(std::istringstream &iss){
+void	Parser::_parserErrorPage(std::istringstream &iss, Server *server, std::string actualRoute){
 
-    std::pair<std::string, std::string>	map;
-	std::string							value;
-	std::string							key;
-	std::string							error_page;
+    std::pair<int, std::string>			map;
+	std::vector<int>					keys;
+	std::string							value, line;
 
-	iss >> error_page >> key >> value;
-	map =  std::make_pair(key, value);
-	return (map);
+	if (actualRoute.empty())
+		std::cout << "esta vazio" << actualRoute << std::endl;
+	std::getline(iss, line);
+	if (!endsWithSemicolon(line)){
+		throw Except("Syntax error.");
+	}
+
+	std::istringstream lineStream(line);
+	while (lineStream >> value){
+		if (isdigit(value[0])){
+			keys.push_back(atoi(value.c_str()));
+		} else if (value.find(".html") != std::string::npos){
+			break;
+		} else {
+			throw Except("Syntaxe error.");
+		}
+	}
+
+	if (keys.empty() || value.empty() || value.find(".html") == std::string::npos){
+		throw Except("Syntax error.");
+	}
+
+	fixPath(value);
+	for (size_t i = 0; i < keys.size(); ++i){
+		map = std::make_pair(keys[i], value);
+		if (actualRoute.empty()){
+			server->SetErrorPage(map);
+		} else {
+			server->routes[actualRoute]->SetErrorPageRoute(map);
+		}
+	}
 }
 
 unsigned long Parser::_parserClientMaxMessage(std::istringstream &iss){

@@ -91,7 +91,7 @@ server {
 ```
 server {
 
-    location /jogo /games;
+    rewrite /jogo /games;
 
     location /img {
         rewrite /images;

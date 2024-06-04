@@ -54,7 +54,7 @@ class Route {
     private:
         std::string                                 _route_name;
         std::set<std::string>                       *_allow_methods;
-        std::map<int, std::string>                  &_error_page;
+        std::map<int, std::string>                  _error_page;
         int                                         _limit_client_body_size;
         std::string                                 _redirectPath;
         std::string                                 _directory;
@@ -74,13 +74,17 @@ class Route {
         std::string                 GenerateAutoindex(std::vector<struct dirent *> dirs, std::string path);
         RouteResponse               *checkFilePermission(HttpRequest &httpReq, int &statusCode);
         // Geters
+
         std::string                 GetRedirectPath(void);
         std::set<std::string>       *GetAllowMethods(void);
+        std::map<int, std::string>  GetErrorPage(void);
         void                        pathReset(std::string &path);
         std::string                 GetRouteName(void) const;
+
         // Seters
         void    SetAllowMethods(std::set<std::string> *methods);
         void    SetRedirectPath(std::string redirect);
+        void    SetErrorPageRoute(std::pair<int, std::string> error_page);
 
         // Base methods
         Route(CommonParameters *server, std::string server_name);

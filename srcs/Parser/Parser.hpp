@@ -21,7 +21,7 @@ class Parser
 		std::set<std::string>				*_parserAllowMethods(std::istringstream &iss);
 		void								_parserServerName(std::istringstream &iss, Http &http, Server *server);
 		unsigned short						_parserServerPort(std::istringstream &iss);
-		std::pair<std::string, std::string> _parserErrorPage(std::istringstream &iss);
+		void						 		_parserErrorPage(std::istringstream &iss, Server *server, std::string actualRoute);
 		unsigned long						_parserClientMaxMessage(std::istringstream &iss);
 	
 	public:
