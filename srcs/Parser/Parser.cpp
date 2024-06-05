@@ -161,7 +161,10 @@ void	Parser::_parserErrorPage(std::istringstream &iss, Server *server, std::stri
 	std::istringstream lineStream(line);
 	while (lineStream >> value){
 		if (isdigit(value[0])){
-			keys.push_back(atoi(value.c_str()));
+			int num; 
+			std::stringstream ss(value);
+			ss >> num;
+			keys.push_back(num);
 		} else if (value.find(".html") != std::string::npos){
 			break;
 		} else {

@@ -22,9 +22,9 @@ class CommonParameters {
 	public:
 
 		// Seters
-		void		SetServerName(std::string server_name);
-		void		SetRewrites(std::pair<std::string, std::string> rewrite);
-		void		SetErrorPage(std::pair<int, std::string> error_page);
+		void								SetServerName(std::string server_name);
+		void								SetRewrites(std::pair<std::string, std::string> rewrite);
+		void								SetErrorPage(std::pair<int, std::string> error_page);
 
 		// Geters
 		std::set<std::string>				*GetDefaultAllowMethods(void);

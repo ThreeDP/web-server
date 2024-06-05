@@ -1,12 +1,12 @@
 #ifndef __HTTP_RESPONSE_HPP__
 # define __HTTP_RESPONSE_HPP__
 
+# include "RouteResponse.hpp"
+
 # include <iomanip>
 # include <ctime>
 # include <map>
 # include <cstring>
-# include <sstream>
-# include "RouteResponse.hpp"
 
 class HttpResponse {
     protected:

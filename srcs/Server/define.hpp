@@ -6,7 +6,7 @@
 /*   By: dapaulin <dapaulin@student.42sp.org.br>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/09/09 18:07:16 by dapaulin          #+#    #+#             */
-/*   Updated: 2023/09/09 18:07:46 by dapaulin         ###   ########.fr       */
+/*   Updated: 2024/06/04 21:20:29 by dapaulin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -87,5 +87,35 @@
 #define reset "\e[0m"
 #define CRESET "\e[0m"
 #define COLOR_RESET "\e[0m"
+
+// Handle Strings
+# include <iostream>
+# include <fstream>
+# include <sstream>
+# include <cstring>
+
+// Handle Time
+# include <ctype.h>
+# include <time.h>
+# include <ctime>
+
+// Handle IPs
+# include <netinet/in.h>
+# include <arpa/inet.h>
+# include <netdb.h>
+
+// Handle Files
+# include <sys/types.h>
+# include <sys/stat.h>
+# include <sys/socket.h>
+# include <sys/epoll.h>
+# include <dirent.h> 		// Handle DIRs
+# include <unistd.h>
+
+// Containers
+# include <vector>
+# include <map>
+# include <vector>
+# include <set>
 
 #endif
