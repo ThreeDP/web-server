@@ -6,7 +6,7 @@
 #    By: dapaulin <dapaulin@student.42sp.org.br>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/11/03 15:04:07 by dapaulin          #+#    #+#              #
-#    Updated: 2024/06/04 21:36:45 by dapaulin         ###   ########.fr        #
+#    Updated: 2024/06/06 20:06:47 by dapaulin         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -17,9 +17,10 @@ NAME										= 	webServer
 OBJS_PATH									= 	objs/
 HEADERS										=	Server/ \
 												Utils/  \
-												Parser/ 
+												Parser/ \
+												Server/Response
 INCLUDE_FLAGS 								:= 	-g3 -O3 -MMD -MP $(addprefix -I, $(HEADERS))
-VPATH										=	Server/:Utils/:Parser/
+VPATH										=	Server/:Utils/:Parser/:Server/Response
 
 ######################## FLAGS ###############################
 FLAGS										= 	-Wall -Wextra -std=c++98
