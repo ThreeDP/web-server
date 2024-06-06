@@ -1,4 +1,4 @@
-#include "Route.hpp"
+# include "Route.hpp"
 
 // Route Methods
 std::set<std::string>     *Route::CatDirectorysFiles(std::string path, std::vector<struct dirent *> &dirs) {
@@ -69,7 +69,7 @@ bool Route::FindFilePattern(std::string &path, std::set<std::string> *dirs) {
     for ( ; it != this->_index.end(); ++it) {
         std::set<std::string>::iterator i = dirs->find(*it);
         if (i != dirs->end()) {
-            Route::checkPathEnd(path, *it);
+            Utils::checkPathEnd(path, *it);
             delete dirs;
             return true;
         }
@@ -80,7 +80,7 @@ bool Route::FindFilePattern(std::string &path, std::set<std::string> *dirs) {
 std::string Route::GenerateAutoindex(std::vector<struct dirent *> dirs, std::string path) {
     std::stringstream   body;
 
-    std::string actualDir = getActualDir(path);
+    std::string actualDir = Utils::getActualDir(path);
     body << "<html data-lt-installed=\"true\">" << "\r\n";
     body << "<head>\r\n";
     body << "\t<title>Index of " << actualDir << "</title>\r\n";
@@ -96,7 +96,7 @@ std::string Route::GenerateAutoindex(std::vector<struct dirent *> dirs, std::str
             body << "\t\t<a href=\"" << (*it)->d_name << "/\">" << (*it)->d_name << "/</a>\r\n";
         else
             body << "\t\t<a href=\"" << (*it)->d_name << "\">" << (*it)->d_name << "</a>\r\n";
-        body << "\t\t" << Route::getLastModifiedOfFile(filePath) << " " << Route::getFileSize(filePath) << "\r\n";
+        body << "\t\t" << Utils::getLastModifiedOfFile(filePath) << " " << Utils::getFileSize(filePath) << "\r\n";
     }
     body << "\t</prev>\r\n";
     body << "\t<hr>\r\n";
@@ -162,7 +162,7 @@ RouteResponse *Route::checkFilePermission(HttpRequest &httpReq, int &statusCode)
             return new RouteResponse(statusCode);
         } else {
             this->pathReset(httpReq._path);
-            Route::checkPathEnd(httpReq._path, it->second);
+            Utils::checkPathEnd(httpReq._path, it->second);
         }
         return NULL;
     }
@@ -217,67 +217,11 @@ Route::Route(CommonParameters *server, std::string server_name)  :
     _stage(R_START)
 {
     std::map<std::string, std::string>::iterator it = server->GetReWrites().find(server_name);
-    if (server->GetReWrites().find(server_name) != server->GetReWrites().end())
+    if (it != server->GetReWrites().end())
         this->_redirectPath = server->GetReWrites()[server_name];
     this->_route_name = server_name;
     std::cout << *this;
-}
-
-// Statics Functions
-std::string Route::getActualDir(std::string path) {
-    int size = path.size();
-    if (size && --size && path[size] == '/')
-        --size;
-    else
-        path += "/";
-    while (path[size] != '/' && size >= 0) {
-        --size;
-    }
-    if (size < 0)
-        size = 0;
-    return path.substr(size, path.size());
-}
-
-std::string	Route::getLastModifiedOfFile(const std::string &filename) {
-	struct stat stat_buff;
-	stat(filename.c_str(), &stat_buff);
-	time_t	gmtTime = Route::convertTimeToGMT(stat_buff.st_mtime);
-	return (Route::formatTimeString(gmtTime));
-}
-
-std::string	Route::getFileSize(const std::string &filename) {
-	struct stat	stat_buff;
-	stat(filename.c_str(), &stat_buff);
-	return (toString(stat_buff.st_size));
-}
-
-time_t	Route::convertTimeToGMT(time_t t) {
-	struct tm	*gmtTime = gmtime(&t);
-	return (mktime(gmtTime));
-}
-
-std::string	Route::formatTimeString(time_t	time) {
-	char	buffer[80];
-	std::strftime(buffer, sizeof(buffer), "%c", localtime(&time));
-	std::string strTime(buffer);
-	strTime += " GMT";
-	return (strTime);
-}
-
-std::string	Route::getCurrentTimeInGMT(void) {
-	time_t	now = Route::convertTimeToGMT(time(0));
-	return (Route::formatTimeString(now));
-}
-
-void   Route::checkPathEnd(std::string &path, std::string append) {
-    if (!path.empty() && path[path.size() - 1] == '/')
-        path += append;
-    else if (!append.empty() && append[0] == '/'){
-        path += append;
-    } else {
-        path += "/"; 
-        path += append;
-    }
+    (void)this->_limit_client_body_size;
 }
 
 std::ostream &operator<<(std::ostream &os, Route const &route) {

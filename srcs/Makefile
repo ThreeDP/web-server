@@ -6,7 +6,7 @@
 #    By: dapaulin <dapaulin@student.42sp.org.br>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/11/03 15:04:07 by dapaulin          #+#    #+#              #
-#    Updated: 2024/06/01 20:06:04 by dapaulin         ###   ########.fr        #
+#    Updated: 2024/06/04 21:36:45 by dapaulin         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -15,21 +15,23 @@
 NAME										= 	webServer
 ######################## PATHS ###############################
 OBJS_PATH									= 	objs/
-VPATH										= 	Server/						\
-												Parser/						\
-												utils/
+HEADERS										=	Server/ \
+												Utils/  \
+												Parser/ 
+INCLUDE_FLAGS 								:= 	-g3 -O3 -MMD -MP $(addprefix -I, $(HEADERS))
+VPATH										=	Server/:Utils/:Parser/
 
 ######################## FLAGS ###############################
 FLAGS										= 	-Wall -Wextra -std=c++98
 ######################## SOURCES #############################
 SRC_SERVER									=	Route.cpp Server.cpp
 SRC_PARSER									=	Parser.cpp
-SRC_HTTP									=	Http.cpp HttpRequest.cpp HttpResponse.cpp CommonParameters.cpp
+SRC_HTTP									=	Http.cpp HttpRequest.cpp HttpResponse.cpp CommonParameters.cpp RouteResponse.cpp
 SRC_UTILS									=	Utils.cpp
-SRC											= 	$(SRC_HTTP)					\
+SRC											= 	$(SRC_UTILS)				\
 												$(SRC_SERVER)				\
+												$(SRC_HTTP)					\
 												$(SRC_PARSER)				\
-												$(SRC_UTILS)				\
 												main.cpp				
 ######################## OBJECTS #############################
 OBJ											=	$(patsubst %.cpp, $(OBJS_PATH)%.o, $(SRC))
@@ -47,7 +49,9 @@ TEST_BUILD									=	Tests/build
 all: $(NAME)
 
 $(OBJS_PATH)%.o: %.cpp $(HEADER)
-	@			c++ $(FLAGS) -I $(VPATH) -c $< -o $@
+
+#	@			echo $(INCLUDE_FLAGS)
+				c++ $(FLAGS) -I $(INCLUDE_FLAGS) -c $< -o $@
 	@			printf "$(GREEN).$(RC)"
 
 $(OBJS_PATH):
