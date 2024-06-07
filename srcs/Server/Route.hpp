@@ -4,9 +4,12 @@
 # include "define.hpp"
 # include "Utils.hpp"
 # include "CommonParameters.hpp"
-# include "RouteResponse.hpp"
+# include "AHttpResponse.hpp"
 # include "HttpRequest.hpp"
-# include "HttpResponse.hpp"
+
+# include "ResponseOK.hpp"
+//# include "HttpResponse.hpp"
+
 
 enum RouteStages {
     R_START,
@@ -24,19 +27,21 @@ class Route {
         bool                                        _autoIndex;
         std::set<std::string>                       &_index;
         
+        AHttpResponse               *_fondStatusResponse(int statusCode, std::string extension);
+
     public:
         RouteStages                                 _stage;
 
         // Route Methods
 
         std::set<std::string>       *CatDirectorysFiles(std::string path, std::vector<struct dirent *> &dirs);
-        RouteResponse               *ProcessRoute(HttpRequest &httpReq);
+        AHttpResponse               *ProcessRoute(HttpRequest &httpReq);
         std::string                 ReturnFileRequest(std::string path);
         mode_t                      CatFileMode(std::string &path, int &statusCode);
         bool                        FindFilePattern(std::string &path, std::set<std::string> *dirs);
-        RouteResponse               *DetermineOutputFile(HttpRequest &httpReq);
+        AHttpResponse               *DetermineOutputFile(HttpRequest &httpReq);
         std::string                 GenerateAutoindex(std::vector<struct dirent *> dirs, std::string path);
-        RouteResponse               *checkFilePermission(HttpRequest &httpReq, int &statusCode);
+        AHttpResponse               *checkFilePermission(HttpRequest &httpReq, int &statusCode);
         
         // Geters
 

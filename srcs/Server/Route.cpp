@@ -20,7 +20,7 @@ std::set<std::string>     *Route::CatDirectorysFiles(std::string path, std::vect
     return dirNames;
 }
 
-RouteResponse    *Route::ProcessRoute(HttpRequest &httpReq) {
+AHttpResponse    *Route::ProcessRoute(HttpRequest &httpReq) {
     std::string body;
     std::string newP = this->_directory;
     httpReq._path = this->_directory + httpReq._path;
@@ -105,11 +105,11 @@ std::string Route::GenerateAutoindex(std::vector<struct dirent *> dirs, std::str
     return body.str();
 }
 
-RouteResponse *Route::DetermineOutputFile(HttpRequest &httpReq) {
+AHttpResponse *Route::DetermineOutputFile(HttpRequest &httpReq) {
     std::stringstream   body;
     int                 statusCode = 200;
     bool                exitCheck = false;
-    RouteResponse       *res = NULL;
+    AHttpResponse       *res = NULL;
 
     this->_stage = R_REQUEST;
     std::cout << *this; 
@@ -126,7 +126,7 @@ RouteResponse *Route::DetermineOutputFile(HttpRequest &httpReq) {
                     body << GenerateAutoindex(dirs, httpReq._path);
                     delete dirNames;
                     exitCheck = true;
-                    res = new RouteResponse(body.str(), statusCode);
+                    res = new ResponseOK("text/html", body.str());
                 }
             }
             break;
@@ -136,12 +136,14 @@ RouteResponse *Route::DetermineOutputFile(HttpRequest &httpReq) {
             if (statusCode == 200) {
                 body << this->ReturnFileRequest(httpReq._path);
                 exitCheck = true;
-                res = new RouteResponse(body.str(), statusCode);
+                res = new ResponseOK("text/html", body.str());
             }
             break;
         default:
             exitCheck = true;
-            res = new RouteResponse(statusCode);
+            std::stringstream code;
+            code << statusCode;
+            res = new AHttpResponse(code.str(), "text/html");
             break;
         }
         if (exitCheck)
@@ -150,7 +152,7 @@ RouteResponse *Route::DetermineOutputFile(HttpRequest &httpReq) {
     return res;
 }
 
-RouteResponse *Route::checkFilePermission(HttpRequest &httpReq, int &statusCode) {
+AHttpResponse *Route::checkFilePermission(HttpRequest &httpReq, int &statusCode) {
     struct stat sb;
 
     memset(&sb, 0, sizeof(struct stat));
@@ -159,7 +161,9 @@ RouteResponse *Route::checkFilePermission(HttpRequest &httpReq, int &statusCode)
         statusCode = 403;
         std::map<int, std::string>::iterator it = this->_error_page.find(statusCode);
         if (it == this->_error_page.end()) {
-            return new RouteResponse(statusCode);
+            std::stringstream code;
+            code << statusCode;
+            return new AHttpResponse(code.str(), "text/html");
         } else {
             this->pathReset(httpReq._path);
             Utils::checkPathEnd(httpReq._path, it->second);

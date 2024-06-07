@@ -32,7 +32,7 @@ class Server : public CommonParameters {
         int                                     listener;
         const static int                        backlog = 10;
 
-        std::map<int, HttpResponse>             ClientsResponse;
+        std::map<int, AHttpResponse *>             ClientsResponse;
 
     public:
 

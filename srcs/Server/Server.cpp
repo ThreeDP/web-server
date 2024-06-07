@@ -76,7 +76,7 @@ int Server::AcceptClientConnect(void) {
 =======================================*/
 
 std::string         Server::ProcessResponse(int client_fd) {
-    std::string response = this->ClientsResponse[client_fd].CreateResponse();
+    std::string response = this->ClientsResponse[client_fd]->CreateResponse();
     this->ClientsResponse.erase(client_fd);
     this->UpdateState(S_SERVER_RESPONSE, client_fd);
     return response;
@@ -110,8 +110,8 @@ void                Server::ProcessRequest(std::string buffer, int client_fd) {
     this->UpdateState(S_CLIENT_REQUEST, client_fd);
     std::cout << *this;
     keyPath = this->FindMatchRoute(res);
-    RouteResponse *routeRes = this->routes[keyPath]->ProcessRoute(res);
-    this->ClientsResponse[client_fd] = HttpResponse(*routeRes);
+    AHttpResponse *routeRes = this->routes[keyPath]->ProcessRoute(res);
+    this->ClientsResponse[client_fd] = routeRes;
 }
 
 /* Geters
