@@ -47,7 +47,7 @@ class AHttpResponse {
         
         AHttpResponse(void);
 
-        void    _setMapTextContent(void) {
+        static void    _setMapTextContent(void) {
             _mapTextContent["text"] = "text/plain";
             _mapTextContent[".txt"] = "text/plain; charset=utf-8";
             _mapTextContent[".html"] = "text/html; charset=utf-8";
@@ -62,7 +62,7 @@ class AHttpResponse {
             _mapTextContent[".gif"] = "image/gif";
         }
 
-        void    _setMapStatusCode(void) {
+        static void    _setMapStatusCode(void) {
             _mapStatusCode["200"] = "OK";
             _mapStatusCode["201"] = "Created";
             _mapStatusCode["202"] = "Accepted";
@@ -83,7 +83,7 @@ class AHttpResponse {
             _mapStatusCode["505"] = "HTTP Version Not Supported";
         }
 
-        void    _setCGIExtensions(void) {
+        static void    _setCGIExtensions(void) {
             _CGIExtensions.insert(".php");
             _CGIExtensions.insert(".go");
             _CGIExtensions.insert(".py");

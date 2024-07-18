@@ -1,5 +1,9 @@
 # include "AHttpResponse.hpp"
 
+std::map<std::string, std::string> AHttpResponse::_mapStatusCode;
+std::map<std::string, std::string> AHttpResponse::_mapTextContent;
+std::set<std::string> AHttpResponse::_CGIExtensions;
+
 std::string AHttpResponse::CreateResponse(void) {
     std::stringstream response;
 

@@ -2,10 +2,20 @@
 # define UTILS_HPP
 
 # include "define.hpp"
+#include <iostream>
+# include <sstream>
+#include <sys/stat.h> // Include for stat
+#include <string> 
+#include <sys/stat.h>  // Include for stat
+#include <ctime>       // Include for strftime, localtime
+#include <string>      // Include for std::string
+#include <iostream>    // Include for std::cerr
+#include <cstdio>
 
-void	removeChar(std::string& str, char c);
-void	fixPath(std::string& str);
-bool    endsWithSemicolon(const std::string& str);
+
+void	removeChar(std::string &str, char c);
+void	fixPath(std::string &str);
+bool    endsWithSemicolon(const std::string &str);
 
 class Utils {
 	

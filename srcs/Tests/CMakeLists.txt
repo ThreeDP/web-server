@@ -6,7 +6,8 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(Name WebServerTests)
-set(Sources parser_test.cpp)
+set(ParserSources parser_test.cpp)
+set(ResponseSources ResponseTest.cpp)
 project(${Name})
 
 enable_testing()
@@ -14,14 +15,26 @@ find_package(GTest REQUIRED)
 include(GoogleTest)
 
 add_executable(
-	parser_test
-  	${Sources}
+	ParserTest
+  	${ParserSources}
+)
+
+add_executable(
+	ResponseTest
+  	${ResponseSources}
 )
 
 target_link_libraries(
-	parser_test
+	ParserTest
 	WebServer
   	GTest::gtest_main
 )
 
-gtest_discover_tests(parser_test)
+target_link_libraries(
+	ResponseTest
+	WebServer
+  	GTest::gtest_main
+)
+
+gtest_discover_tests(ParserTest)
+gtest_discover_tests(ResponseTest)

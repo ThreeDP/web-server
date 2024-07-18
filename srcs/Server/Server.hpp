@@ -2,6 +2,10 @@
 # define __SERVER_HPP__
 
 # include "Route.hpp"
+#include <netdb.h>
+#include <sys/epoll.h>
+
+
 
 enum ServerStages {
     S_START,

@@ -126,7 +126,7 @@ AHttpResponse *Route::DetermineOutputFile(HttpRequest &httpReq) {
                     body << GenerateAutoindex(dirs, httpReq._path);
                     delete dirNames;
                     exitCheck = true;
-                    res = new ResponseOK("text/html", body.str());
+                    res = new Response200OK("text/html", body.str());
                 }
             }
             break;
@@ -136,7 +136,7 @@ AHttpResponse *Route::DetermineOutputFile(HttpRequest &httpReq) {
             if (statusCode == 200) {
                 body << this->ReturnFileRequest(httpReq._path);
                 exitCheck = true;
-                res = new ResponseOK("text/html", body.str());
+                res = new Response200OK("text/html", body.str());
             }
             break;
         default:
