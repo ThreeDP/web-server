@@ -7,6 +7,7 @@
 class ResponseTest : public ::testing::Test {
 protected:
     void SetUp() override {
+        AHttpResponse::SetDefaultAHTTPResponse();
     }
 };
 
@@ -52,9 +53,8 @@ std::string HttpResponseTest(
     return oss.str();
 }
 
-TEST(TestResponse200OkWithoutBody, Response200OK) {
+TEST_F(ResponseTest, TestResponse200OkWithoutBody) {
     // Arrange
-    AHttpResponse::SetDefaultAHTTPResponse();
     std::string     expectedResponse = HttpResponseTest(
         "200", "OK", "text/html; charset=utf-8"
     );
@@ -66,9 +66,8 @@ TEST(TestResponse200OkWithoutBody, Response200OK) {
     EXPECT_EQ(expectedResponse, response.CreateResponse());
 }
 
-TEST(TestResponse200OkWithBody, Response200OK) {
+TEST_F(ResponseTest, TestResponse200OkWithBody) {
     // Arrange
-    AHttpResponse::SetDefaultAHTTPResponse();
     std::string     expectedResponse = HttpResponseTest(
         "200", "OK", "text/html; charset=utf-8", "<h1>200</h1>");
 
@@ -77,4 +76,9 @@ TEST(TestResponse200OkWithBody, Response200OK) {
 
     // Assert
     EXPECT_EQ(expectedResponse, response.CreateResponse());
+}
+
+int main(int argc, char **argv) {
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }
