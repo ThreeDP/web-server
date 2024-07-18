@@ -3,9 +3,9 @@
 std::string AHttpResponse::CreateResponse(void) {
     std::stringstream response;
 
-    response << this->_HTTPVersion << " " << this->_statusCode << " " << this->_status << "\r\n";
-    std::map<std::string, std::string>::iterator it = this->_payload.begin();
-    for (; it != this->_payload.end(); ++it) {
+    response << this->_HTTPVersion << " " << this->_statusCode << " " << this->_statusMessage << "\r\n";
+    std::map<std::string, std::string>::iterator it = this->_headers.begin();
+    for (; it != this->_headers.end(); ++it) {
         response << it->first << " " << it->second << "\r\n";
     }
     response << "\r\n" << this->_body << "\r\n";
@@ -17,11 +17,11 @@ std::string AHttpResponse::_defaultErrorPage(void) {
 
 	sb << "<html data-lt-installed=\"true\">";
 	sb << "<head><title>";
-	sb << this->_statusCode << " " << this->_status;
+	sb << this->_statusCode << " " << this->_statusMessage;
 	sb << "</title></head>";
 	sb << "<body>";
 	sb << "<center><h1>";
-	sb << this->_statusCode << " " << this->_status;
+	sb << this->_statusCode << " " << this->_statusMessage;
 	sb << "</h1></center>";
 	sb << "<hr><center>";
 	sb << "RavyServer";
@@ -54,29 +54,29 @@ AHttpResponse::AHttpResponse(void) {
 AHttpResponse::AHttpResponse(std::string statusCode, std::string extension, std::string body) :
     _HTTPVersion("HTTP/1.1"),
     _statusCode(statusCode),
-    _status(this->GetStatusName(statusCode)),
+    _statusMessage(this->GetStatusName(statusCode)),
     _body(body)
 {
-    this->_payload["Content-Type:"] = this->GetTextContent(extension);
+    this->_headers["Content-Type:"] = this->GetTextContent(extension);
 
     std::stringstream size;
     size << this->_body.size() + 2;
-    this->_payload["Content-Length:"] = std::string(size.str());
-    this->_payload["Date:"] = Utils::getCurrentTimeInGMT();
+    this->_headers["Content-Length:"] = std::string(size.str());
+    this->_headers["Date:"] = Utils::getCurrentTimeInGMT();
 }
 
 AHttpResponse::AHttpResponse(std::string statusCode, std::string extension) :
     _HTTPVersion("HTTP/1.1"),
     _statusCode(statusCode),
-    _status(this->GetStatusName(statusCode))
+    _statusMessage(this->GetStatusName(statusCode))
 {
-    this->_payload["Content-Type:"] = this->GetTextContent(extension);
+    this->_headers["Content-Type:"] = this->GetTextContent(extension);
     this->_body = this->_defaultErrorPage();
 
     std::stringstream size;
     size << this->_body.size() + 2;
-    this->_payload["Content-Length:"] = std::string(size.str());
-    this->_payload["Date:"] = Utils::getCurrentTimeInGMT();
+    this->_headers["Content-Length:"] = std::string(size.str());
+    this->_headers["Date:"] = Utils::getCurrentTimeInGMT();
 }
 
 

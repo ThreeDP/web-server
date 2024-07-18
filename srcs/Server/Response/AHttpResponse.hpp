@@ -16,8 +16,8 @@ class AHttpResponse {
 
 		std::string                         _HTTPVersion;
         std::string                         _statusCode;
-        std::string                         _status;
-        std::map<std::string, std::string>  _payload;
+        std::string                         _statusMessage;
+        std::map<std::string, std::string>  _headers;
         std::string                         _body;
 
         std::string             _defaultErrorPage(void);

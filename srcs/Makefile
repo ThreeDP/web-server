@@ -6,7 +6,7 @@
 #    By: dapaulin <dapaulin@student.42sp.org.br>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/11/03 15:04:07 by dapaulin          #+#    #+#              #
-#    Updated: 2024/06/06 22:30:24 by dapaulin         ###   ########.fr        #
+#    Updated: 2024/07/17 20:56:16 by dapaulin         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -27,7 +27,7 @@ FLAGS										= 	-Wall -Wextra -std=c++98
 ######################## SOURCES #############################
 SRC_SERVER									=	Route.cpp Server.cpp
 SRC_PARSER									=	Parser.cpp
-SRC_RESPONSE								=	AHttpResponse.cpp ResponseOK.cpp
+SRC_RESPONSE								=	AHttpResponse.cpp Response200OK.cpp Response404NotFound.cpp
 SRC_HTTP									=	Http.cpp HttpRequest.cpp CommonParameters.cpp RouteResponse.cpp
 SRC_UTILS									=	Utils.cpp
 SRC											= 	$(SRC_UTILS)				\
