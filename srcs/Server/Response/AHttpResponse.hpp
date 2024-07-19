@@ -7,10 +7,11 @@
 # include <map>
 # include <set>
 # include "Utils.hpp"
+# include "IAHttpResponse.hpp"
 
 // # include "RouteResponse.hpp"
 
-class AHttpResponse {
+class AHttpResponse : public IAHttpResponse {
 
 	protected:
 
@@ -32,7 +33,7 @@ class AHttpResponse {
         std::string             GetTextContent(std::string extension);
 
         // Seters
-        static void                    SetDefaultAHTTPResponse(void);
+        static void             SetDefaultAHTTPResponse(void);
         
         // Base Methods
 
@@ -40,7 +41,7 @@ class AHttpResponse {
         AHttpResponse(std::string statusCode, std::string extension);
         virtual ~AHttpResponse();
     private:
-
+        const std::string                          _server = "Ravy 1.0.0";
         static std::map<std::string, std::string>  _mapStatusCode;
         static std::set<std::string>               _CGIExtensions;
         static std::map<std::string, std::string>  _mapTextContent;

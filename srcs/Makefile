@@ -27,7 +27,10 @@ FLAGS										= 	-Wall -Wextra -std=c++98
 ######################## SOURCES #############################
 SRC_SERVER									=	Route.cpp Server.cpp
 SRC_PARSER									=	Parser.cpp
-SRC_RESPONSE								=	AHttpResponse.cpp Response200OK.cpp Response404NotFound.cpp
+SRC_RESPONSE								=	AHttpResponse.cpp \
+												Response200OK.cpp \
+												Response201Created.cpp \
+												Response404NotFound.cpp
 SRC_HTTP									=	Http.cpp HttpRequest.cpp CommonParameters.cpp RouteResponse.cpp
 SRC_UTILS									=	Utils.cpp
 SRC											= 	$(SRC_UTILS)				\
@@ -89,7 +92,7 @@ test_build:
 test_run:
 	@			cd $(TEST_BUILD) && ctest --rerun-failed --output-on-failure
 
-test: $(GOOGLE_TEST) test_build test_run
+test: t_clean $(GOOGLE_TEST) test_build test_run
 
 t_clean:
 	@			rm -rf $(TEST_BUILD)

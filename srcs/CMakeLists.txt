@@ -23,8 +23,10 @@ set(HEADERS
     Server/HttpRequest.hpp
     Server/HttpResponse.hpp
     Utils/Utils.hpp
+    Server/Response/IAHttpResponse.hpp
     Server/Response/AHttpResponse.hpp
     Server/Response/Response200OK.hpp
+    Server/Response/Response201Created.hpp
     Server/Response/Response404NotFound.hpp
 )
 
@@ -40,6 +42,7 @@ set(SOURCE_FILES
     Utils/Utils.cpp
     Server/Response/AHttpResponse.cpp
     Server/Response/Response200OK.cpp
+    Server/Response/Response201Created.cpp
     Server/Response/Response404NotFound.cpp
 )
 

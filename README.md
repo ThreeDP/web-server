@@ -334,3 +334,10 @@ struct protoent {
 - [Protocolo HTTP](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/Identifying_resources_on_the_Web)
 - [Overview of webserver](https://excalidraw.com/#room=fc1367eea05a706ab29e,qKnHZ8dxThptsr0YgXLOvw)
 - [I/O Multiplexing](https://www.softprayog.in/programming/io-multiplexing-select-poll-epoll-in-linux)
+
+### Headers Refs
+- [Mozzila Headers Ref](https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Headers)
+
+### Status Code Refs
+- [RFC Status Code Ref](https://www.rfc-editor.org/rfc/rfc9110)
+- [Cat Status Code Ref](https://http.cat/)

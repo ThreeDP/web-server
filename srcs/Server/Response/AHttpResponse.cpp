@@ -28,8 +28,7 @@ std::string AHttpResponse::_defaultErrorPage(void) {
 	sb << this->_statusCode << " " << this->_statusMessage;
 	sb << "</h1></center>";
 	sb << "<hr><center>";
-	sb << "RavyServer";
-	sb << "/" << "1.27.0" << "</center>";
+	sb << _server << "</center>";
 	sb << "</body></html>";
 	return sb.str();
 }
@@ -61,12 +60,13 @@ AHttpResponse::AHttpResponse(std::string statusCode, std::string extension, std:
     _statusMessage(this->GetStatusName(statusCode)),
     _body(body)
 {
-    this->_headers["Content-Type:"] = this->GetTextContent(extension);
 
     std::stringstream size;
     size << this->_body.size() + 2;
+    this->_headers["Content-Type:"] = this->GetTextContent(extension);
     this->_headers["Content-Length:"] = std::string(size.str());
     this->_headers["Date:"] = Utils::getCurrentTimeInGMT();
+    this->_headers["Server:"] = this->_server;
 }
 
 AHttpResponse::AHttpResponse(std::string statusCode, std::string extension) :
@@ -74,13 +74,13 @@ AHttpResponse::AHttpResponse(std::string statusCode, std::string extension) :
     _statusCode(statusCode),
     _statusMessage(this->GetStatusName(statusCode))
 {
-    this->_headers["Content-Type:"] = this->GetTextContent(extension);
     this->_body = this->_defaultErrorPage();
-
     std::stringstream size;
     size << this->_body.size() + 2;
+    this->_headers["Content-Type:"] = this->GetTextContent(extension);
     this->_headers["Content-Length:"] = std::string(size.str());
     this->_headers["Date:"] = Utils::getCurrentTimeInGMT();
+    this->_headers["Server:"] = this->_server;
 }
 
 
