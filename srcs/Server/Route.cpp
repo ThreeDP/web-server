@@ -192,6 +192,30 @@ std::map<int, std::string>  Route::GetErrorPage(){
     return this->_error_page;
 }
 
+std::string                 Route::GetErrorPage(int statusCode) {
+    std::map<int, std::string>::iterator it = _error_page.find(statusCode);
+    if (it != _error_page.end()) {
+        return _error_page[statusCode];
+    }
+    return "";
+}
+
+bool                        Route::IsAllowMethod(std::string method) {
+    std::set<std::string>::iterator it = _allow_methods->find(method);
+    if (it != _allow_methods->end()) {
+        return true;
+    }
+    return false;
+}
+
+int                         Route::GetLimitClientBodySize(void) const {
+    return _limit_client_body_size;
+}
+
+std::string                 Route::GetRoot(void) const {
+    return _directory;
+}
+
 // Seters
 void    Route::SetAllowMethods(std::set<std::string> *methods) {
     this->_allow_methods = methods;
@@ -210,10 +234,31 @@ std::string                 Route::GetRouteName(void) const {
     return this->_route_name;
 }
 
+std::set<std::string>       Route::GetFilesForIndex(void) const {
+    return _index;
+}
+
 // Base Methods
 Route::Route(CommonParameters *server, std::string server_name)  : 
     _allow_methods(server->GetDefaultAllowMethods()),
     _error_page(std::map<int, std::string>()),
+    _limit_client_body_size(2048),
+    _directory(server->GetRoot()),
+    _autoIndex(server->GetAutoIndex()),
+    _index(server->GetIndex()),
+    _stage(R_START)
+{
+    std::map<std::string, std::string>::iterator it = server->GetReWrites().find(server_name);
+    if (it != server->GetReWrites().end())
+        this->_redirectPath = server->GetReWrites()[server_name];
+    this->_route_name = server_name;
+    std::cout << *this;
+    (void)this->_limit_client_body_size;
+}
+
+Route::Route(IServer *server, std::string server_name)  : 
+    _allow_methods(server->GetDefaultAllowMethods()),
+    _error_page(server->GetDefaultErrorPage()),
     _limit_client_body_size(2048),
     _directory(server->GetRoot()),
     _autoIndex(server->GetAutoIndex()),

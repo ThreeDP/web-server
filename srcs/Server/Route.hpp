@@ -44,8 +44,13 @@ class Route {
         AHttpResponse               *checkFilePermission(HttpRequest &httpReq, int &statusCode);
         
         // Geters
-
         std::string                 GetRedirectPath(void);
+        std::string                 GetErrorPage(int statusCode);
+        bool                        IsAllowMethod(std::string method);
+        int                         GetLimitClientBodySize(void) const;
+        std::string                 GetRoot(void) const;
+        std::set<std::string>       GetFilesForIndex(void) const;
+
         std::set<std::string>       *GetAllowMethods(void);
         std::map<int, std::string>  GetErrorPage(void);
         void                        pathReset(std::string &path);
@@ -60,6 +65,7 @@ class Route {
         // Base methods
 
         Route(CommonParameters *server, std::string server_name);
+        Route(IServer *server, std::string server_name);
 
         class Except: virtual public std::exception {
 			protected:

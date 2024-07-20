@@ -17,6 +17,7 @@ set(INCLUDE_DIR
 set(HEADERS
     Parser/Parser.hpp
     Server/Server.hpp
+    Server/IServer.hpp
     Server/CommonParameters.hpp
     Server/Route.hpp
     Server/Http.hpp
