@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(Name WebServerTests)
 set(ParserSources parser_test.cpp)
 set(ResponseSources ResponseTest.cpp)
+set(RequestSources RequestTest.cpp)
 set(RouteSources RouteTest.cpp)
 project(${Name})
 
@@ -23,6 +24,11 @@ add_executable(
 add_executable(
 	ResponseTest
   	${ResponseSources}
+)
+
+add_executable(
+	RequestTest
+  	${RequestSources}
 )
 
 add_executable(
@@ -43,6 +49,12 @@ target_link_libraries(
 )
 
 target_link_libraries(
+	RequestTest
+	WebServer
+  	GTest::gtest_main
+)
+
+target_link_libraries(
 	RouteTest
 	WebServer
   	GTest::gtest_main
@@ -50,4 +62,5 @@ target_link_libraries(
 
 gtest_discover_tests(ParserTest)
 gtest_discover_tests(ResponseTest)
+gtest_discover_tests(RequestTest)
 gtest_discover_tests(RouteTest)

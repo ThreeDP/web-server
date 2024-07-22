@@ -98,6 +98,46 @@ TEST_F(RouteTest, CreateARoute) {
     EXPECT_EQ(indexs.find("index.py"), indexs.end());
 }
 
+TEST_F(RouteTest, CheckAAllowMethod) {
+    // Arrange
+    RouteResponse *expected = new RouteResponse(6, 200, false);
+    HttpRequest request;
+    request.ParserRequest(
+        "GET /index.html HTTP/1.0\r\n"
+    );
+    std::string     server_name = "localhost";
+    IServer         *server = new ServerTest();
+    Route route(server, server_name);
+
+    // Act
+    RouteResponse *response = route.ProcessRequest(request);
+
+    // Assert
+    EXPECT_EQ(expected->fd, response->fd);
+    EXPECT_EQ(expected->statusCode, response->statusCode);
+    EXPECT_EQ(*expected, *response);
+    delete response;
+}
+
+TEST_F(RouteTest, CheckNotAllowMethod) {
+    // Arrange
+    RouteResponse *expected = new RouteResponse(-1, 405, false);
+    HttpRequest request;
+    request.ParserRequest(
+        "PUT /create HTTP/1.0\r\n"
+    );
+    std::string     server_name = "localhost";
+    IServer         *server = new ServerTest();
+    Route route(server, server_name);
+
+    // Act
+    RouteResponse *response = route.ProcessRequest(request);
+
+    // Assert
+    EXPECT_EQ(*expected, *response);
+    delete response;
+}
+
 int main(int argc, char **argv) {
 	::testing::InitGoogleTest(&argc, argv);
 	return RUN_ALL_TESTS();

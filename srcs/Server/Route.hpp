@@ -10,6 +10,27 @@
 # include "Response200OK.hpp"
 //# include "HttpResponse.hpp"
 
+class RouteResponse {
+    
+    public:
+        int fd;
+        int statusCode;
+        bool isDirectory;
+        
+        RouteResponse(int _fd, int _statusCode, bool _isDirectory) {
+            this->fd = _fd;
+            this->statusCode = _statusCode;
+            this->isDirectory = _isDirectory;
+        }
+
+        bool operator==(const RouteResponse &other) const {
+            return fd == other.fd &&
+                statusCode == other.statusCode &&
+                isDirectory == other.isDirectory;
+        }
+};
+
+std::ostream &operator<<(std::ostream &os, RouteResponse const &route);
 
 enum RouteStages {
     R_START,
@@ -33,6 +54,13 @@ class Route {
         RouteStages                                 _stage;
 
         // Route Methods
+
+        RouteResponse *ProcessRequest(HttpRequest &request) {
+            if (!this->IsAllowMethod(request.GetMethod())) {
+                return new RouteResponse(-1, 405, false);
+            }
+            return new RouteResponse(6, 200, false);
+        }
 
         std::set<std::string>       *CatDirectorysFiles(std::string path, std::vector<struct dirent *> &dirs);
         AHttpResponse               *ProcessRoute(HttpRequest &httpReq);

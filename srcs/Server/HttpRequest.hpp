@@ -4,6 +4,8 @@
 # include <map>
 # include <iostream>
 # include <sstream>
+# include <string>
+# include <cstring>
 
 class HttpRequest {
     public:
@@ -22,10 +24,15 @@ class HttpRequest {
         ~HttpRequest();
 
         // Geters
-        std::string         GetMethod(void) const;
-        std::string         GetPath(void) const;
-        std::string         GetHTTPVersion(void) const;
-        std::string         GetBody(void) const;
+        const std::map<std::string, std::string>  GetHeaders(void) const;
+        std::string                         GetMethod(void) const;
+        std::string                         GetPath(void) const;
+        std::string                         GetHTTPVersion(void) const;
+        std::string                         GetBody(void) const;
+
+        bool operator==(const HttpRequest &other);
 };
+
+std::ostream &operator<<(std::ostream &os, HttpRequest const &route);
 
 #endif

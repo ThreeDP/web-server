@@ -286,3 +286,10 @@ std::ostream &operator<<(std::ostream &os, Route const &route) {
     }
 	return (os);
 }
+
+std::ostream &operator<<(std::ostream &os, RouteResponse const &route) {
+    os << "fd: " << route.fd << std::endl;
+    os << "status code: " << route.statusCode << std::endl;
+    os << "is a directory: " << route.isDirectory << std::endl;
+	return (os);
+}
