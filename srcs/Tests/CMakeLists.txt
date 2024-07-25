@@ -4,6 +4,7 @@ cmake_policy(SET CMP0079 NEW)
 # GoogleTest requires at least C++14
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(GTEST_INCLUDE_DIR "/workspace/web-server/srcs/googletest/googletest/include")
 
 set(Name WebServerTests)
 set(ParserSources parser_test.cpp)

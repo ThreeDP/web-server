@@ -85,6 +85,8 @@ re: fclean all
 
 $(GOOGLE_TEST):
 	@			git clone https://github.com/google/googletest.git
+	@			cd googletest && cmake -S . -B build
+	@			cd googletest && cmake --build build
 
 test_build:
 	@			cmake -S . -B $(TEST_BUILD)
