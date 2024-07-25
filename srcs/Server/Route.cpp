@@ -239,7 +239,7 @@ std::set<std::string>       Route::GetFilesForIndex(void) const {
 }
 
 // Base Methods
-Route::Route(CommonParameters *server, std::string server_name)  : 
+Route::Route(CommonParameters *server, std::string route_name)  : 
     _allow_methods(server->GetDefaultAllowMethods()),
     _error_page(std::map<int, std::string>()),
     _limit_client_body_size(2048),
@@ -248,15 +248,15 @@ Route::Route(CommonParameters *server, std::string server_name)  :
     _index(server->GetIndex()),
     _stage(R_START)
 {
-    std::map<std::string, std::string>::iterator it = server->GetReWrites().find(server_name);
+    std::map<std::string, std::string>::iterator it = server->GetReWrites().find(route_name);
     if (it != server->GetReWrites().end())
-        this->_redirectPath = server->GetReWrites()[server_name];
-    this->_route_name = server_name;
+        this->_redirectPath = server->GetReWrites()[route_name];
+    this->_route_name = route_name;
     std::cout << *this;
     (void)this->_limit_client_body_size;
 }
 
-Route::Route(IServer *server, std::string server_name, IHandler *handler)  : 
+Route::Route(IServer *server, std::string route_name, IHandler *handler)  : 
     _allow_methods(server->GetDefaultAllowMethods()),
     _error_page(server->GetDefaultErrorPage()),
     _limit_client_body_size(server->GetLimitClientBodySize()),
@@ -266,10 +266,10 @@ Route::Route(IServer *server, std::string server_name, IHandler *handler)  :
     _stage(R_START),
     _handler(handler)
 {
-    std::map<std::string, std::string>::iterator it = server->GetReWrites().find(server_name);
+    std::map<std::string, std::string>::iterator it = server->GetReWrites().find(route_name);
     if (it != server->GetReWrites().end())
-        this->_redirectPath = server->GetReWrites()[server_name];
-    this->_route_name = server_name;
+        this->_redirectPath = server->GetReWrites()[route_name];
+    this->_route_name = route_name;
     std::cout << *this;
     (void)this->_limit_client_body_size;
 }
@@ -292,5 +292,7 @@ std::ostream &operator<<(std::ostream &os, RouteResponse const &route) {
     os << "fd: " << route.fd << std::endl;
     os << "status code: " << route.statusCode << std::endl;
     os << "is a directory: " << route.isDirectory << std::endl;
+    if (route.redirectPath != "")
+        os << "redirect path: " << route.redirectPath << std::endl;
 	return (os);
 }

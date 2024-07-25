@@ -15,18 +15,28 @@ class RouteResponse {
     public:
         int fd;
         int statusCode;
+        std::string redirectPath;
         bool isDirectory;
         
-        RouteResponse(int _fd, int _statusCode, bool _isDirectory) {
+        RouteResponse(int _fd, int _statusCode) {
             this->fd = _fd;
             this->statusCode = _statusCode;
-            this->isDirectory = _isDirectory;
+            this->isDirectory = false;
+            this->redirectPath = "";
+        }
+
+        RouteResponse(int _fd, int _statusCode, std::string redirectPath) {
+            this->fd = _fd;
+            this->statusCode = _statusCode;
+            this->redirectPath = redirectPath;
+            this->isDirectory = false;
         }
 
         bool operator==(const RouteResponse &other) const {
             return fd == other.fd &&
                 statusCode == other.statusCode &&
-                isDirectory == other.isDirectory;
+                isDirectory == other.isDirectory &&
+                redirectPath == other.redirectPath;
         }
 };
 
@@ -61,22 +71,21 @@ class Route {
             if (it != this->_error_page.end()) {
                 fd = this->_handler->OpenFile(this->_error_page[statusCode]);
             }
-            return new RouteResponse(fd, statusCode, false);
+            return new RouteResponse(fd, statusCode);
         }
 
         RouteResponse *ProcessRequest(HttpRequest &request) {
             int fd = -1;
-            int statusCode = 200;
-        
+            if (this->GetRedirectPath() != "") {
+                return new RouteResponse(fd, 308, this->GetRedirectPath());
+            }
             if (!this->IsAllowMethod(request.GetMethod())) {
-                statusCode = 405;
-                return this->_handlerErrorResponse(fd, statusCode);
+                return this->_handlerErrorResponse(fd, 405);
             } else if (this->_limit_client_body_size < request.GetBodySize()) {
-                statusCode = 413;
-                return this->_handlerErrorResponse(fd, statusCode);
+                return this->_handlerErrorResponse(fd, 413);
             }
             fd = this->_handler->OpenFile(request.GetPath());
-            return new RouteResponse(fd, statusCode, false);
+            return new RouteResponse(fd, 200);
         }
 
         std::set<std::string>       *CatDirectorysFiles(std::string path, std::vector<struct dirent *> &dirs);
@@ -109,8 +118,8 @@ class Route {
 
         // Base methods
 
-        Route(CommonParameters *server, std::string server_name);
-        Route(IServer *server, std::string server_name, IHandler *handler);
+        Route(CommonParameters *server, std::string route_name);
+        Route(IServer *server, std::string route_name, IHandler *handler);
 
         class Except: virtual public std::exception {
 			protected:
