@@ -49,7 +49,7 @@ TEST_F(RequestTest, TestCreateAPOSTRequest) {
     HttpRequest request;
 
     std::map<std::string, std::string> expectedHeaders;
-    std::string expectedBody = "{\"username\": \"johndoe\",\"password\": \"securePassword123!\",\"email\": \"johndoe@example.com\"}";
+    std::string expectedBody = "{\\n\\t\"username\": \"johndoe\",\\n\\t\"password\": \"securePassword123!\",\\n\\t\"email\": \"johndoe@example.com\"\\n}";
     expectedHeaders["Host:"] = "www.example.com";
     expectedHeaders["User-Agent:"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0";
     expectedHeaders["Accept:"] = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8";

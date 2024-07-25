@@ -12,18 +12,24 @@ void    HttpRequest::ParserRequest(std::string request) {
         if (i == 1) {
             std::getline(swords, this->_method, ' ');
             std::getline(swords, this->_path, ' ');
-            std::getline(swords, this->_HTTPVersion, '\n');
-            this->_HTTPVersion.pop_back();
+            std::getline(swords, this->_HTTPVersion, '\r');
             continue;
         }
-        if (isBody || std::strncmp(swords.str().c_str(), "\r\n", 1) == 0) {
-            if (isBody) {
-                std::getline(swords, this->_body, '\n');
-                this->_body.pop_back();
+        bool isSlashRFirst = std::strncmp(swords.str().c_str(), "\r", 2) == 0;
+        if (isBody || isSlashRFirst) {
+            if (!isBody && isSlashRFirst) {
+                isBody = true;
+                continue;
+            } else if (isBody && !isSlashRFirst) {
+                std::string body;
+                std::getline(swords, body, '\r');
+                this->_body += body;
+                this->_bodySize += this->_body.length();
+                continue;
+            } else {
+                this->_bodySize += 2;
                 break;
             }
-            isBody = true;
-            continue;
         }
         std::string key;
         std::string value;
@@ -53,6 +59,10 @@ std::string         HttpRequest::GetHTTPVersion(void) const {
 
 std::string         HttpRequest::GetBody(void) const {
     return this->_body;
+}
+
+size_t              HttpRequest::GetBodySize(void) const {
+    return this->_bodySize;
 }
 
 // Base Methods

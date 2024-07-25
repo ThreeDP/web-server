@@ -56,8 +56,11 @@ class Route {
         // Route Methods
 
         RouteResponse *ProcessRequest(HttpRequest &request) {
+            std::cout << "\n\nOLHA O TAMANHO: " << request.GetBodySize() << "\n\n";
             if (!this->IsAllowMethod(request.GetMethod())) {
                 return new RouteResponse(-1, 405, false);
+            } else if (this->_limit_client_body_size < request.GetBodySize()) {
+                return new RouteResponse(-1, 413, false);
             }
             return new RouteResponse(6, 200, false);
         }

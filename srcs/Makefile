@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: dapaulin <dapaulin@student.42sp.org.br>    +#+  +:+       +#+         #
+#    By: user42 <user42@student.42.fr>              +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/11/03 15:04:07 by dapaulin          #+#    #+#              #
-#    Updated: 2024/07/17 20:56:16 by dapaulin         ###   ########.fr        #
+#    Updated: 2024/07/24 19:17:37 by user42           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -91,6 +91,12 @@ test_build:
 
 test_run:
 	@			cd $(TEST_BUILD) && ctest --rerun-failed --output-on-failure
+
+test_rund:
+	@			cd $(TEST_BUILD) && ctest --rerun-failed --output-on-failure --verbose --interactive-debug-mode
+
+
+testd: t_clean $(GOOGLE_TEST) test_build test_rund
 
 test: t_clean $(GOOGLE_TEST) test_build test_run
 

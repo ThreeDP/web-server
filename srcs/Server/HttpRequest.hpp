@@ -13,6 +13,7 @@ class HttpRequest {
         std::string                         _path;
         std::string                         _HTTPVersion;
         std::string                         _body;
+        size_t                              _bodySize;
 
     public:
         std::map<std::string, std::string>  _payload;
@@ -29,6 +30,7 @@ class HttpRequest {
         std::string                         GetPath(void) const;
         std::string                         GetHTTPVersion(void) const;
         std::string                         GetBody(void) const;
+        size_t                              GetBodySize(void) const;
 
         bool operator==(const HttpRequest &other);
 };

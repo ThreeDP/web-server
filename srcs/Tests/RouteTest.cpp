@@ -21,7 +21,7 @@ class ServerTest : public IServer {
         ServerTest(void) : 
             _listen_host("127.0.0.1"),
             _listen_port(8081),
-            _limit_client_body_size(2048),
+            _limit_client_body_size(250),
             _root("/app"),
             _autoindex(false) {
             _default_allow_methods.insert("GET");
@@ -90,7 +90,7 @@ TEST_F(RouteTest, CreateARoute) {
     EXPECT_EQ(route.IsAllowMethod("POST"), true);
     EXPECT_EQ(route.IsAllowMethod("DELETE"), true);
     EXPECT_EQ(route.IsAllowMethod("PUT"), false);
-    EXPECT_EQ(route.GetLimitClientBodySize(), 2048);
+    EXPECT_EQ(route.GetLimitClientBodySize(), 250);
     EXPECT_EQ(route.GetRoot(), "/app");
     std::set<std::string> indexs = route.GetFilesForIndex();
     EXPECT_NE(indexs.find("index.html"), indexs.end());
@@ -126,6 +126,43 @@ TEST_F(RouteTest, CheckNotAllowMethod) {
     request.ParserRequest(
         "PUT /create HTTP/1.0\r\n"
     );
+    std::string     server_name = "localhost";
+    IServer         *server = new ServerTest();
+    Route route(server, server_name);
+
+    // Act
+    RouteResponse *response = route.ProcessRequest(request);
+
+    // Assert
+    EXPECT_EQ(*expected, *response);
+    delete response;
+}
+
+TEST_F(RouteTest, CheckAPayloadTooLarge) {
+    // Arrange
+    RouteResponse *expected = new RouteResponse(-1, 413, false);
+    HttpRequest request;
+    std::stringstream body;
+    body << "POST /create-page HTTP/1.0\r\n";
+    body << "\r\n";
+    body << "<!DOCTYPE html>\n";
+    body << "<html lang=\"pt-BR\">\n";
+    body << "<head>\n";
+    body << "<meta charset=\"UTF-8\">\n";
+    body << "<title>Página Compacta</title>\n"; 
+    body << "<style>\n";
+    body << "body{font-family:Arial,sans-serif;background-color:#f4f4f9;color:#333;padding:10px;}\n";
+    body << "a{color:#0066cc;text-decoration:none;}\n";
+    body << "</style>\n";
+    body << "</head>\n";
+    body << "<body>\n";
+    body << "<h1>Bem-vindo!</h1>\n"; 
+    body << "<p>Esta é uma página HTML de 350 caracteres. Ela contém texto, estilo e um link.</p>\n";
+    body << "<a href=\"https://www.exemplo.com\">Clique aqui para mais informações</a>\n";
+    body << "</body>\n";
+    body << "</html>\r\n";
+    request.ParserRequest(body.str());
+
     std::string     server_name = "localhost";
     IServer         *server = new ServerTest();
     Route route(server, server_name);

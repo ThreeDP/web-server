@@ -259,7 +259,7 @@ Route::Route(CommonParameters *server, std::string server_name)  :
 Route::Route(IServer *server, std::string server_name)  : 
     _allow_methods(server->GetDefaultAllowMethods()),
     _error_page(server->GetDefaultErrorPage()),
-    _limit_client_body_size(2048),
+    _limit_client_body_size(server->GetLimitClientBodySize()),
     _directory(server->GetRoot()),
     _autoIndex(server->GetAutoIndex()),
     _index(server->GetIndex()),
