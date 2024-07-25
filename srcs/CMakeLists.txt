@@ -12,6 +12,7 @@ set(INCLUDE_DIR
     "${CMAKE_CURRENT_SOURCE_DIR}/Server"
     "${CMAKE_CURRENT_SOURCE_DIR}/Server/Response"
     "${CMAKE_CURRENT_SOURCE_DIR}/Utils"
+    "${CMAKE_CURRENT_SOURCE_DIR}/HandlerFileSystem"
 )
 
 set(HEADERS
@@ -24,6 +25,7 @@ set(HEADERS
     Server/HttpRequest.hpp
     Server/HttpResponse.hpp
     Utils/Utils.hpp
+    HandlerFileSystem/IHandler.hpp
     Server/Response/IAHttpResponse.hpp
     Server/Response/AHttpResponse.hpp
     Server/Response/Response200OK.hpp

@@ -66,7 +66,12 @@ size_t              HttpRequest::GetBodySize(void) const {
 }
 
 // Base Methods
-HttpRequest::HttpRequest(void) {
+HttpRequest::HttpRequest(void) :
+    _method(""),
+    _path(""),
+    _HTTPVersion(""),
+    _body(""),
+    _bodySize(0) {
 
 }
 

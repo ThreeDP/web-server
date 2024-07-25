@@ -16,6 +16,7 @@ NAME										= 	webServer
 ######################## PATHS ###############################
 OBJS_PATH									= 	objs/
 HEADERS										=	Server/ \
+												HandlerFileSystem/ \
 												Utils/  \
 												Parser/ \
 												Server/Response

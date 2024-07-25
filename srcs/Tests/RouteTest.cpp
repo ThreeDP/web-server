@@ -3,6 +3,16 @@
 # include "IServer.hpp"
 # include "Route.hpp"
 
+class HandlerTest : public IHandler {
+    int                     OpenFile(std::string path) {
+        if (path != "") {
+            return 6;
+        }
+        return -1;
+    }
+
+};
+
 class ServerTest : public IServer {
 
     private:
@@ -29,6 +39,22 @@ class ServerTest : public IServer {
             _default_allow_methods.insert("DELETE");
             _default_error_page[404] = "404.html";
             _default_error_page[500] = "50x.html";
+            _index.insert("index.html");
+            _index.insert("index.php");
+        }
+
+        ServerTest(int statusCode, std::string path) : 
+            _listen_host("127.0.0.1"),
+            _listen_port(8081),
+            _limit_client_body_size(250),
+            _root("/app"),
+            _autoindex(false) {
+            _default_allow_methods.insert("GET");
+            _default_allow_methods.insert("POST");
+            _default_allow_methods.insert("DELETE");
+            _default_error_page[404] = "404.html";
+            _default_error_page[500] = "50x.html";
+            _default_error_page[statusCode] = path;
             _index.insert("index.html");
             _index.insert("index.php");
         }
@@ -75,11 +101,12 @@ protected:
 
 TEST_F(RouteTest, CreateARoute) {
     // Arrange
+    IHandler *handler = new HandlerTest(); 
     std::string     server_name = "localhost";
     IServer         *server = new ServerTest();
 
     // Act
-    Route route(server, server_name);
+    Route route(server, server_name, handler);
 
     // Assert
     EXPECT_EQ(route.GetRedirectPath(), "");
@@ -100,6 +127,7 @@ TEST_F(RouteTest, CreateARoute) {
 
 TEST_F(RouteTest, CheckAAllowMethod) {
     // Arrange
+    IHandler *handler = new HandlerTest(); 
     RouteResponse *expected = new RouteResponse(6, 200, false);
     HttpRequest request;
     request.ParserRequest(
@@ -107,7 +135,7 @@ TEST_F(RouteTest, CheckAAllowMethod) {
     );
     std::string     server_name = "localhost";
     IServer         *server = new ServerTest();
-    Route route(server, server_name);
+    Route route(server, server_name, handler);
 
     // Act
     RouteResponse *response = route.ProcessRequest(request);
@@ -121,6 +149,7 @@ TEST_F(RouteTest, CheckAAllowMethod) {
 
 TEST_F(RouteTest, CheckNotAllowMethod) {
     // Arrange
+    IHandler *handler = new HandlerTest(); 
     RouteResponse *expected = new RouteResponse(-1, 405, false);
     HttpRequest request;
     request.ParserRequest(
@@ -128,7 +157,27 @@ TEST_F(RouteTest, CheckNotAllowMethod) {
     );
     std::string     server_name = "localhost";
     IServer         *server = new ServerTest();
-    Route route(server, server_name);
+    Route route(server, server_name, handler);
+
+    // Act
+    RouteResponse *response = route.ProcessRequest(request);
+
+    // Assert
+    EXPECT_EQ(*expected, *response);
+    delete response;
+}
+
+TEST_F(RouteTest, CheckNotAllowMethodWithSetErrorPage) {
+    // Arrange
+    IHandler *handler = new HandlerTest(); 
+    RouteResponse *expected = new RouteResponse(6, 405, false);
+    HttpRequest request;
+    request.ParserRequest(
+        "PUT /create HTTP/1.0\r\n"
+    );
+    std::string     server_name = "localhost";
+    IServer         *server = new ServerTest(405, "405.html");
+    Route route(server, server_name, handler);
 
     // Act
     RouteResponse *response = route.ProcessRequest(request);
@@ -140,6 +189,7 @@ TEST_F(RouteTest, CheckNotAllowMethod) {
 
 TEST_F(RouteTest, CheckAPayloadTooLarge) {
     // Arrange
+    IHandler *handler = new HandlerTest(); 
     RouteResponse *expected = new RouteResponse(-1, 413, false);
     HttpRequest request;
     std::stringstream body;
@@ -165,7 +215,45 @@ TEST_F(RouteTest, CheckAPayloadTooLarge) {
 
     std::string     server_name = "localhost";
     IServer         *server = new ServerTest();
-    Route route(server, server_name);
+    Route route(server, server_name, handler);
+
+    // Act
+    RouteResponse *response = route.ProcessRequest(request);
+
+    // Assert
+    EXPECT_EQ(*expected, *response);
+    delete response;
+}
+
+TEST_F(RouteTest, CheckAPayloadTooLargeWithErrorPageSetup) {
+    // Arrange
+    IHandler *handler = new HandlerTest(); 
+    RouteResponse *expected = new RouteResponse(6, 413, false);
+    HttpRequest request;
+    std::stringstream body;
+    body << "POST /create-page HTTP/1.0\r\n";
+    body << "\r\n";
+    body << "<!DOCTYPE html>\n";
+    body << "<html lang=\"pt-BR\">\n";
+    body << "<head>\n";
+    body << "<meta charset=\"UTF-8\">\n";
+    body << "<title>Página Compacta</title>\n"; 
+    body << "<style>\n";
+    body << "body{font-family:Arial,sans-serif;background-color:#f4f4f9;color:#333;padding:10px;}\n";
+    body << "a{color:#0066cc;text-decoration:none;}\n";
+    body << "</style>\n";
+    body << "</head>\n";
+    body << "<body>\n";
+    body << "<h1>Bem-vindo!</h1>\n"; 
+    body << "<p>Esta é uma página HTML de 350 caracteres. Ela contém texto, estilo e um link.</p>\n";
+    body << "<a href=\"https://www.exemplo.com\">Clique aqui para mais informações</a>\n";
+    body << "</body>\n";
+    body << "</html>\r\n";
+    request.ParserRequest(body.str());
+
+    std::string     server_name = "localhost";
+    IServer         *server = new ServerTest(413, "413.html");
+    Route route(server, server_name, handler);
 
     // Act
     RouteResponse *response = route.ProcessRequest(request);

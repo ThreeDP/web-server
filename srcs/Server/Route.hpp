@@ -6,7 +6,7 @@
 # include "CommonParameters.hpp"
 # include "AHttpResponse.hpp"
 # include "HttpRequest.hpp"
-
+# include "IHandler.hpp"
 # include "Response200OK.hpp"
 //# include "HttpResponse.hpp"
 
@@ -39,6 +39,7 @@ enum RouteStages {
 
 class Route {
     private:
+        IHandler                                    *_handler;
         std::string                                 _route_name;
         std::set<std::string>                       *_allow_methods;
         std::map<int, std::string>                  _error_page;
@@ -55,14 +56,27 @@ class Route {
 
         // Route Methods
 
-        RouteResponse *ProcessRequest(HttpRequest &request) {
-            std::cout << "\n\nOLHA O TAMANHO: " << request.GetBodySize() << "\n\n";
-            if (!this->IsAllowMethod(request.GetMethod())) {
-                return new RouteResponse(-1, 405, false);
-            } else if (this->_limit_client_body_size < request.GetBodySize()) {
-                return new RouteResponse(-1, 413, false);
+        RouteResponse *_handlerErrorResponse(int fd, int statusCode) {
+            std::map<int, std::string>::iterator it = this->_error_page.find(statusCode);
+            if (it != this->_error_page.end()) {
+                fd = this->_handler->OpenFile(this->_error_page[statusCode]);
             }
-            return new RouteResponse(6, 200, false);
+            return new RouteResponse(fd, statusCode, false);
+        }
+
+        RouteResponse *ProcessRequest(HttpRequest &request) {
+            int fd = -1;
+            int statusCode = 200;
+        
+            if (!this->IsAllowMethod(request.GetMethod())) {
+                statusCode = 405;
+                return this->_handlerErrorResponse(fd, statusCode);
+            } else if (this->_limit_client_body_size < request.GetBodySize()) {
+                statusCode = 413;
+                return this->_handlerErrorResponse(fd, statusCode);
+            }
+            fd = this->_handler->OpenFile(request.GetPath());
+            return new RouteResponse(fd, statusCode, false);
         }
 
         std::set<std::string>       *CatDirectorysFiles(std::string path, std::vector<struct dirent *> &dirs);
@@ -96,7 +110,7 @@ class Route {
         // Base methods
 
         Route(CommonParameters *server, std::string server_name);
-        Route(IServer *server, std::string server_name);
+        Route(IServer *server, std::string server_name, IHandler *handler);
 
         class Except: virtual public std::exception {
 			protected:
