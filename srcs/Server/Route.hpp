@@ -67,22 +67,31 @@ class Route {
         // Route Methods
 
         RouteResponse *_handlerErrorResponse(int fd, int statusCode) {
+            static bool isNotFound = false;
             std::map<int, std::string>::iterator it = this->_error_page.find(statusCode);
-            if (it != this->_error_page.end()) {
+            if (it != this->_error_page.end() && !isNotFound) {
+                if (!this->_handler->FileExist(it->second)) {
+                    if (statusCode == 404)
+                        isNotFound = true;
+                    return this->_handlerErrorResponse(fd, 404);
+                }
                 fd = this->_handler->OpenFile(this->_error_page[statusCode]);
             }
+            isNotFound = false;
             return new RouteResponse(fd, statusCode);
         }
 
         RouteResponse *ProcessRequest(HttpRequest &request) {
             int fd = -1;
-            if (this->GetRedirectPath() != "") {
-                return new RouteResponse(fd, 308, this->GetRedirectPath());
-            }
             if (!this->IsAllowMethod(request.GetMethod())) {
                 return this->_handlerErrorResponse(fd, 405);
             } else if (this->_limit_client_body_size < request.GetBodySize()) {
                 return this->_handlerErrorResponse(fd, 413);
+            } else if (this->GetRedirectPath() != "") {
+                return new RouteResponse(fd, 308, this->GetRedirectPath());
+            }
+            if (!this->_handler->FileExist(request.GetPath())) {
+                return this->_handlerErrorResponse(fd, 404);
             }
             fd = this->_handler->OpenFile(request.GetPath());
             return new RouteResponse(fd, 200);

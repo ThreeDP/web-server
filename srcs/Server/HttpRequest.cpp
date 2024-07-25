@@ -100,7 +100,7 @@ std::ostream &operator<<(std::ostream &os, HttpRequest const &request) {
     os << request.GetMethod() << " " << request.GetPath() << " " << request.GetHTTPVersion() << "\r\n";
     std::map<std::string, std::string> headers = request.GetHeaders(); 
     std::map<std::string, std::string>::iterator it = headers.begin();
-    for (it; it != headers.end(); ++it) {
+    for ( ; it != headers.end(); ++it) {
         os << it->first << " " << it->second << "\r\n";
     }
     os << "\r\n";
