@@ -61,7 +61,7 @@ std::string         HttpRequest::GetBody(void) const {
     return this->_body;
 }
 
-size_t              HttpRequest::GetBodySize(void) const {
+int              HttpRequest::GetBodySize(void) const {
     return this->_bodySize;
 }
 

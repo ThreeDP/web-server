@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: user42 <user42@student.42.fr>              +#+  +:+       +#+         #
+#    By: dapaulin <dapaulin@student.42sp.org.br>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/11/03 15:04:07 by dapaulin          #+#    #+#              #
-#    Updated: 2024/07/24 19:17:37 by user42           ###   ########.fr        #
+#    Updated: 2024/07/27 18:57:02 by dapaulin         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -66,7 +66,7 @@ $(OBJS_PATH):
 
 $(NAME): $(OBJS_PATH) $(OBJ)
 	@			printf "\n$(YELLOW)Creating Project '$(OBJ)'$(RC)\n" 
-	@			c++ $(FLAGS) $(OBJ) -o $(NAME)
+	@			c++ $(FLAGS) $(OBJ) $(INCLUDE_FLAGS) -o $(NAME)
 	@			printf "$(GREEN)$(NAME) created$(RC)\n"
 
 -include $(DEP)

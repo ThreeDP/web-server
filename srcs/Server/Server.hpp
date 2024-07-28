@@ -5,8 +5,6 @@
 #include <netdb.h>
 #include <sys/epoll.h>
 
-
-
 enum ServerStages {
     S_START,
     S_LISTEN,
@@ -36,7 +34,7 @@ class Server : public CommonParameters {
         int                                     listener;
         const static int                        backlog = 10;
 
-        std::map<int, AHttpResponse *>             ClientsResponse;
+        std::map<int, RouteResponse *>             ClientsResponse;
 
     public:
 
@@ -50,6 +48,7 @@ class Server : public CommonParameters {
         // Server Process
 
         std::string             ProcessResponse(int client_fd);
+        void                    ProcessRequest(HttpRequest &request, int client_fd);
         void                    ProcessRequest(std::string buffer, int client_fd);
         std::string             FindMatchRoute(HttpRequest &res);
 

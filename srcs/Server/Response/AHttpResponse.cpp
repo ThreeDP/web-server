@@ -87,3 +87,16 @@ AHttpResponse::AHttpResponse(std::string statusCode, std::string extension) :
 AHttpResponse::~AHttpResponse(void) {
 
 }
+
+std::string AHttpResponse::ToString(void) {
+    std::stringstream os;
+    os << this->_HTTPVersion << " " << this->_statusCode << " " << this->_statusMessage << "\r\n";
+    std::map<std::string, std::string>::iterator it = this->_headers.begin();
+    for ( ; it != this->_headers.end(); ++it) {
+        os << it->first << " " << it->second << "\r\n";
+    }
+    os << "\r\n";
+    if (this->_body != "")
+        os << this->_body << "\r\n";
+    return os.str();
+}

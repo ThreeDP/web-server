@@ -30,7 +30,7 @@ class HttpRequest {
         std::string                         GetPath(void) const;
         std::string                         GetHTTPVersion(void) const;
         std::string                         GetBody(void) const;
-        size_t                              GetBodySize(void) const;
+        int                              GetBodySize(void) const;
 
         bool operator==(const HttpRequest &other);
 };

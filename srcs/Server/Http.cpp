@@ -44,7 +44,7 @@ void    Http::StartWatchSockets(void) {
                 ssize_t numbytes = this->HandleRequest(this->clientEvents[i].data.fd);  
                 if (numbytes == -1)
                     throw Except("error recv");
-                else if (numbytes == 0) {
+                if (numbytes == 0) {
                     this->DisconnectClientToServer(this->clientEvents[i].data.fd);
                 } else if (numbytes > 0) {
                     this->HandleResponse(this->clientEvents[i].data.fd);
@@ -92,8 +92,8 @@ ssize_t    Http::HandleRequest(int client_fd) {
 
     memset(&buffer, 0, sizeof(char) * 1000000);
     ssize_t numbytes = recv(client_fd, &buffer, sizeof(char) * 1000000, 0);
-    server->ProcessRequest(buffer, client_fd);
     res.ParserRequest(buffer);
+    server->ProcessRequest(res, client_fd);
     return numbytes;
 }
 
@@ -105,13 +105,14 @@ void    Http::HandleResponse(int client_fd) {
     if (send(client_fd, message.c_str(), message.size(), 0) == -1) {
         throw Except("Error on send Response");
     }
-    std::cout << *server;
+    // std::cout << *server;
 }
 
 void    Http::ClientHandShake(Server *server) {
     int                         client_fd;
     struct epoll_event          event;
 
+    memset(&event, 0, sizeof(event));
     client_fd = server->AcceptClientConnect();
     event.events = EPOLLIN;
     event.data.fd = client_fd;
@@ -133,7 +134,7 @@ Server *Http::GetServer(std::string server) {
 }
 
 int &Http::GetEPollFD(void) {
-    static int  epollFD = epoll_create1(0);
+    static int epollFD = epoll_create1(0);
     return epollFD;
 }
 

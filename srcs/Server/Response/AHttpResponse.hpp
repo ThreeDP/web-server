@@ -32,6 +32,8 @@ class AHttpResponse : public IAHttpResponse {
         std::string             GetStatusName(std::string statusCode);
         std::string             GetTextContent(std::string extension);
 
+        std::string             ToString(void);
+
         // Seters
         static void             SetDefaultAHTTPResponse(void);
         

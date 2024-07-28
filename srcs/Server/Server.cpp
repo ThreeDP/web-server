@@ -76,10 +76,26 @@ int Server::AcceptClientConnect(void) {
 =======================================*/
 
 std::string         Server::ProcessResponse(int client_fd) {
-    std::string response = this->ClientsResponse[client_fd]->CreateResponse();
+    RouteResponse *routeResponse = this->ClientsResponse[client_fd];
+    AHttpResponse *response = NULL;
+    if (routeResponse->fd != -1) {
+        switch (routeResponse->statusCode) {
+            case 200:
+                response = new Response200OK(".html");
+                break;
+            case 308:
+                response = new Response200OK(".html");
+                break;
+            default:
+                response = new Response200OK(".html");
+                break;
+        }
+    } else {
+        response = new Response200OK(".html");
+    }
     this->ClientsResponse.erase(client_fd);
     this->UpdateState(S_SERVER_RESPONSE, client_fd);
-    return response;
+    return response->ToString();
 }
 
 std::string         Server::FindMatchRoute(HttpRequest &res) {
@@ -108,9 +124,17 @@ void                Server::ProcessRequest(std::string buffer, int client_fd) {
     res.ParserRequest(buffer);
 
     this->UpdateState(S_CLIENT_REQUEST, client_fd);
-    std::cout << *this;
-    keyPath = this->FindMatchRoute(res);
-    AHttpResponse *routeRes = this->routes[keyPath]->ProcessRoute(res);
+    // std::cout << *this;
+    // keyPath = this->FindMatchRoute(res);
+    RouteResponse *routeRes = this->routes["/"]->ProcessRoute(res);
+    this->ClientsResponse[client_fd] = routeRes;
+}
+
+void                Server::ProcessRequest(HttpRequest &request, int client_fd) {
+    this->UpdateState(S_CLIENT_REQUEST, client_fd);
+    // std::cout << *this;
+    std::string keyPath = this->FindMatchRoute(request);
+    RouteResponse *routeRes = this->routes[keyPath]->ProcessRoute(request);
     this->ClientsResponse[client_fd] = routeRes;
 }
 

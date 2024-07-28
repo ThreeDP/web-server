@@ -13,30 +13,30 @@
 class RouteResponse {
     
     public:
-        int fd;
-        int statusCode;
-        std::string redirectPath;
-        bool isDirectory;
+        int             FD;
+        int             StatusCode;
+        std::string     RedirectPath;
+        DIR             *Directory;
         
         RouteResponse(int _fd, int _statusCode) {
-            this->fd = _fd;
-            this->statusCode = _statusCode;
-            this->isDirectory = false;
-            this->redirectPath = "";
+            this->FD = _fd;
+            this->StatusCode = _statusCode;
+            this->Directory = NULL;
+            this->RedirectPath = "";
         }
 
         RouteResponse(int _fd, int _statusCode, std::string redirectPath) {
-            this->fd = _fd;
-            this->statusCode = _statusCode;
-            this->redirectPath = redirectPath;
-            this->isDirectory = false;
+            this->FD = _fd;
+            this->StatusCode = _statusCode;
+            this->RedirectPath = redirectPath;
+            this->Directory = NULL;
         }
 
         bool operator==(const RouteResponse &other) const {
-            return fd == other.fd &&
-                statusCode == other.statusCode &&
-                isDirectory == other.isDirectory &&
-                redirectPath == other.redirectPath;
+            return FD == other.FD &&
+                StatusCode == other.StatusCode &&
+                Directory == other.Directory &&
+                RedirectPath == other.RedirectPath;
         }
 };
 
@@ -85,11 +85,13 @@ class Route {
             int fd = -1;
             if (!this->IsAllowMethod(request.GetMethod())) {
                 return this->_handlerErrorResponse(fd, 405);
-            } else if (this->_limit_client_body_size < request.GetBodySize()) {
+            }
+            if (this->_limit_client_body_size < request.GetBodySize()) {
                 return this->_handlerErrorResponse(fd, 413);
             } else if (this->GetRedirectPath() != "") {
                 return new RouteResponse(fd, 308, this->GetRedirectPath());
             }
+            std::cout << request << std::endl;
             if (!this->_handler->FileExist(request.GetPath())) {
                 return this->_handlerErrorResponse(fd, 404);
             }
@@ -98,7 +100,7 @@ class Route {
         }
 
         std::set<std::string>       *CatDirectorysFiles(std::string path, std::vector<struct dirent *> &dirs);
-        AHttpResponse               *ProcessRoute(HttpRequest &httpReq);
+        RouteResponse              *ProcessRoute(HttpRequest &httpReq);
         std::string                 ReturnFileRequest(std::string path);
         mode_t                      CatFileMode(std::string &path, int &statusCode);
         bool                        FindFilePattern(std::string &path, std::set<std::string> *dirs);

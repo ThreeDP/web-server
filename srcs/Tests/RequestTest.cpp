@@ -23,7 +23,7 @@ TEST_F(RequestTest, TestCreateAGETRequest) {
     std::stringstream requestMessage;
     requestMessage << "GET /index.html HTTP/1.1\r\n";
     std::map<std::string, std::string>::iterator it = expectedHeaders.begin();
-    for (it; it != expectedHeaders.end(); ++it) {
+    for ( ; it != expectedHeaders.end(); ++it) {
         requestMessage << it->first << " " << it->second << "\r\n";
     }
     requestMessage << "\r\n\r\n";
@@ -60,7 +60,7 @@ TEST_F(RequestTest, TestCreateAPOSTRequest) {
     std::stringstream requestMessage;
     requestMessage << "POST /create-user HTTP/1.1\r\n";
     std::map<std::string, std::string>::iterator it = expectedHeaders.begin();
-    for (it; it != expectedHeaders.end(); ++it) {
+    for ( ; it != expectedHeaders.end(); ++it) {
         requestMessage << it->first << " " << it->second << "\r\n";
     }
     requestMessage << "\r\n";
