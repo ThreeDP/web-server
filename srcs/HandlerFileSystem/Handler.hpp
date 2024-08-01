@@ -4,12 +4,9 @@
 #include "IHandler.hpp"
 
 class Handler : public IHandler {
-	struct stat _fileInfo;
 
 	public:
-		Handler(void) {
-			memset(&this->_fileInfo, 0, sizeof(struct stat));
-		}
+		Handler(void) { }
 
 		std::ifstream *OpenFile(std::string path) {
 			std::ifstream *file = new std::ifstream(path.c_str());
@@ -49,21 +46,31 @@ class Handler : public IHandler {
 
 			memset(&file, 0, sizeof(struct stat));
 			if (stat(path.c_str(), &file) == 0
-				&& this->_fileInfo.st_mode & S_IFREG) {
+				&& file.st_mode & S_IFREG) {
 				return true;
 			}
 			return false;
 		}
 
-		bool IsAllowToGetFile(std::string path) {
+		bool IsAllowToGetFile(std::string path, std::string root) {
 			struct stat file;
+			std::stringstream ss(path);
+			std::string pathPiece;
+			std::string p = root;
 
-			memset(&file, 0, sizeof(struct stat));
-			if (stat(path.c_str(), &file) == 0
-				&& this->_fileInfo.st_mode & S_IRUSR) {
-				return true;
+			while (std::getline(ss, pathPiece, '/'))
+			{
+				p += pathPiece;
+				memset(&file, 0, sizeof(struct stat));
+				if (this->FileIsDirectory(p))
+					p += "/";
+				if (stat(p.c_str(), &file) != 0
+					|| (!(file.st_mode & S_IRUSR)
+					&& !(file.st_mode & S_IRGRP))) {
+					return false;
+				}
 			}
-			return false;
+			return true;
 		}
 
 		bool IsAllowToRunScript(std::string path) {
@@ -71,7 +78,7 @@ class Handler : public IHandler {
 
 			memset(&file, 0, sizeof(struct stat));
 			if (stat(path.c_str(), &file) == 0
-				&& this->_fileInfo.st_mode & S_IXUSR) {
+				&& file.st_mode & S_IXUSR) {
 				return true;
 			}
 			return false;

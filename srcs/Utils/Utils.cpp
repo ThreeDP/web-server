@@ -16,6 +16,13 @@ bool endsWithSemicolon(const std::string& str) {
     return !str.empty() && str[str.size() - 1] == ';';
 }
 
+std::string Utils::GetFileExtension(std::string path) {
+    std::size_t dot = path.find_last_of('.');
+    if (dot == std::string::npos)
+        return "";
+    return path.substr(dot);
+}
+
 // Statics Functions
 std::string Utils::getActualDir(std::string path) {
     int size = path.size();

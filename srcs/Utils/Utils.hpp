@@ -27,6 +27,7 @@ class Utils {
         static std::string	        formatTimeString(time_t	time);
         static std::string          getCurrentTimeInGMT(void);
         static void                 checkPathEnd(std::string &path, std::string append);
+        static std::string          GetFileExtension(std::string path);
 };
 
 template<typename T>

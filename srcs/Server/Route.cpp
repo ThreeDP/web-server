@@ -22,8 +22,8 @@ std::set<std::string>     *Route::CatDirectorysFiles(std::string path, std::vect
 
 RouteResponse    *Route::ProcessRoute(HttpRequest &httpReq) {
     std::string body;
-    std::string newP = this->_directory;
-    httpReq._path = this->_directory + httpReq._path;
+    std::string newP = this->_root;
+    httpReq._path = this->_root + httpReq._path;
 
     return this->ProcessRequest(httpReq);
 }
@@ -175,7 +175,7 @@ AHttpResponse *Route::checkFilePermission(HttpRequest &httpReq, int &statusCode)
 }
 
 void    Route::pathReset(std::string &path) {
-    path = this->_directory;
+    path = this->_root;
     path += this->_route_name; 
 }
 
@@ -213,7 +213,7 @@ int                         Route::GetLimitClientBodySize(void) const {
 }
 
 std::string                 Route::GetRoot(void) const {
-    return _directory;
+    return _root;
 }
 
 // Seters
@@ -243,7 +243,7 @@ Route::Route(CommonParameters *server, std::string route_name)  :
     _allow_methods(server->GetDefaultAllowMethods()),
     _error_page(std::map<int, std::string>()),
     _limit_client_body_size(2048),
-    _directory(server->GetRoot()),
+    _root(server->GetRoot()),
     _autoIndex(server->GetAutoIndex()),
     _index(server->GetIndex()),
     _stage(R_START)
@@ -260,7 +260,7 @@ Route::Route(IServer *server, std::string route_name, IHandler *handler)  :
     _allow_methods(server->GetDefaultAllowMethods()),
     _error_page(server->GetDefaultErrorPage()),
     _limit_client_body_size(server->GetLimitClientBodySize()),
-    _directory(server->GetRoot()),
+    _root(server->GetRoot()),
     _autoIndex(server->GetAutoIndex()),
     _index(server->GetIndex()),
     _stage(R_START),
@@ -289,8 +289,10 @@ std::ostream &operator<<(std::ostream &os, Route const &route) {
 }
 
 std::ostream &operator<<(std::ostream &os, RouteResponse const &route) {
-    os << "status code: " << route.StatusCode << std::endl;
+    os << std::endl;
+    os << "\tStatus Code: " << route.StatusCode << std::endl;
+    os << "\tFile Extension: " << route.FileExtension << std::endl;
     if (route.RedirectPath != "")
-        os << "redirect path: " << route.RedirectPath << std::endl;
+        os << "\tredirect path: " << route.RedirectPath << std::endl;
 	return (os);
 }

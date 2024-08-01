@@ -17,7 +17,7 @@ class IHandler {
         virtual bool                        FileExist(std::string path) = 0;
         virtual bool                        FileIsDirectory(std::string path) = 0;
         virtual bool                        FileIsRegular(std::string path) = 0;
-        virtual bool                        IsAllowToGetFile(std::string path) = 0;
+        virtual bool                        IsAllowToGetFile(std::string path, std::string root) = 0;
         virtual bool                        IsAllowToRunScript(std::string path) = 0;
 
         virtual std::set<std::string>       *ReadDirectory(DIR *directory) = 0;
