@@ -52,19 +52,21 @@ class Handler : public IHandler {
 			return false;
 		}
 
-		bool IsAllowToGetFile(std::string path, std::string root) {
+		bool IsAllowToGetFile(std::string path) {
 			struct stat file;
 			std::stringstream ss(path);
 			std::string pathPiece;
-			std::string p = root;
 
+			path = "";
 			while (std::getline(ss, pathPiece, '/'))
 			{
-				p += pathPiece;
+				path += pathPiece;
 				memset(&file, 0, sizeof(struct stat));
-				if (this->FileIsDirectory(p))
-					p += "/";
-				if (stat(p.c_str(), &file) != 0
+				std::cout << path << std::endl;
+				if (this->FileIsDirectory(path))
+					path += "/";
+				std::cout << path << std::endl;
+				if (stat(path.c_str(), &file) != 0
 					|| (!(file.st_mode & S_IRUSR)
 					&& !(file.st_mode & S_IRGRP))) {
 					return false;
@@ -84,23 +86,22 @@ class Handler : public IHandler {
 			return false;
 		}
 
-		std::set<std::string> *ReadDirectory(DIR *directory) {
-			std::set<std::string>		*dirnames = new std::set<std::string>();
+		std::vector<struct dirent *> *ReadDirectory(DIR *directory) {
+			std::vector<struct dirent *>	*dirnames = new std::vector<struct dirent *>();
 			struct dirent* entry;
 			while ((entry = readdir(directory)) != NULL) {
-				std::string fileName = entry->d_name;
-				dirnames->insert(fileName);
+				dirnames->push_back(entry);
 			}
 			return dirnames;
 		}
 
-		std::string ReadRegularFile(std::ifstream file) {
+		std::string ReadRegularFile(std::ifstream *file) {
 			std::stringstream payload;
 			std::string line;
-			while (std::getline(file, line)) {
+			while (std::getline(*file, line)) {
 				payload << line;
 			}
-			file.close();
+			file->close();
 			return payload.str();
 		}
 };

@@ -34,7 +34,7 @@ class HandlerTest : public IHandler {
             return true;
         }
 
-        bool    IsAllowToGetFile(std::string path, std::string root) {
+        bool    IsAllowToGetFile(std::string path) {
             return true;
         }
 
@@ -449,7 +449,7 @@ TEST_F(RouteTest, Handler) {
     // Arrange
     IHandler *handler2 = new Handler();
 
-    EXPECT_TRUE(handler2->IsAllowToGetFile("build/lib/libgtest.a", "../../"));
+    EXPECT_TRUE(handler2->IsAllowToGetFile("../../build/lib/libgtest.a/"));
 }
 
 int main(int argc, char **argv) {

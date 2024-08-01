@@ -27,6 +27,17 @@ class RouteResponse {
             this->FileExtension = "text";
         }
 
+        RouteResponse(std::string extensionFile, DIR *directory, int _statusCode) {
+            this->FD = NULL;
+            this->StatusCode = _statusCode;
+            this->Directory = directory;
+            this->RedirectPath = "";
+            if (extensionFile == "")
+                this->FileExtension = "text";
+            else
+                this->FileExtension = extensionFile;
+        }
+
         RouteResponse(std::string extensionFile, std::ifstream *_fd, int _statusCode) {
             this->FD = _fd;
             this->StatusCode = _statusCode;
@@ -85,7 +96,7 @@ class Route {
             std::map<int, std::string>::iterator it = this->_error_page.find(statusCode);
             if (it != this->_error_page.end()) {
                 if (!this->_handler->FileExist(it->second)) {
-                    return new RouteResponse(fd, statusCode);
+                    return new RouteResponse(".html", fd, statusCode);
                 }
                 path = this->_root + this->_error_page[statusCode];
                 fd = this->_handler->OpenFile(path);
@@ -94,24 +105,36 @@ class Route {
         }
 
         RouteResponse *ProcessRequest(HttpRequest &request) {
-            std::ifstream *fd = NULL;
+            std::ifstream   *fd = NULL;
+            std::string     absolutePath = this->_root + request.GetPath();
 
-            std::cout << request << std::endl;
+            // std::cout << request << std::endl;
+            std::cout << absolutePath << std::endl;
             if (!this->IsAllowMethod(request.GetMethod())) {
                 return this->_handlerErrorResponse(fd, 405);
             } else if (this->_limit_client_body_size < request.GetBodySize()) {
                 return this->_handlerErrorResponse(fd, 413);
             } else if (this->GetRedirectPath() != "") {
                 return new RouteResponse(fd, 308, this->GetRedirectPath());
-            } else if (!this->_handler->FileExist(request.GetPath())) {
-                return this->_handlerErrorResponse(fd, 404);
             }
-            fd = this->_handler->OpenFile(request.GetPath());
-            return new RouteResponse(
-                Utils::GetFileExtension(request.GetPath()),
-                fd,
-                200
-            );
+            if (this->_handler->IsAllowToGetFile(absolutePath))
+            {
+                if (this->_handler->FileIsDirectory(absolutePath)) {
+                    DIR *directory = this->_handler->OpenDirectory(absolutePath);
+                    return new RouteResponse(
+                        Utils::GetFileExtension(absolutePath),
+                        directory,
+                        200
+                    );
+                }
+                fd = this->_handler->OpenFile(absolutePath);
+                return new RouteResponse(
+                    Utils::GetFileExtension(absolutePath),
+                    fd,
+                    200
+                );
+            }
+            return this->_handlerErrorResponse(fd, 404);
         }
 
         std::set<std::string>       *CatDirectorysFiles(std::string path, std::vector<struct dirent *> &dirs);

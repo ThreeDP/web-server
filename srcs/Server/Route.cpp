@@ -21,10 +21,6 @@ std::set<std::string>     *Route::CatDirectorysFiles(std::string path, std::vect
 }
 
 RouteResponse    *Route::ProcessRoute(HttpRequest &httpReq) {
-    std::string body;
-    std::string newP = this->_root;
-    httpReq._path = this->_root + httpReq._path;
-
     return this->ProcessRequest(httpReq);
 }
 
