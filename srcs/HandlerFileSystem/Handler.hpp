@@ -11,12 +11,12 @@ class Handler : public IHandler {
 			memset(&this->_fileInfo, 0, sizeof(struct stat));
 		}
 
-		int OpenFile(std::string path) {
-			return -1;
-		}
-
-		std::ifstream OpenFileStream(std::string path) {
-			return std::ifstream(path.c_str());
+		std::ifstream *OpenFile(std::string path) {
+			std::ifstream *file = new std::ifstream(path.c_str());
+			if (file->is_open())
+				return file;
+			delete file;
+			return NULL;
 		}
 
 		DIR *OpenDirectory(std::string path) {
@@ -77,13 +77,14 @@ class Handler : public IHandler {
 			return false;
 		}
 
-		std::set<std::string> ReadDirectory(DIR *directory) {
+		std::set<std::string> *ReadDirectory(DIR *directory) {
 			std::set<std::string>		*dirnames = new std::set<std::string>();
 			struct dirent* entry;
 			while ((entry = readdir(directory)) != NULL) {
 				std::string fileName = entry->d_name;
 				dirnames->insert(fileName);
 			}
+			return dirnames;
 		}
 
 		std::string ReadRegularFile(std::ifstream file) {

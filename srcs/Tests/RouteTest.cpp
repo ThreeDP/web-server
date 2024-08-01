@@ -4,20 +4,50 @@
 # include "Route.hpp"
 
 class HandlerTest : public IHandler {
-    int                     OpenFile(std::string path) {
-        if (path != "") {
-            return 6;
-        }
-        return -1;
-    }
 
-    bool                    FileExist(std::string path) {
-        if (path == "/app/notfound.html") {
-            return false;
-        }
-        return true;
-    }
+    public:
+        HandlerTest(){}
 
+        DIR *OpenDirectory(std::string path) {
+            return opendir("dasjd");
+        }
+
+        std::ifstream   *OpenFile(std::string path) {
+            if (path != "")
+                return new std::ifstream();
+            return NULL;
+        }
+
+        bool    FileExist(std::string path) {
+            if (path == "/app/notfound.html") {
+                return false;
+            }
+            return true;
+        }
+
+        bool    FileIsDirectory(std::string path) {
+            return true;
+        }
+
+        bool    FileIsRegular(std::string path) {
+            return true;
+        }
+
+        bool    IsAllowToGetFile(std::string path) {
+            return true;
+        }
+
+        bool    IsAllowToRunScript(std::string path) {
+            return true;
+        }
+
+        std::set<std::string>   *ReadDirectory(DIR *directory) {
+            return new std::set<std::string>();
+        }
+
+        std::string ReadRegularFile(std::ifstream file) {
+            return "";
+        }
 };
 
 class ServerTest : public IServer {
@@ -139,7 +169,7 @@ TEST_F(RouteTest, CheckAAllowMethod) {
     // Arrange
     std::stringstream   requestString;
     IServer             *server = new ServerTest();
-    RouteResponse       *expected = new RouteResponse(6, 200);
+    RouteResponse       *expected = new RouteResponse(nullptr, 200);
     HttpRequest         request;
     std::string         route_name = "/";
     Route               route(server, route_name, handler);
@@ -151,16 +181,18 @@ TEST_F(RouteTest, CheckAAllowMethod) {
     RouteResponse *response = route.ProcessRequest(request);
 
     // Assert
-    EXPECT_EQ(expected->fd, response->fd);
-    EXPECT_EQ(expected->statusCode, response->statusCode);
     EXPECT_EQ(*expected, *response);
+    EXPECT_NE(response->FD, nullptr);
+    EXPECT_EQ(response->Directory, nullptr);
+    response->FD->close();
+    delete response->FD;
     delete response;
 }
 
 TEST_F(RouteTest, CheckNotAllowMethod) {
     // Arrange
     IServer                     *server = new ServerTest();
-    RouteResponse               *expected = new RouteResponse(-1, 405);
+    RouteResponse               *expected = new RouteResponse(nullptr, 405);
     HttpRequest                 request;
     std::string                 route_name = "/create";
     std::stringstream           requestString;
@@ -174,6 +206,8 @@ TEST_F(RouteTest, CheckNotAllowMethod) {
 
     // Assert
     EXPECT_EQ(*expected, *response);
+    EXPECT_EQ(response->FD, nullptr);
+    EXPECT_EQ(response->Directory, nullptr);
     delete response;
 }
 
@@ -181,7 +215,7 @@ TEST_F(RouteTest, CheckNotAllowMethodWithSetErrorPage) {
     // Arrange
      
     IServer                     *server = new ServerTest(405, "405.html");
-    RouteResponse               *expected = new RouteResponse(6, 405);
+    RouteResponse               *expected = new RouteResponse(nullptr, 405);
     HttpRequest                 request;
     std::string                 route_name = "/create";
     Route                       route(server, route_name, handler);
@@ -195,6 +229,10 @@ TEST_F(RouteTest, CheckNotAllowMethodWithSetErrorPage) {
 
     // Assert
     EXPECT_EQ(*expected, *response);
+    EXPECT_NE(response->FD, nullptr);
+    EXPECT_EQ(response->Directory, nullptr);
+    response->FD->close();
+    delete response->FD;
     delete response;
 }
 
@@ -202,7 +240,7 @@ TEST_F(RouteTest, CheckNotAllowMethodWithNotFoundErrorPage) {
     // Arrange
      
     IServer                     *server = new ServerTest(405, "/app/notfound.html");
-    RouteResponse               *expected = new RouteResponse(6, 404);
+    RouteResponse               *expected = new RouteResponse(nullptr, 404);
     HttpRequest                 request;
     std::string                 route_name = "/app";
     Route                       route(server, route_name, handler);
@@ -216,13 +254,17 @@ TEST_F(RouteTest, CheckNotAllowMethodWithNotFoundErrorPage) {
 
     // Assert
     EXPECT_EQ(*expected, *response);
+    EXPECT_NE(response->FD, nullptr);
+    EXPECT_EQ(response->Directory, nullptr);
+    response->FD->close();
+    delete response->FD;
     delete response;
 }
 
 TEST_F(RouteTest, CheckAPayloadTooLarge) {
     // Arrange
     IServer                     *server = new ServerTest();
-    RouteResponse               *expected = new RouteResponse(-1, 413);
+    RouteResponse               *expected = new RouteResponse(nullptr, 413);
     HttpRequest                 request;
     std::stringstream           body;
     std::string                 route_name = "/create-page";
@@ -253,13 +295,15 @@ TEST_F(RouteTest, CheckAPayloadTooLarge) {
 
     // Assert
     EXPECT_EQ(*expected, *response);
+    EXPECT_EQ(response->FD, nullptr);
+    EXPECT_EQ(response->Directory, nullptr);
     delete response;
 }
 
 TEST_F(RouteTest, CheckAPayloadTooLargeWithErrorPageSetup) {
     // Arrange
     IServer                     *server = new ServerTest(413, "413.html");
-    RouteResponse               *expected = new RouteResponse(6, 413);
+    RouteResponse               *expected = new RouteResponse(nullptr, 413);
     HttpRequest                 request;
     std::stringstream           body;
     std::string                 route_name = "/create-page";
@@ -290,13 +334,17 @@ TEST_F(RouteTest, CheckAPayloadTooLargeWithErrorPageSetup) {
 
     // Assert
     EXPECT_EQ(*expected, *response);
+    EXPECT_NE(response->FD, nullptr);
+    EXPECT_EQ(response->Directory, nullptr);
+    response->FD->close();
+    delete response->FD;
     delete response;
 }
 
-TEST_F(RouteTest, CheckAPayloadTooLargeWithNotFoundErrorPage) {
+TEST_F(RouteTest, CheckAPayloadTooLargeWithErrorPageSetupNotFound) {
     // Arrange
     IServer                     *server = new ServerTest(413, "/app/notfound.html");
-    RouteResponse               *expected = new RouteResponse(6, 404);
+    RouteResponse               *expected = new RouteResponse(nullptr, 404);
     HttpRequest                 request;
     std::stringstream           body;
     std::string                 route_name = "/app";
@@ -327,13 +375,17 @@ TEST_F(RouteTest, CheckAPayloadTooLargeWithNotFoundErrorPage) {
 
     // Assert
     EXPECT_EQ(*expected, *response);
+    EXPECT_NE(response->FD, nullptr);
+    EXPECT_EQ(response->Directory, nullptr);
+    response->FD->close();
+    delete response->FD;
     delete response;
 }
 
 TEST_F(RouteTest, CheckARedirect) {
     // Arrange
     IServer                     *server = new ServerTest();
-    RouteResponse               *expected = new RouteResponse(-1, 308, "/new-path");
+    RouteResponse               *expected = new RouteResponse(nullptr, 308, "/new-path");
     HttpRequest                 request;
     std::stringstream           requestString;
     std::string                 route_name = "/rewrite";
@@ -347,13 +399,15 @@ TEST_F(RouteTest, CheckARedirect) {
 
     // Assert
     EXPECT_EQ(*expected, *response);
+    EXPECT_EQ(response->FD, nullptr);
+    EXPECT_EQ(response->Directory, nullptr);
     delete response;
 }
 
 TEST_F(RouteTest, CheckANotFoundFile) {
     // Arrange
     IServer                     *server = new ServerTest();
-    RouteResponse               *expected = new RouteResponse(6, 404);
+    RouteResponse               *expected = new RouteResponse(nullptr, 404);
     HttpRequest                 request;
     std::stringstream           requestString;
     std::string                 route_name = "/app";
@@ -367,13 +421,17 @@ TEST_F(RouteTest, CheckANotFoundFile) {
 
     // Assert
     EXPECT_EQ(*expected, *response);
+    EXPECT_NE(response->FD, nullptr);
+    EXPECT_EQ(response->Directory, nullptr);
+    response->FD->close();
+    delete response->FD;
     delete response;
 }
 
 TEST_F(RouteTest, CheckANotFoundFileWithNotFoundErrorPage) {
     // Arrange
     IServer                     *server = new ServerTest(404, "/app/notfound.html");
-    RouteResponse               *expected = new RouteResponse(-1, 404);
+    RouteResponse               *expected = new RouteResponse(nullptr, 404);
     HttpRequest                 request;
     std::stringstream           requestString;
     std::string                 route_name = "/app";
@@ -387,6 +445,8 @@ TEST_F(RouteTest, CheckANotFoundFileWithNotFoundErrorPage) {
 
     // Assert
     EXPECT_EQ(*expected, *response);
+    EXPECT_EQ(response->FD, nullptr);
+    EXPECT_EQ(response->Directory, nullptr);
     delete response;
 }
 

@@ -13,19 +13,19 @@
 class RouteResponse {
     
     public:
-        int             FD;
+        std::ifstream   *FD;
         int             StatusCode;
         std::string     RedirectPath;
         DIR             *Directory;
         
-        RouteResponse(int _fd, int _statusCode) {
+        RouteResponse(std::ifstream *_fd, int _statusCode) {
             this->FD = _fd;
             this->StatusCode = _statusCode;
             this->Directory = NULL;
             this->RedirectPath = "";
         }
 
-        RouteResponse(int _fd, int _statusCode, std::string redirectPath) {
+        RouteResponse(std::ifstream *_fd, int _statusCode, std::string redirectPath) {
             this->FD = _fd;
             this->StatusCode = _statusCode;
             this->RedirectPath = redirectPath;
@@ -33,9 +33,8 @@ class RouteResponse {
         }
 
         bool operator==(const RouteResponse &other) const {
-            return FD == other.FD &&
+            return
                 StatusCode == other.StatusCode &&
-                Directory == other.Directory &&
                 RedirectPath == other.RedirectPath;
         }
 };
@@ -66,7 +65,7 @@ class Route {
 
         // Route Methods
 
-        RouteResponse *_handlerErrorResponse(int fd, int statusCode) {
+        RouteResponse *_handlerErrorResponse(std::ifstream *fd, int statusCode) {
             static bool isNotFound = false;
             std::map<int, std::string>::iterator it = this->_error_page.find(statusCode);
             if (it != this->_error_page.end() && !isNotFound) {
@@ -82,7 +81,7 @@ class Route {
         }
 
         RouteResponse *ProcessRequest(HttpRequest &request) {
-            int fd = -1;
+            std::ifstream *fd = NULL;
             if (!this->IsAllowMethod(request.GetMethod())) {
                 return this->_handlerErrorResponse(fd, 405);
             }

@@ -289,10 +289,8 @@ std::ostream &operator<<(std::ostream &os, Route const &route) {
 }
 
 std::ostream &operator<<(std::ostream &os, RouteResponse const &route) {
-    os << "fd: " << route.fd << std::endl;
-    os << "status code: " << route.statusCode << std::endl;
-    os << "is a directory: " << route.isDirectory << std::endl;
-    if (route.redirectPath != "")
-        os << "redirect path: " << route.redirectPath << std::endl;
+    os << "status code: " << route.StatusCode << std::endl;
+    if (route.RedirectPath != "")
+        os << "redirect path: " << route.RedirectPath << std::endl;
 	return (os);
 }

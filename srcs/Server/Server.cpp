@@ -78,8 +78,8 @@ int Server::AcceptClientConnect(void) {
 std::string         Server::ProcessResponse(int client_fd) {
     RouteResponse *routeResponse = this->ClientsResponse[client_fd];
     AHttpResponse *response = NULL;
-    if (routeResponse->fd != -1) {
-        switch (routeResponse->statusCode) {
+    if (routeResponse->FD != NULL) {
+        switch (routeResponse->StatusCode) {
             case 200:
                 response = new Response200OK(".html");
                 break;

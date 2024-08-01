@@ -101,7 +101,7 @@ test_rund:
 
 testd: t_clean $(GOOGLE_TEST) test_build test_rund
 
-test: t_clean $(GOOGLE_TEST) test_build test_run
+test: $(GOOGLE_TEST) test_build test_run
 
 t_clean:
 	@			rm -rf $(TEST_BUILD)
