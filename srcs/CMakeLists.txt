@@ -24,8 +24,10 @@ set(HEADERS
     Server/Http.hpp
     Server/HttpRequest.hpp
     Server/HttpResponse.hpp
+    Server/RouteResponse.hpp
     Utils/Utils.hpp
     HandlerFileSystem/IHandler.hpp
+    HandlerFileSystem/Handler.hpp
     Server/Response/IAHttpResponse.hpp
     Server/Response/AHttpResponse.hpp
     Server/Response/Response200OK.hpp
@@ -42,11 +44,13 @@ set(SOURCE_FILES
     Server/Http.cpp
     Server/HttpRequest.cpp
     Server/HttpResponse.cpp
+    Server/RouteResponse.cpp
     Utils/Utils.cpp
     Server/Response/AHttpResponse.cpp
     Server/Response/Response200OK.cpp
     Server/Response/Response201Created.cpp
     Server/Response/Response404NotFound.cpp
+    HandlerFileSystem/Handler.cpp
 )
 
 add_library(${PROJECT_NAME} STATIC ${SOURCE_FILES})

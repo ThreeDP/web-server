@@ -9,63 +9,8 @@
 # include "IHandler.hpp"
 # include "Response200OK.hpp"
 //# include "HttpResponse.hpp"
+# include "RouteResponse.hpp"
 
-class RouteResponse {
-    
-    public:
-        std::ifstream   *FD;
-        int             StatusCode;
-        std::string     RedirectPath;
-        DIR             *Directory;
-        std::string     FileExtension;
-        
-        RouteResponse(std::ifstream *_fd, int _statusCode) {
-            this->FD = _fd;
-            this->StatusCode = _statusCode;
-            this->Directory = NULL;
-            this->RedirectPath = "";
-            this->FileExtension = "text";
-        }
-
-        RouteResponse(std::string extensionFile, DIR *directory, int _statusCode) {
-            this->FD = NULL;
-            this->StatusCode = _statusCode;
-            this->Directory = directory;
-            this->RedirectPath = "";
-            if (extensionFile == "")
-                this->FileExtension = "text";
-            else
-                this->FileExtension = extensionFile;
-        }
-
-        RouteResponse(std::string extensionFile, std::ifstream *_fd, int _statusCode) {
-            this->FD = _fd;
-            this->StatusCode = _statusCode;
-            this->Directory = NULL;
-            this->RedirectPath = "";
-            if (extensionFile == "")
-                this->FileExtension = "text";
-            else
-                this->FileExtension = extensionFile;
-        }
-
-        RouteResponse(std::ifstream *_fd, int _statusCode, std::string redirectPath) {
-            this->FD = _fd;
-            this->StatusCode = _statusCode;
-            this->RedirectPath = redirectPath;
-            this->Directory = NULL;
-            this->FileExtension = "text";
-        }
-
-        bool operator==(const RouteResponse &other) const {
-            return
-                StatusCode == other.StatusCode &&
-                RedirectPath == other.RedirectPath &&
-                FileExtension == other.FileExtension;
-        }
-};
-
-std::ostream &operator<<(std::ostream &os, RouteResponse const &route);
 
 enum RouteStages {
     R_START,
@@ -123,8 +68,8 @@ class Route {
                     DIR *directory = this->_handler->OpenDirectory(absolutePath);
                     return new RouteResponse(
                         Utils::GetFileExtension(absolutePath),
-                        directory,
-                        200
+                        200,
+                        directory
                     );
                 }
                 fd = this->_handler->OpenFile(absolutePath);

@@ -36,24 +36,24 @@ HttpResponse::~HttpResponse(void) {
 
 }
 
-HttpResponse::HttpResponse(std::string body, std::string statusCode, std::string contentType)
-    : _HTTPVersion("HTTP/1.1"), _StatusCode(statusCode),
-    _Status("OK") {
-    this->_payload["Content-Type:"] = contentType;
-    std::stringstream num;
-    num << body.size() + 2;
-    this->_payload["Content-Length:"] = std::string(num.str());
-    this->_payload["Date:"] = this->GetTimeNow();
-    this->_Body = body;
-}
+// HttpResponse::HttpResponse(std::string body, std::string statusCode, std::string contentType)
+//     : _HTTPVersion("HTTP/1.1"), _StatusCode(statusCode),
+//     _Status("OK") {
+//     this->_payload["Content-Type:"] = contentType;
+//     std::stringstream num;
+//     num << body.size() + 2;
+//     this->_payload["Content-Length:"] = std::string(num.str());
+//     this->_payload["Date:"] = this->GetTimeNow();
+//     this->_Body = body;
+// }
 
-HttpResponse::HttpResponse(RouteResponse &rr)
-    : _HTTPVersion("HTTP/1.1"), _StatusCode(rr.getStatusCode()),
-    _Status(rr.getStatusName()) {
-    this->_payload["Content-Type:"] = rr.getContentType();
-    std::stringstream num;
-    num << rr.getBody().size() + 2;
-    this->_payload["Content-Length:"] = std::string(num.str());
-    this->_payload["Date:"] = this->GetTimeNow();
-    this->_Body = rr.getBody();
-}
+// HttpResponse::HttpResponse(RouteResponse &rr)
+//     : _HTTPVersion("HTTP/1.1"), _StatusCode(rr.getStatusCode()),
+//     _Status(rr.getStatusName()) {
+//     this->_payload["Content-Type:"] = rr.getContentType();
+//     std::stringstream num;
+//     num << rr.getBody().size() + 2;
+//     this->_payload["Content-Length:"] = std::string(num.str());
+//     this->_payload["Date:"] = this->GetTimeNow();
+//     this->_Body = rr.getBody();
+// }

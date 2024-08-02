@@ -42,11 +42,11 @@ class HandlerTest : public IHandler {
             return true;
         }
 
-        std::set<std::string>   *ReadDirectory(DIR *directory) {
-            return new std::set<std::string>();
+        std::vector<struct dirent *>   *ReadDirectory(DIR *directory) {
+            return new std::vector<struct dirent *>();
         }
 
-        std::string ReadRegularFile(std::ifstream file) {
+        std::string ReadRegularFile(std::ifstream *file) {
             return "";
         }
 };
@@ -241,7 +241,7 @@ TEST_F(RouteTest, CheckNotAllowMethodWithNotFoundErrorPage) {
     // Arrange
      
     IServer                     *server = new ServerTest(405, "/app/notfound.html");
-    RouteResponse               *expected = new RouteResponse(nullptr, 405);
+    RouteResponse               *expected = new RouteResponse(".html", nullptr, 405);
     HttpRequest                 request;
     std::string                 route_name = "/app";
     Route                       route(server, route_name, handler);
@@ -342,7 +342,7 @@ TEST_F(RouteTest, CheckAPayloadTooLargeWithErrorPageSetup) {
 TEST_F(RouteTest, CheckAPayloadTooLargeWithErrorPageSetupNotFound) {
     // Arrange
     IServer                     *server = new ServerTest(413, "/app/notfound.html");
-    RouteResponse               *expected = new RouteResponse(nullptr, 413);
+    RouteResponse               *expected = new RouteResponse(".html", nullptr, 413);
     HttpRequest                 request;
     std::stringstream           body;
     std::string                 route_name = "/app";
@@ -416,17 +416,17 @@ TEST_F(RouteTest, CheckANotFoundFile) {
 
     // Assert
     EXPECT_EQ(*expected, *response);
-    EXPECT_NE(response->FD, nullptr);
+    EXPECT_EQ(response->FD, nullptr);
     EXPECT_EQ(response->Directory, nullptr);
-    response->FD->close();
-    delete response->FD;
+    // response->FD->close();
+    // delete response->FD;
     delete response;
 }
 
 TEST_F(RouteTest, CheckANotFoundFileWithNotFoundErrorPage) {
     // Arrange
     IServer                     *server = new ServerTest(404, "/app/notfound.html");
-    RouteResponse               *expected = new RouteResponse(nullptr, 404);
+    RouteResponse               *expected = new RouteResponse(".html", nullptr, 404);
     HttpRequest                 request;
     std::stringstream           requestString;
     std::string                 route_name = "/app";

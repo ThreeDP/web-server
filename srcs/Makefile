@@ -21,13 +21,13 @@ HEADERS										=	Server/ \
 												Parser/ \
 												Server/Response
 INCLUDE_FLAGS 								:= 	-g3 -O3 -MMD -MP $(addprefix -I, $(HEADERS))
-VPATH										=	Server/:Utils/:Parser/:Server/Response
+VPATH										=	Server/:Utils/:Parser/:Server/Response:HandlerFileSystem
 
 ######################## FLAGS ###############################
 FLAGS										= 	-Wall -Wextra -std=c++98
 ######################## SOURCES #############################
 SRC_SERVER									=	Route.cpp Server.cpp
-SRC_PARSER									=	Parser.cpp
+SRC_PARSER									=	Parser.cpp Handler.cpp
 SRC_RESPONSE								=	AHttpResponse.cpp \
 												Response200OK.cpp \
 												Response201Created.cpp \

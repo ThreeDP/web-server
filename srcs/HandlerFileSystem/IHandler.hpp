@@ -2,9 +2,13 @@
 # define __IHANDLER_HPP__
 
 # include <iostream>
+# include <fstream>
 # include <sys/stat.h>
 # include <sys/types.h>
 # include <dirent.h>
+# include <vector>
+# include <cstring>
+# include <sstream>
 
 class IHandler {
     public:
