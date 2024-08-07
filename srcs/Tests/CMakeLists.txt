@@ -11,6 +11,7 @@ set(ParserSources parser_test.cpp)
 set(ResponseSources ResponseTest.cpp)
 set(RequestSources RequestTest.cpp)
 set(RouteSources RouteTest.cpp)
+set(UtilsSources UtilsTest.cpp)
 project(${Name})
 
 enable_testing()
@@ -37,6 +38,11 @@ add_executable(
   	${RouteSources}
 )
 
+add_executable(
+	UtilsTest
+	${UtilsSources}
+)
+
 target_link_libraries(
 	ParserTest
 	WebServer
@@ -61,7 +67,14 @@ target_link_libraries(
   	GTest::gtest_main
 )
 
+target_link_libraries(
+	UtilsTest
+	WebServer
+	GTest::gtest_main
+)
+
 gtest_discover_tests(ParserTest)
 gtest_discover_tests(ResponseTest)
 gtest_discover_tests(RequestTest)
 gtest_discover_tests(RouteTest)
+gtest_discover_tests(UtilsTest)

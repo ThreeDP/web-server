@@ -38,23 +38,22 @@ class Route {
 
         RouteResponse *_handlerErrorResponse(std::ifstream *fd, int statusCode) {
             std::string path;
-            std::map<int, std::string>::iterator it = this->_error_page.find(statusCode);
-            if (it != this->_error_page.end()) {
-                if (!this->_handler->FileExist(it->second)) {
-                    return new RouteResponse(".html", fd, statusCode);
+            bool hasErrorPage = (path = this->GetErrorPage(statusCode)) != "";
+            path = Utils::SanitizePath(this->_root, path);
+            if (hasErrorPage && this->_handler->FileExist(path)) {
+                if (this->_handler->IsAllowToGetFile(path)) {
+                    fd = this->_handler->OpenFile(path);
+                    return new RouteResponse(Utils::GetFileExtension(path), fd, statusCode);
                 }
-                path = this->_root + this->_error_page[statusCode];
-                fd = this->_handler->OpenFile(path);
             }
-            return new RouteResponse(Utils::GetFileExtension(path), fd, statusCode);
+            return new RouteResponse(".html", fd, statusCode);
         }
 
         RouteResponse *ProcessRequest(HttpRequest &request) {
             std::ifstream   *fd = NULL;
-            std::string     absolutePath = this->_root + request.GetPath();
-
-            // std::cout << request << std::endl;
-            std::cout << absolutePath << std::endl;
+            std::string     absolutePath;
+            
+            absolutePath = Utils::SanitizePath(this->_root, request.GetPath());
             if (!this->IsAllowMethod(request.GetMethod())) {
                 return this->_handlerErrorResponse(fd, 405);
             } else if (this->_limit_client_body_size < request.GetBodySize()) {
@@ -62,16 +61,9 @@ class Route {
             } else if (this->GetRedirectPath() != "") {
                 return new RouteResponse(fd, 308, this->GetRedirectPath());
             }
+            std::cout << absolutePath << std::endl;
             if (this->_handler->IsAllowToGetFile(absolutePath))
             {
-                if (this->_handler->FileIsDirectory(absolutePath)) {
-                    DIR *directory = this->_handler->OpenDirectory(absolutePath);
-                    return new RouteResponse(
-                        Utils::GetFileExtension(absolutePath),
-                        200,
-                        directory
-                    );
-                }
                 fd = this->_handler->OpenFile(absolutePath);
                 return new RouteResponse(
                     Utils::GetFileExtension(absolutePath),

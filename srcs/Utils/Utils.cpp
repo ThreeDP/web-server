@@ -79,3 +79,14 @@ void   Utils::checkPathEnd(std::string &path, std::string append) {
         path += append;
     }
 }
+
+std::string Utils::SanitizePath(std::string root, std::string path) {
+    std::stringstream response;
+    
+    if (root.length() > 0 && root[root.length() - 1] == '/' && path.length() > 0 && path[0] == '/')
+        path = path.substr(1);
+    else if (root.length() > 0 && root[root.length() - 1] != '/' && path.length() > 0 && path[0] != '/')
+        path = "/" + path;
+    response << root << path;
+    return response.str();
+}

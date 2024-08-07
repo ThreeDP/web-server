@@ -26,6 +26,7 @@ class IHandler {
 
         virtual std::vector<struct dirent *>    *ReadDirectory(DIR *directory) = 0;
         virtual std::string                     ReadRegularFile(std::ifstream *file) = 0;
+        virtual ~IHandler(void) {}
         // virtual int                     GetFilePermission(std::string path) = 0;
         // virtual bool                    IsDirectory(std::string path) = 0;
         // virtual bool                    IsFile(std::string path) = 0;
