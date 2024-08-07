@@ -5,8 +5,9 @@
 # include <set>
 # include <map>
 # include <vector>
+# include "IServer.hpp"
 
-class CommonParameters {
+class CommonParameters : public IServer {
 	protected:
 		std::string                             _listen_host;
         unsigned short                          _listen_port;

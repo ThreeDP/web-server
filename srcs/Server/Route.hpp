@@ -4,9 +4,13 @@
 # include "define.hpp"
 # include "Utils.hpp"
 # include "CommonParameters.hpp"
-# include "RouteResponse.hpp"
+# include "AHttpResponse.hpp"
 # include "HttpRequest.hpp"
-# include "HttpResponse.hpp"
+# include "IHandler.hpp"
+# include "Response200OK.hpp"
+//# include "HttpResponse.hpp"
+# include "RouteResponse.hpp"
+
 
 enum RouteStages {
     R_START,
@@ -15,32 +19,90 @@ enum RouteStages {
 
 class Route {
     private:
+        IHandler                                    *_handler;
         std::string                                 _route_name;
         std::set<std::string>                       *_allow_methods;
         std::map<int, std::string>                  _error_page;
         int                                         _limit_client_body_size;
         std::string                                 _redirectPath;
-        std::string                                 _directory;
+        std::string                                 _root;
         bool                                        _autoIndex;
         std::set<std::string>                       &_index;
         
+        AHttpResponse               *_fondStatusResponse(int statusCode, std::string extension);
+
     public:
         RouteStages                                 _stage;
 
         // Route Methods
 
+        RouteResponse *_handlerErrorResponse(std::ifstream *fd, int statusCode) {
+            std::string path;
+            bool hasErrorPage = (path = this->GetErrorPage(statusCode)) != "";
+            path = Utils::SanitizePath(this->_root, path);
+            if (hasErrorPage && this->_handler->FileExist(path)) {
+                if (this->_handler->IsAllowToGetFile(path)) {
+                    fd = this->_handler->OpenFile(path);
+                    return new RouteResponse(Utils::GetFileExtension(path), fd, statusCode);
+                }
+            }
+            return new RouteResponse(".html", fd, statusCode);
+        }
+
+        RouteResponse *ProcessRequest(HttpRequest &request) {
+            std::ifstream   *fd = NULL;
+            std::string     absolutePath;
+            
+            absolutePath = Utils::SanitizePath(this->_root, request.GetPath());
+            if (!this->IsAllowMethod(request.GetMethod())) {
+                return this->_handlerErrorResponse(fd, 405);
+            } else if (this->_limit_client_body_size < request.GetBodySize()) {
+                return this->_handlerErrorResponse(fd, 413);
+            } else if (this->GetRedirectPath() != "") {
+                return new RouteResponse(fd, 308, this->GetRedirectPath());
+            }
+            if (this->_handler->PathExist(absolutePath))
+            {
+                bool allow = this->_handler->IsAllowToGetFile(absolutePath);
+                if (allow && this->_handler->FileIsDirectory(absolutePath))
+                {
+                    DIR *dir = this->_handler->OpenDirectory(absolutePath);
+                    return new RouteResponse(
+                        ".html",
+                        200,
+                        dir
+                    );
+                } else if (allow) {
+                    fd = this->_handler->OpenFile(absolutePath);
+                    return new RouteResponse(
+                        Utils::GetFileExtension(absolutePath),
+                        fd,
+                        200
+                    );
+                } else if (!allow) {
+                    return this->_handlerErrorResponse(fd, 403);
+                }
+            }
+            return this->_handlerErrorResponse(fd, 404);
+        }
+
         std::set<std::string>       *CatDirectorysFiles(std::string path, std::vector<struct dirent *> &dirs);
-        RouteResponse               *ProcessRoute(HttpRequest &httpReq);
+        RouteResponse              *ProcessRoute(HttpRequest &httpReq);
         std::string                 ReturnFileRequest(std::string path);
         mode_t                      CatFileMode(std::string &path, int &statusCode);
         bool                        FindFilePattern(std::string &path, std::set<std::string> *dirs);
-        RouteResponse               *DetermineOutputFile(HttpRequest &httpReq);
+        AHttpResponse               *DetermineOutputFile(HttpRequest &httpReq);
         std::string                 GenerateAutoindex(std::vector<struct dirent *> dirs, std::string path);
-        RouteResponse               *checkFilePermission(HttpRequest &httpReq, int &statusCode);
+        AHttpResponse               *checkFilePermission(HttpRequest &httpReq, int &statusCode);
         
         // Geters
-
         std::string                 GetRedirectPath(void);
+        std::string                 GetErrorPage(int statusCode);
+        bool                        IsAllowMethod(std::string method);
+        int                         GetLimitClientBodySize(void) const;
+        std::string                 GetRoot(void) const;
+        std::set<std::string>       GetFilesForIndex(void) const;
+
         std::set<std::string>       *GetAllowMethods(void);
         std::map<int, std::string>  GetErrorPage(void);
         void                        pathReset(std::string &path);
@@ -54,7 +116,8 @@ class Route {
 
         // Base methods
 
-        Route(CommonParameters *server, std::string server_name);
+        Route(CommonParameters *server, std::string route_name);
+        Route(IServer *server, std::string route_name, IHandler *handler);
 
         class Except: virtual public std::exception {
 			protected:

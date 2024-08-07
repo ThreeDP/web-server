@@ -72,14 +72,71 @@ int Server::AcceptClientConnect(void) {
     return this->_actualClientFD;
 }
 
+
+std::string Server::GenerateAutoindex(std::vector<struct dirent *> *dirs, std::string path) {
+    std::stringstream   body;
+
+    std::string actualDir = "Utils::getActualDir(path);";
+    body << "<html data-lt-installed=\"true\">" << "\r\n";
+    body << "<head>\r\n";
+    body << "\t<title>Index of " << actualDir << "</title>\r\n";
+    body << "</head>\r\n";
+    body << "<body>\r\n";
+    body << "\t<h1>index of " << actualDir << "</h1>\r\n";
+    body << "\t<hr>\r\n";
+    body << "\t<pre>\r\n";
+    std::vector<struct dirent *>::iterator it = dirs->begin();
+    for (; it != dirs->end(); ++it) {
+        std::string filePath = path + std::string((*it)->d_name);
+        if ((*it)->d_type == DT_DIR && std::string((*it)->d_name) != ".." && std::string((*it)->d_name) != ".")
+            body << "\t\t<a href=\"" << (*it)->d_name << "/\">" << (*it)->d_name << "/</a>\r\n";
+        else
+            body << "\t\t<a href=\"" << (*it)->d_name << "\">" << (*it)->d_name << "</a>\r\n";
+        body << "\t\t" << Utils::getLastModifiedOfFile(filePath) << " " << Utils::getFileSize(filePath) << "\r\n";
+    }
+    body << "\t</prev>\r\n";
+    body << "\t<hr>\r\n";
+    body << "</body>\r\n";
+    body << "</html>";
+    return body.str();
+}
 /* Server Process
 =======================================*/
 
 std::string         Server::ProcessResponse(int client_fd) {
-    std::string response = this->ClientsResponse[client_fd].CreateResponse();
+    RouteResponse *routeResponse = this->ClientsResponse[client_fd];
+    AHttpResponse *response = NULL;
+    std::string     body = "";
+    if (routeResponse->FD)
+        body = this->_handler->ReadRegularFile(routeResponse->FD);
+    if (routeResponse->Directory) {
+        std::vector<struct dirent *> *directories = this->_handler->ReadDirectory(routeResponse->Directory);
+        body = this->GenerateAutoindex(directories, "");
+        // delete directories;
+    }
+    switch (routeResponse->StatusCode) {
+        case 200:
+            if (!routeResponse->FD && !routeResponse->Directory)
+                response = new Response200OK(routeResponse->FileExtension);
+            else
+                response = new Response200OK(routeResponse->FileExtension, body);
+            break;
+        case 404:
+            if (!routeResponse->FD && !routeResponse->Directory)
+                response = new Response404NotFound(routeResponse->FileExtension);
+            else
+                response = new Response404NotFound(routeResponse->FileExtension, body);
+            break;
+        default:
+            if (!routeResponse->FD && !routeResponse->Directory)
+                response = new Response201Created(routeResponse->FileExtension, "");
+            else
+                response = new Response201Created(routeResponse->FileExtension, "", body);
+            break;
+    }
     this->ClientsResponse.erase(client_fd);
     this->UpdateState(S_SERVER_RESPONSE, client_fd);
-    return response;
+    return response->ToString();
 }
 
 std::string         Server::FindMatchRoute(HttpRequest &res) {
@@ -104,14 +161,23 @@ std::string         Server::FindMatchRoute(HttpRequest &res) {
 
 void                Server::ProcessRequest(std::string buffer, int client_fd) {
     HttpRequest     res;
-    std::string keyPath; 
+    std::string keyPath;
+    std::cout << "OLHA O BUFFER: " << buffer << std::endl;
     res.ParserRequest(buffer);
 
     this->UpdateState(S_CLIENT_REQUEST, client_fd);
-    std::cout << *this;
-    keyPath = this->FindMatchRoute(res);
-    RouteResponse *routeRes = this->routes[keyPath]->ProcessRoute(res);
-    this->ClientsResponse[client_fd] = HttpResponse(*routeRes);
+    // std::cout << *this;
+    // keyPath = this->FindMatchRoute(res);
+    RouteResponse *routeRes = this->routes["/"]->ProcessRoute(res);
+    this->ClientsResponse[client_fd] = routeRes;
+}
+
+void                Server::ProcessRequest(HttpRequest &request, int client_fd) {
+    this->UpdateState(S_CLIENT_REQUEST, client_fd);
+    // std::cout << *this;
+    std::string keyPath = this->FindMatchRoute(request);
+    RouteResponse *routeRes = this->routes[keyPath]->ProcessRequest(request);
+    this->ClientsResponse[client_fd] = routeRes;
 }
 
 /* Geters
@@ -215,6 +281,22 @@ Server::Server(std::string name) : CommonParameters(){
     this->_index.insert("new.html");
     this->_autoindex = false;
     this->_stage = S_START;
+    std::cout << *this;
+}
+
+Server::Server(std::string name, IHandler *handler) : CommonParameters(){
+    this->_default_error_page[403] = "/errors/403.html";
+    this->_default_error_page[404] = "/404.html";
+    this->_default_error_page[500] = "/50x.html";
+    this->_default_error_page[502] = "/50x.html";
+    this->_default_error_page[503] = "/50x.html";
+    this->_default_error_page[504] = "/50x.html";
+    this->_root = "../home";
+    this->_index.insert("index.html");
+    this->_index.insert("new.html");
+    this->_autoindex = false;
+    this->_stage = S_START;
+    this->_handler = handler;
     std::cout << *this;
 }
 

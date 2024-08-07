@@ -21,11 +21,7 @@ std::set<std::string>     *Route::CatDirectorysFiles(std::string path, std::vect
 }
 
 RouteResponse    *Route::ProcessRoute(HttpRequest &httpReq) {
-    std::string body;
-    std::string newP = this->_directory;
-    httpReq._path = this->_directory + httpReq._path;
-
-    return this->DetermineOutputFile(httpReq);
+    return this->ProcessRequest(httpReq);
 }
 
 std::string Route::ReturnFileRequest(std::string path) {
@@ -105,11 +101,11 @@ std::string Route::GenerateAutoindex(std::vector<struct dirent *> dirs, std::str
     return body.str();
 }
 
-RouteResponse *Route::DetermineOutputFile(HttpRequest &httpReq) {
+AHttpResponse *Route::DetermineOutputFile(HttpRequest &httpReq) {
     std::stringstream   body;
     int                 statusCode = 200;
     bool                exitCheck = false;
-    RouteResponse       *res = NULL;
+    AHttpResponse       *res = NULL;
 
     this->_stage = R_REQUEST;
     std::cout << *this; 
@@ -126,7 +122,7 @@ RouteResponse *Route::DetermineOutputFile(HttpRequest &httpReq) {
                     body << GenerateAutoindex(dirs, httpReq._path);
                     delete dirNames;
                     exitCheck = true;
-                    res = new RouteResponse(body.str(), statusCode);
+                    res = new Response200OK("text/html", body.str());
                 }
             }
             break;
@@ -136,12 +132,14 @@ RouteResponse *Route::DetermineOutputFile(HttpRequest &httpReq) {
             if (statusCode == 200) {
                 body << this->ReturnFileRequest(httpReq._path);
                 exitCheck = true;
-                res = new RouteResponse(body.str(), statusCode);
+                res = new Response200OK("text/html", body.str());
             }
             break;
         default:
             exitCheck = true;
-            res = new RouteResponse(statusCode);
+            std::stringstream code;
+            code << statusCode;
+            res = new AHttpResponse(code.str(), "text/html");
             break;
         }
         if (exitCheck)
@@ -150,7 +148,7 @@ RouteResponse *Route::DetermineOutputFile(HttpRequest &httpReq) {
     return res;
 }
 
-RouteResponse *Route::checkFilePermission(HttpRequest &httpReq, int &statusCode) {
+AHttpResponse *Route::checkFilePermission(HttpRequest &httpReq, int &statusCode) {
     struct stat sb;
 
     memset(&sb, 0, sizeof(struct stat));
@@ -159,7 +157,9 @@ RouteResponse *Route::checkFilePermission(HttpRequest &httpReq, int &statusCode)
         statusCode = 403;
         std::map<int, std::string>::iterator it = this->_error_page.find(statusCode);
         if (it == this->_error_page.end()) {
-            return new RouteResponse(statusCode);
+            std::stringstream code;
+            code << statusCode;
+            return new AHttpResponse(code.str(), "text/html");
         } else {
             this->pathReset(httpReq._path);
             Utils::checkPathEnd(httpReq._path, it->second);
@@ -171,7 +171,7 @@ RouteResponse *Route::checkFilePermission(HttpRequest &httpReq, int &statusCode)
 }
 
 void    Route::pathReset(std::string &path) {
-    path = this->_directory;
+    path = this->_root;
     path += this->_route_name; 
 }
 
@@ -186,6 +186,30 @@ std::string Route::GetRedirectPath(void) {
 
 std::map<int, std::string>  Route::GetErrorPage(){
     return this->_error_page;
+}
+
+std::string                 Route::GetErrorPage(int statusCode) {
+    std::map<int, std::string>::iterator it = _error_page.find(statusCode);
+    if (it != _error_page.end()) {
+        return _error_page[statusCode];
+    }
+    return "";
+}
+
+bool                        Route::IsAllowMethod(std::string method) {
+    std::set<std::string>::iterator it = _allow_methods->find(method);
+    if (it != _allow_methods->end()) {
+        return true;
+    }
+    return false;
+}
+
+int                         Route::GetLimitClientBodySize(void) const {
+    return _limit_client_body_size;
+}
+
+std::string                 Route::GetRoot(void) const {
+    return _root;
 }
 
 // Seters
@@ -206,20 +230,42 @@ std::string                 Route::GetRouteName(void) const {
     return this->_route_name;
 }
 
+std::set<std::string>       Route::GetFilesForIndex(void) const {
+    return _index;
+}
+
 // Base Methods
-Route::Route(CommonParameters *server, std::string server_name)  : 
+Route::Route(CommonParameters *server, std::string route_name)  : 
     _allow_methods(server->GetDefaultAllowMethods()),
     _error_page(std::map<int, std::string>()),
     _limit_client_body_size(2048),
-    _directory(server->GetRoot()),
+    _root(server->GetRoot()),
     _autoIndex(server->GetAutoIndex()),
     _index(server->GetIndex()),
     _stage(R_START)
 {
-    std::map<std::string, std::string>::iterator it = server->GetReWrites().find(server_name);
+    std::map<std::string, std::string>::iterator it = server->GetReWrites().find(route_name);
     if (it != server->GetReWrites().end())
-        this->_redirectPath = server->GetReWrites()[server_name];
-    this->_route_name = server_name;
+        this->_redirectPath = server->GetReWrites()[route_name];
+    this->_route_name = route_name;
+    std::cout << *this;
+    (void)this->_limit_client_body_size;
+}
+
+Route::Route(IServer *server, std::string route_name, IHandler *handler)  : 
+    _allow_methods(server->GetDefaultAllowMethods()),
+    _error_page(server->GetDefaultErrorPage()),
+    _limit_client_body_size(server->GetLimitClientBodySize()),
+    _root(server->GetRoot()),
+    _autoIndex(server->GetAutoIndex()),
+    _index(server->GetIndex()),
+    _stage(R_START),
+    _handler(handler)
+{
+    std::map<std::string, std::string>::iterator it = server->GetReWrites().find(route_name);
+    if (it != server->GetReWrites().end())
+        this->_redirectPath = server->GetReWrites()[route_name];
+    this->_route_name = route_name;
     std::cout << *this;
     (void)this->_limit_client_body_size;
 }
@@ -237,3 +283,4 @@ std::ostream &operator<<(std::ostream &os, Route const &route) {
     }
 	return (os);
 }
+

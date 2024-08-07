@@ -20,8 +20,8 @@ class HttpResponse {
         // Base Methods
         HttpResponse();
         ~HttpResponse();
-        HttpResponse(RouteResponse &rr);
-        HttpResponse(std::string body, std::string statusCode, std::string contentType);
+        // HttpResponse(RouteResponse &rr);
+        // makHttpResponse(std::string body, std::string statusCode, std::string contentType);
 
         // Create Response
         std::string             CreateResponse(void);

@@ -2,6 +2,10 @@
 # define __SERVER_HPP__
 
 # include "Route.hpp"
+#include <netdb.h>
+#include <sys/epoll.h>
+# include "Response201Created.hpp"
+# include "Response404NotFound.hpp"
 
 enum ServerStages {
     S_START,
@@ -18,6 +22,7 @@ class Server : public CommonParameters {
         std::string     _ip;
         std::string     _ipVersion;
         ServerStages    _stage;
+        IHandler        *_handler;
 
         int             _actualClientFD;
 
@@ -32,12 +37,12 @@ class Server : public CommonParameters {
         int                                     listener;
         const static int                        backlog = 10;
 
-        std::map<int, HttpResponse>             ClientsResponse;
+        std::map<int, RouteResponse *>             ClientsResponse;
 
     public:
 
         // Server Methods
-        
+        std::string GenerateAutoindex(std::vector<struct dirent *> *dirs, std::string path);
         void                    SetAddrInfo(void);
         void                    CreateSocketAndBind(void);
         int                     StartListen(void);
@@ -46,6 +51,7 @@ class Server : public CommonParameters {
         // Server Process
 
         std::string             ProcessResponse(int client_fd);
+        void                    ProcessRequest(HttpRequest &request, int client_fd);
         void                    ProcessRequest(std::string buffer, int client_fd);
         std::string             FindMatchRoute(HttpRequest &res);
 
@@ -72,6 +78,7 @@ class Server : public CommonParameters {
         Server(void);
         ~Server(void);
         Server(std::string name);
+        Server(std::string name, IHandler *handler);
         Server(std::string name, int port, std::string root);
         Server(std::vector<std::string> serv, unsigned short port);
         

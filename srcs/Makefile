@@ -6,7 +6,7 @@
 #    By: dapaulin <dapaulin@student.42sp.org.br>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/11/03 15:04:07 by dapaulin          #+#    #+#              #
-#    Updated: 2024/06/06 20:06:47 by dapaulin         ###   ########.fr        #
+#    Updated: 2024/07/27 18:57:02 by dapaulin         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -16,23 +16,29 @@ NAME										= 	webServer
 ######################## PATHS ###############################
 OBJS_PATH									= 	objs/
 HEADERS										=	Server/ \
+												HandlerFileSystem/ \
 												Utils/  \
 												Parser/ \
 												Server/Response
 INCLUDE_FLAGS 								:= 	-g3 -O3 -MMD -MP $(addprefix -I, $(HEADERS))
-VPATH										=	Server/:Utils/:Parser/:Server/Response
+VPATH										=	Server/:Utils/:Parser/:Server/Response:HandlerFileSystem
 
 ######################## FLAGS ###############################
 FLAGS										= 	-Wall -Wextra -std=c++98
 ######################## SOURCES #############################
 SRC_SERVER									=	Route.cpp Server.cpp
-SRC_PARSER									=	Parser.cpp
-SRC_HTTP									=	Http.cpp HttpRequest.cpp HttpResponse.cpp CommonParameters.cpp RouteResponse.cpp
+SRC_PARSER									=	Parser.cpp Handler.cpp
+SRC_RESPONSE								=	AHttpResponse.cpp \
+												Response200OK.cpp \
+												Response201Created.cpp \
+												Response404NotFound.cpp
+SRC_HTTP									=	Http.cpp HttpRequest.cpp CommonParameters.cpp RouteResponse.cpp
 SRC_UTILS									=	Utils.cpp
 SRC											= 	$(SRC_UTILS)				\
 												$(SRC_SERVER)				\
 												$(SRC_HTTP)					\
 												$(SRC_PARSER)				\
+												$(SRC_RESPONSE)				\
 												main.cpp				
 ######################## OBJECTS #############################
 OBJ											=	$(patsubst %.cpp, $(OBJS_PATH)%.o, $(SRC))
@@ -60,7 +66,7 @@ $(OBJS_PATH):
 
 $(NAME): $(OBJS_PATH) $(OBJ)
 	@			printf "\n$(YELLOW)Creating Project '$(OBJ)'$(RC)\n" 
-	@			c++ $(FLAGS) $(OBJ) -o $(NAME)
+	@			c++ $(FLAGS) $(OBJ) $(INCLUDE_FLAGS) -o $(NAME)
 	@			printf "$(GREEN)$(NAME) created$(RC)\n"
 
 -include $(DEP)
@@ -79,6 +85,8 @@ re: fclean all
 
 $(GOOGLE_TEST):
 	@			git clone https://github.com/google/googletest.git
+	@			cd googletest && cmake -S . -B build
+	@			cd googletest && cmake --build build
 
 test_build:
 	@			cmake -S . -B $(TEST_BUILD)
@@ -86,6 +94,12 @@ test_build:
 
 test_run:
 	@			cd $(TEST_BUILD) && ctest --rerun-failed --output-on-failure
+
+test_rund:
+	@			cd $(TEST_BUILD) && ctest --rerun-failed --output-on-failure --verbose --interactive-debug-mode
+
+
+testd: t_clean $(GOOGLE_TEST) test_build test_rund
 
 test: $(GOOGLE_TEST) test_build test_run
 

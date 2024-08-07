@@ -1,32 +1,64 @@
 #ifndef __ROUTE_RESPONSE_HPP__
 # define __ROUTE_RESPONSE_HPP__
 
-# include <iostream>
-# include <sstream>
-# include <map>
+# include "IHandler.hpp"
 
 class RouteResponse {
-    private:
-        std::string _body;
-        int         _statusCode;
-		std::string	_contenttype;
-		std::map<int, std::string> _status;
-
+    
     public:
-        std::string defaultErrorPage(int statusCode);
+        std::ifstream   *FD;
+        int             StatusCode;
+        std::string     RedirectPath;
+        DIR             *Directory;
+        std::string     FileExtension;
+        
+        RouteResponse(std::ifstream *_fd, int _statusCode) {
+            this->FD = _fd;
+            this->StatusCode = _statusCode;
+            this->Directory = NULL;
+            this->RedirectPath = "";
+            this->FileExtension = "text";
+        }
 
-        // Geters
+        RouteResponse(std::string extensionFile, int _statusCode, DIR *directory) {
+            this->FD = NULL;
+            this->StatusCode = _statusCode;
+            this->Directory = directory;
+            this->RedirectPath = "";
+            if (extensionFile == "")
+                this->FileExtension = "text";
+            else
+                this->FileExtension = extensionFile;
+        }
 
-        std::string getBody(void) const;
-        std::string getStatusCode(void) const;
-        std::string getStatusName(void);
-		std::string getContentType(void) const;
+        RouteResponse(std::string extensionFile, std::ifstream *_fd, int _statusCode) {
+            this->FD = _fd;
+            this->StatusCode = _statusCode;
+            this->Directory = NULL;
+            this->RedirectPath = "";
+            if (extensionFile == "")
+                this->FileExtension = "text";
+            else
+                this->FileExtension = extensionFile;
+        }
 
-        // Base Methods
+        RouteResponse(std::ifstream *_fd, int _statusCode, std::string redirectPath) {
+            this->FD = _fd;
+            this->StatusCode = _statusCode;
+            this->RedirectPath = redirectPath;
+            this->Directory = NULL;
+            this->FileExtension = "text";
+        }
 
-        RouteResponse(std::string b, int sc);
-        RouteResponse(int sc);
+        bool operator==(const RouteResponse &other) const {
+            return
+                StatusCode == other.StatusCode &&
+                RedirectPath == other.RedirectPath &&
+                FileExtension == other.FileExtension;
+        }
 };
+
+std::ostream &operator<<(std::ostream &os, RouteResponse const &route);
 
 
 // Response::mimetypes_map Response::mimetypes = Response::init_mimetypes();
@@ -63,8 +95,6 @@ class RouteResponse {
 //   _map["PATCH"] = &Response::_patch;
 //   return _map;
 // }
-
-
 
 #endif
 
