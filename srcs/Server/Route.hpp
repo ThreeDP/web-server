@@ -61,15 +61,27 @@ class Route {
             } else if (this->GetRedirectPath() != "") {
                 return new RouteResponse(fd, 308, this->GetRedirectPath());
             }
-            std::cout << absolutePath << std::endl;
-            if (this->_handler->IsAllowToGetFile(absolutePath))
+            if (this->_handler->PathExist(absolutePath))
             {
-                fd = this->_handler->OpenFile(absolutePath);
-                return new RouteResponse(
-                    Utils::GetFileExtension(absolutePath),
-                    fd,
-                    200
-                );
+                bool allow = this->_handler->IsAllowToGetFile(absolutePath);
+                if (allow && this->_handler->FileIsDirectory(absolutePath))
+                {
+                    DIR *dir = this->_handler->OpenDirectory(absolutePath);
+                    return new RouteResponse(
+                        ".html",
+                        200,
+                        dir
+                    );
+                } else if (allow) {
+                    fd = this->_handler->OpenFile(absolutePath);
+                    return new RouteResponse(
+                        Utils::GetFileExtension(absolutePath),
+                        fd,
+                        200
+                    );
+                } else if (!allow) {
+                    return this->_handlerErrorResponse(fd, 403);
+                }
             }
             return this->_handlerErrorResponse(fd, 404);
         }

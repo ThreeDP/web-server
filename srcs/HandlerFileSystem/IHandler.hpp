@@ -23,6 +23,7 @@ class IHandler {
         virtual bool                            FileIsRegular(std::string path) = 0;
         virtual bool                            IsAllowToGetFile(std::string path) = 0;
         virtual bool                            IsAllowToRunScript(std::string path) = 0;
+        virtual bool                            PathExist(std::string path) = 0;
 
         virtual std::vector<struct dirent *>    *ReadDirectory(DIR *directory) = 0;
         virtual std::string                     ReadRegularFile(std::ifstream *file) = 0;

@@ -54,13 +54,30 @@ bool Handler::IsAllowToGetFile(std::string path) {
     {
         path += pathPiece;
         memset(&file, 0, sizeof(struct stat));
-        std::cout << path << std::endl;
         if (this->FileIsDirectory(path))
             path += "/";
-        std::cout << path << std::endl;
         if (stat(path.c_str(), &file) != 0
             || (!(file.st_mode & S_IRUSR)
             && !(file.st_mode & S_IRGRP))) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool Handler::PathExist(std::string path) {
+    struct stat file;
+    std::stringstream ss(path);
+    std::string pathPiece;
+
+    path = "";
+    while (std::getline(ss, pathPiece, '/'))
+    {
+        path += pathPiece;
+        memset(&file, 0, sizeof(struct stat));
+        if (this->FileIsDirectory(path))
+            path += "/";
+        if (stat(path.c_str(), &file) != 0) {
             return false;
         }
     }

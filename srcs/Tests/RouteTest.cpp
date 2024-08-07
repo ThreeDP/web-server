@@ -1,11 +1,14 @@
 # include <gtest/gtest.h>
 # include <iostream>
+# include <sys/types.h>
+# include <dirent.h>
 # include "IServer.hpp"
 # include "Route.hpp"
 # include "Handler.hpp"
 
 enum class CONFIGS {
-    NoMethods
+    NoMethods,
+    WithAutoIndex
 };
 
 class HandlerTest : public IHandler {
@@ -14,7 +17,8 @@ class HandlerTest : public IHandler {
         HandlerTest(){}
 
         DIR *OpenDirectory(std::string path) {
-            return opendir("dasjd");
+            DIR *dir = (DIR *)calloc(1, sizeof(DIR *));
+            return dir;
         }
 
         std::ifstream   *OpenFile(std::string path) {
@@ -31,7 +35,11 @@ class HandlerTest : public IHandler {
         }
 
         bool    FileIsDirectory(std::string path) {
-            return true;
+            if (path == "/app/home")
+                return true;
+            if (path == "/app/notallow")
+                return true;
+            return false;
         }
 
         bool    FileIsRegular(std::string path) {
@@ -39,9 +47,19 @@ class HandlerTest : public IHandler {
         }
 
         bool    IsAllowToGetFile(std::string path) {
+            if (path == "/app/notallow.html")
+                return false;
+            if (path == "/app/notallow")
+                return false;
+            return true;
+        }
+
+        bool PathExist(std::string path) {
             if (path == "/app/notfound.html") {
                 return false;
             }
+            if (path == "/app/DirectoryNotFound")
+                return false;
             return true;
         }
 
@@ -96,6 +114,8 @@ class ServerTest : public IServer {
             _root("/app"),
             _autoindex(false) {
             _rewrites["/rewrite"] = "/new-path";
+            if (flag == CONFIGS::WithAutoIndex)
+                _autoindex == true;
             if (flag != CONFIGS::NoMethods) {
                 _default_allow_methods.insert("GET");
                 _default_allow_methods.insert("POST");
@@ -166,6 +186,7 @@ class ServerTest : public IServer {
 
 ServerTest *ServerTestDefault;
 ServerTest *ServerTestWithoutGet;
+ServerTest *ServerTestWithAutoIndex;
 
 IHandler            *handler;
 
@@ -175,6 +196,7 @@ protected:
         handler = new HandlerTest();
         ServerTestDefault = new ServerTest();
         ServerTestWithoutGet = new ServerTest(CONFIGS::NoMethods);
+        ServerTestWithAutoIndex = new ServerTest(CONFIGS::WithAutoIndex);
     }
 };
 
@@ -511,11 +533,109 @@ TEST_F(RouteTest, CheckANotFoundFileWithNotFoundErrorPage) {
     delete response;
 }
 
+TEST_F(RouteTest, CheckAAutoindexDirectoryListing) {
+    // Arrange
+    RouteResponse               *expected = new RouteResponse(".html", nullptr, 200);
+    HttpRequest                 request;
+    std::stringstream           requestString;
+    std::string                 route_name = "/home";
+    Route                       route(ServerTestWithAutoIndex, route_name, handler);
+    
+    requestString << "GET " << route_name << " HTTP/1.0\r\n";
+    request.ParserRequest(requestString.str());
+
+    // Act
+    RouteResponse *response = route.ProcessRequest(request);
+
+    // Assert
+    EXPECT_EQ(*expected, *response);
+    EXPECT_EQ(response->FD, nullptr);
+    EXPECT_NE(response->Directory, nullptr);
+
+    // Clean
+    free(response->Directory);
+    delete expected;
+    delete response;
+}
+
+TEST_F(RouteTest, CheckAAutoindexDirectoryListingNotFound) {
+    // Arrange
+    RouteResponse               *expected = new RouteResponse(".html", nullptr, 404);
+    HttpRequest                 request;
+    std::stringstream           requestString;
+    std::string                 route_name = "/DirectoryNotFound";
+    Route                       route(ServerTestWithAutoIndex, route_name, handler);
+    
+    requestString << "GET " << route_name << " HTTP/1.0\r\n";
+    request.ParserRequest(requestString.str());
+
+    // Act
+    RouteResponse *response = route.ProcessRequest(request);
+
+    // Assert
+    EXPECT_EQ(*expected, *response);
+    EXPECT_NE(response->FD, nullptr);
+    EXPECT_EQ(response->Directory, nullptr);
+
+    // Clean
+    delete expected;
+    delete response;
+}
+
+TEST_F(RouteTest, CheakANotAllowDirectory) {
+    // Arrange
+    RouteResponse               *expected = new RouteResponse(".html", nullptr, 403);
+    HttpRequest                 request;
+    std::stringstream           requestString;
+    std::string                 route_name = "/notallow";
+    Route                       route(ServerTestWithAutoIndex, route_name, handler);
+    
+    requestString << "GET " << route_name << " HTTP/1.0\r\n";
+    request.ParserRequest(requestString.str());
+
+    // Act
+    RouteResponse *response = route.ProcessRequest(request);
+
+    // Assert
+    EXPECT_EQ(*expected, *response);
+    EXPECT_EQ(response->FD, nullptr);
+    EXPECT_EQ(response->Directory, nullptr);
+
+    // Clean
+    delete expected;
+    delete response;
+}
+
+TEST_F(RouteTest, CheakANotAllowFile) {
+    // Arrange
+    RouteResponse               *expected = new RouteResponse(".html", nullptr, 403);
+    HttpRequest                 request;
+    std::stringstream           requestString;
+    std::string                 route_name = "/notallow.html";
+    Route                       route(ServerTestWithAutoIndex, route_name, handler);
+    
+    requestString << "GET " << route_name << " HTTP/1.0\r\n";
+    request.ParserRequest(requestString.str());
+
+    // Act
+    RouteResponse *response = route.ProcessRequest(request);
+
+    // Assert
+    EXPECT_EQ(*expected, *response);
+    EXPECT_EQ(response->FD, nullptr);
+    EXPECT_EQ(response->Directory, nullptr);
+
+    // Clean
+    delete expected;
+    delete response;
+}
+
+
 TEST_F(RouteTest, Handler) {
     // Arrange
     IHandler *handler2 = new Handler();
 
-    EXPECT_TRUE(handler2->IsAllowToGetFile("../../build/lib/libgtest.a/"));
+    EXPECT_TRUE(handler2->IsAllowToGetFile("../../build/lib/libgtest.a"));
 }
 
 int main(int argc, char **argv) {

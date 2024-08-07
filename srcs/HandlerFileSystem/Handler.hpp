@@ -21,6 +21,8 @@ class Handler : public IHandler {
 
 		std::vector<struct dirent *> 	*ReadDirectory(DIR *directory);
 		std::string						ReadRegularFile(std::ifstream *file);
+
+		bool                            PathExist(std::string path);
 };
 
 #endif
