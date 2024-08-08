@@ -63,15 +63,37 @@ class Route {
             }
             if (this->_handler->PathExist(absolutePath))
             {
+                bool isDirectory = this->_handler->FileIsDirectory(absolutePath);
                 bool allow = this->_handler->IsAllowToGetFile(absolutePath);
-                if (allow && this->_handler->FileIsDirectory(absolutePath))
+                if (allow && isDirectory)
                 {
-                    DIR *dir = this->_handler->OpenDirectory(absolutePath);
-                    return new RouteResponse(
-                        ".html",
-                        200,
-                        dir
-                    );
+                    std::string pathAutoindex = absolutePath;
+                    for (std::set<std::string>::iterator it = this->_index.begin(); it != this->_index.end(); ++it)
+                    {
+                        pathAutoindex = Utils::SanitizePath(pathAutoindex, *it);
+                        if (this->_handler->PathExist(pathAutoindex)
+                        && this->_handler->IsAllowToGetFile(pathAutoindex)
+                        && !this->_handler->FileIsDirectory(pathAutoindex))
+                        {
+                            absolutePath = pathAutoindex;
+                            fd = this->_handler->OpenFile(absolutePath);
+                            // std::string test = Utils::SanitizePath("http://localhost:8081/", );
+                            std::string test = Utils::SanitizePath(request.GetPath(), *it);
+                            return new RouteResponse(
+                                fd,
+                                302,
+                                test
+                            );
+                        }
+                    }
+                    if (this->_autoIndex) {
+                        DIR *dir = this->_handler->OpenDirectory(absolutePath);
+                        return new RouteResponse(
+                            ".html",
+                            200,
+                            dir
+                        );
+                    }
                 } else if (allow) {
                     fd = this->_handler->OpenFile(absolutePath);
                     return new RouteResponse(

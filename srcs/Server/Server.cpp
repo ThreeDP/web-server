@@ -127,6 +127,18 @@ std::string         Server::ProcessResponse(int client_fd) {
             else
                 response = new Response404NotFound(routeResponse->FileExtension, body);
             break;
+        case 302:
+            if (!routeResponse->FD && !routeResponse->Directory)
+                response = new AHttpResponse("302", routeResponse->FileExtension, "", routeResponse->RedirectPath);
+            else
+                response = new AHttpResponse("302", routeResponse->FileExtension, body, routeResponse->RedirectPath);
+            break;
+        case 308:
+            if (!routeResponse->FD && !routeResponse->Directory)
+                response = new Response404NotFound(routeResponse->FileExtension);
+            else
+                response = new Response404NotFound(routeResponse->FileExtension, body);
+            break;
         default:
             if (!routeResponse->FD && !routeResponse->Directory)
                 response = new Response201Created(routeResponse->FileExtension, "");
