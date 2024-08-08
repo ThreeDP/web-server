@@ -40,6 +40,7 @@ class AHttpResponse : public IAHttpResponse {
         // Base Methods
 
         AHttpResponse(std::string statusCode, std::string extension, std::string body);
+        AHttpResponse(std::string statusCode, std::string extension, std::string body, std::string Location);
         AHttpResponse(std::string statusCode, std::string extension);
         virtual ~AHttpResponse();
     private:

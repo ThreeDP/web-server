@@ -8,7 +8,8 @@
 
 enum class CONFIGS {
     NoMethods,
-    WithAutoIndex
+    WithAutoIndex,
+    WithAutoIndexWithoutIndex
 };
 
 class HandlerTest : public IHandler {
@@ -114,8 +115,8 @@ class ServerTest : public IServer {
             _root("/app"),
             _autoindex(false) {
             _rewrites["/rewrite"] = "/new-path";
-            if (flag == CONFIGS::WithAutoIndex)
-                _autoindex == true;
+            if (flag == CONFIGS::WithAutoIndex || flag == CONFIGS::WithAutoIndexWithoutIndex)
+                _autoindex = true;
             if (flag != CONFIGS::NoMethods) {
                 _default_allow_methods.insert("GET");
                 _default_allow_methods.insert("POST");
@@ -123,8 +124,10 @@ class ServerTest : public IServer {
             }
             _default_error_page[404] = "404.html";
             _default_error_page[500] = "50x.html";
-            _index.insert("index.html");
-            _index.insert("index.php");
+            if (flag != CONFIGS::WithAutoIndexWithoutIndex) {
+                _index.insert("index.html");
+                _index.insert("index.php");
+            }
         }
 
         ServerTest(int statusCode, std::string path) : 
@@ -187,6 +190,7 @@ class ServerTest : public IServer {
 ServerTest *ServerTestDefault;
 ServerTest *ServerTestWithoutGet;
 ServerTest *ServerTestWithAutoIndex;
+ServerTest *ServerTestWithAutoIndexWithoutIndex;
 
 IHandler            *handler;
 
@@ -197,6 +201,7 @@ protected:
         ServerTestDefault = new ServerTest();
         ServerTestWithoutGet = new ServerTest(CONFIGS::NoMethods);
         ServerTestWithAutoIndex = new ServerTest(CONFIGS::WithAutoIndex);
+        ServerTestWithAutoIndexWithoutIndex = new ServerTest(CONFIGS::WithAutoIndexWithoutIndex);
     }
 };
 
@@ -539,7 +544,7 @@ TEST_F(RouteTest, CheckAAutoindexDirectoryListing) {
     HttpRequest                 request;
     std::stringstream           requestString;
     std::string                 route_name = "/home";
-    Route                       route(ServerTestWithAutoIndex, route_name, handler);
+    Route                       route(ServerTestWithAutoIndexWithoutIndex, route_name, handler);
     
     requestString << "GET " << route_name << " HTTP/1.0\r\n";
     request.ParserRequest(requestString.str());
@@ -648,6 +653,8 @@ int main(int argc, char **argv) {
     // Clean
     delete ServerTestDefault;
     delete ServerTestWithoutGet;
+    delete ServerTestWithAutoIndex;
+    delete ServerTestWithAutoIndexWithoutIndex;
     delete handler;
     return num;
 }
