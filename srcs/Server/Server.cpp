@@ -104,51 +104,10 @@ std::string Server::GenerateAutoindex(std::vector<struct dirent *> *dirs, std::s
 =======================================*/
 
 std::string         Server::ProcessResponse(int client_fd) {
-    RouteResponse *routeResponse = this->ClientsResponse[client_fd];
-    AHttpResponse *response = NULL;
-    std::string     body = "";
-    if (routeResponse->FD)
-        body = this->_handler->ReadRegularFile(routeResponse->FD);
-    if (routeResponse->Directory) {
-        std::vector<struct dirent *> *directories = this->_handler->ReadDirectory(routeResponse->Directory);
-        body = this->GenerateAutoindex(directories, "");
-        // delete directories;
-    }
-    switch (routeResponse->StatusCode) {
-        case 200:
-            if (!routeResponse->FD && !routeResponse->Directory)
-                response = new Response200OK(routeResponse->FileExtension);
-            else
-                response = new Response200OK(routeResponse->FileExtension, body);
-            break;
-        case 404:
-            if (!routeResponse->FD && !routeResponse->Directory)
-                response = new Response404NotFound(routeResponse->FileExtension);
-            else
-                response = new Response404NotFound(routeResponse->FileExtension, body);
-            break;
-        case 302:
-            if (!routeResponse->FD && !routeResponse->Directory)
-                response = new AHttpResponse("302", routeResponse->FileExtension, "", routeResponse->RedirectPath);
-            else
-                response = new AHttpResponse("302", routeResponse->FileExtension, body, routeResponse->RedirectPath);
-            break;
-        case 308:
-            if (!routeResponse->FD && !routeResponse->Directory)
-                response = new Response404NotFound(routeResponse->FileExtension);
-            else
-                response = new Response404NotFound(routeResponse->FileExtension, body);
-            break;
-        default:
-            if (!routeResponse->FD && !routeResponse->Directory)
-                response = new Response201Created(routeResponse->FileExtension, "");
-            else
-                response = new Response201Created(routeResponse->FileExtension, "", body);
-            break;
-    }
-    this->ClientsResponse.erase(client_fd);
+    std::string res = this->ResponsesMap[client_fd]->ToString();
+    this->ResponsesMap.erase(client_fd);
     this->UpdateState(S_SERVER_RESPONSE, client_fd);
-    return response->ToString();
+    return res;
 }
 
 std::string         Server::FindMatchRoute(HttpRequest &res) {
@@ -171,25 +130,16 @@ std::string         Server::FindMatchRoute(HttpRequest &res) {
     return keyPath;
 }
 
-void                Server::ProcessRequest(std::string buffer, int client_fd) {
-    HttpRequest     res;
-    std::string keyPath;
-    std::cout << "OLHA O BUFFER: " << buffer << std::endl;
-    res.ParserRequest(buffer);
-
-    this->UpdateState(S_CLIENT_REQUEST, client_fd);
-    // std::cout << *this;
-    // keyPath = this->FindMatchRoute(res);
-    RouteResponse *routeRes = this->routes["/"]->ProcessRoute(res);
-    this->ClientsResponse[client_fd] = routeRes;
-}
-
 void                Server::ProcessRequest(HttpRequest &request, int client_fd) {
     this->UpdateState(S_CLIENT_REQUEST, client_fd);
+    BuilderResponse builder = BuilderResponse(new Handler());
+    builder.Setup();
     // std::cout << *this;
     std::string keyPath = this->FindMatchRoute(request);
-    RouteResponse *routeRes = this->routes[keyPath]->ProcessRequest(request);
-    this->ClientsResponse[client_fd] = routeRes;
+    this->routes[keyPath]->ProcessRequest(request, builder);
+
+    this->ResponsesMap[client_fd] = builder.GetResult();
+    // this->ClientsResponse[client_fd] = routeRes;
 }
 
 /* Geters

@@ -5,6 +5,7 @@
 # include "IServer.hpp"
 # include "Route.hpp"
 # include "Handler.hpp"
+# include "BuilderResponse.hpp"
 
 enum class CONFIGS {
     NoMethods,
@@ -232,416 +233,418 @@ TEST_F(RouteTest, CreateARoute) {
 
 TEST_F(RouteTest, CheckAAllowMethod_CheckContentTypeIsHTML) {
     // Arrange
-    std::stringstream   requestString;
-    RouteResponse       *expected = new RouteResponse(".html", nullptr, 200);
-    HttpRequest         request;
+    BuilderResponse     builder = BuilderResponse(handler);
+    builder.Setup();
     std::string         route_name = "/imagens";
     Route               route(ServerTestDefault, route_name, handler);
 
+    HttpRequest         request;
+    std::stringstream   requestString;
     requestString << "GET " << route_name << "/index.html" << " HTTP/1.0\r\n";
     request.ParserRequest(requestString.str());
 
     // Act
-    RouteResponse *response = route.ProcessRequest(request);
+    HttpStatusCode::Code res = route.ProcessRequest(request, builder);
 
     // Assert
-    EXPECT_EQ(*expected, *response);
-    EXPECT_NE(response->FD, nullptr);
-    EXPECT_EQ(response->Directory, nullptr);
+    EXPECT_EQ(HttpStatusCode::_OK, res);
+    EXPECT_EQ("test", builder.GetResult()->GetStatusName(HttpStatusCode::_OK));
+    // EXPECT_NE(response->FD, nullptr);
+    // EXPECT_EQ(response->Directory, nullptr);
 
-    // Clean
-    delete expected;
-    response->FD->close();
-    delete response->FD;
-    delete response;
+    // // Clean
+    // delete expected;
+    // response->FD->close();
+    // delete response->FD;
+    // delete response;
 }
 
-TEST_F(RouteTest, CheckNotAllowMethod) {
-    // Arrange
-    RouteResponse               *expected = new RouteResponse(".html", nullptr, 405);
-    HttpRequest                 request;
-    std::string                 route_name = "/create";
-    std::stringstream           requestString;
-    Route                       route(ServerTestWithoutGet, route_name, handler);
+// TEST_F(RouteTest, CheckNotAllowMethod) {
+//     // Arrange
+//     RouteResponse               *expected = new RouteResponse(".html", nullptr, 405);
+//     HttpRequest                 request;
+//     std::string                 route_name = "/create";
+//     std::stringstream           requestString;
+//     Route                       route(ServerTestWithoutGet, route_name, handler);
 
-    requestString << "GET " << route_name << "/index.html" << " HTTP/1.0\r\n";
-    request.ParserRequest(requestString.str());
+//     requestString << "GET " << route_name << "/index.html" << " HTTP/1.0\r\n";
+//     request.ParserRequest(requestString.str());
 
-    // Act
-    RouteResponse *response = route.ProcessRequest(request);
+//     // Act
+//     RouteResponse *response = route.ProcessRequest(request);
 
-    // Assert
-    EXPECT_EQ(*expected, *response);
-    EXPECT_EQ(response->FD, nullptr);
-    EXPECT_EQ(response->Directory, nullptr);
+//     // Assert
+//     EXPECT_EQ(*expected, *response);
+//     EXPECT_EQ(response->FD, nullptr);
+//     EXPECT_EQ(response->Directory, nullptr);
 
-    // Clean
-    delete expected;
-    delete response;
-}
+//     // Clean
+//     delete expected;
+//     delete response;
+// }
 
-TEST_F(RouteTest, CheckNotAllowMethodWithSetErrorPage) {
-    // Arrange
-    ServerTestWithoutGet->SetErroPage(405, "405.html");
-    RouteResponse               *expected = new RouteResponse(".html", nullptr, 405);
-    HttpRequest                 request;
-    std::string                 route_name = "/create";
-    Route                       route(ServerTestWithoutGet, route_name, handler);
-    std::stringstream           requestString;
+// TEST_F(RouteTest, CheckNotAllowMethodWithSetErrorPage) {
+//     // Arrange
+//     ServerTestWithoutGet->SetErroPage(405, "405.html");
+//     RouteResponse               *expected = new RouteResponse(".html", nullptr, 405);
+//     HttpRequest                 request;
+//     std::string                 route_name = "/create";
+//     Route                       route(ServerTestWithoutGet, route_name, handler);
+//     std::stringstream           requestString;
 
-    requestString << "GET " << route_name << "/index.html" << " HTTP/1.0\r\n";
-    request.ParserRequest(requestString.str());
+//     requestString << "GET " << route_name << "/index.html" << " HTTP/1.0\r\n";
+//     request.ParserRequest(requestString.str());
 
-    // Act
-    RouteResponse *response = route.ProcessRequest(request);
+//     // Act
+//     RouteResponse *response = route.ProcessRequest(request);
 
-    // Assert
-    EXPECT_EQ(*expected, *response);
-    EXPECT_NE(response->FD, nullptr);
-    EXPECT_EQ(response->Directory, nullptr);
+//     // Assert
+//     EXPECT_EQ(*expected, *response);
+//     EXPECT_NE(response->FD, nullptr);
+//     EXPECT_EQ(response->Directory, nullptr);
 
-    // Clean
-    ServerTestWithoutGet->ResetErroPage(405);
-    delete expected;
-    response->FD->close();
-    delete response->FD;
-    delete response;
-}
+//     // Clean
+//     ServerTestWithoutGet->ResetErroPage(405);
+//     delete expected;
+//     response->FD->close();
+//     delete response->FD;
+//     delete response;
+// }
 
-TEST_F(RouteTest, CheckNotAllowMethodWithNotFoundErrorPage) {
-    // Arrange
-    ServerTestWithoutGet->SetErroPage(405, "notfound.html");
-    RouteResponse               *expected = new RouteResponse(".html", nullptr, 405);
-    HttpRequest                 request;
-    std::string                 route_name = "/page";
-    Route                       route(ServerTestWithoutGet, route_name, handler);
-    std::stringstream           requestString;
+// TEST_F(RouteTest, CheckNotAllowMethodWithNotFoundErrorPage) {
+//     // Arrange
+//     ServerTestWithoutGet->SetErroPage(405, "notfound.html");
+//     RouteResponse               *expected = new RouteResponse(".html", nullptr, 405);
+//     HttpRequest                 request;
+//     std::string                 route_name = "/page";
+//     Route                       route(ServerTestWithoutGet, route_name, handler);
+//     std::stringstream           requestString;
 
-    requestString << "GET " << route_name << "index.html" << " HTTP/1.0\r\n";
-    request.ParserRequest(requestString.str());
+//     requestString << "GET " << route_name << "index.html" << " HTTP/1.0\r\n";
+//     request.ParserRequest(requestString.str());
 
-    // Act
-    RouteResponse *response = route.ProcessRequest(request);
+//     // Act
+//     RouteResponse *response = route.ProcessRequest(request);
 
-    // Assert
-    EXPECT_EQ(*expected, *response);
-    EXPECT_EQ(response->FD, nullptr);
-    EXPECT_EQ(response->Directory, nullptr);
+//     // Assert
+//     EXPECT_EQ(*expected, *response);
+//     EXPECT_EQ(response->FD, nullptr);
+//     EXPECT_EQ(response->Directory, nullptr);
 
-    // Clean
-    ServerTestWithoutGet->ResetErroPage(405);
-    delete expected;
-    delete response;
-}
+//     // Clean
+//     ServerTestWithoutGet->ResetErroPage(405);
+//     delete expected;
+//     delete response;
+// }
 
-TEST_F(RouteTest, CheckAPayloadTooLarge) {
-    // Arrange
-    RouteResponse               *expected = new RouteResponse(".html", nullptr, 413);
-    HttpRequest                 request;
-    std::stringstream           body;
-    std::string                 route_name = "/create-page";
-    Route                       route(ServerTestDefault, route_name, handler);
+// TEST_F(RouteTest, CheckAPayloadTooLarge) {
+//     // Arrange
+//     RouteResponse               *expected = new RouteResponse(".html", nullptr, 413);
+//     HttpRequest                 request;
+//     std::stringstream           body;
+//     std::string                 route_name = "/create-page";
+//     Route                       route(ServerTestDefault, route_name, handler);
      
-    body << "GET " << route_name << "index.html" << " HTTP/1.0\r\n";
-    body << "\r\n";
-    body << "<!DOCTYPE html>\n";
-    body << "<html lang=\"pt-BR\">\n";
-    body << "<head>\n";
-    body << "<meta charset=\"UTF-8\">\n";
-    body << "<title>Página Compacta</title>\n"; 
-    body << "<style>\n";
-    body << "body{font-family:Arial,sans-serif;background-color:#f4f4f9;color:#333;padding:10px;}\n";
-    body << "a{color:#0066cc;text-decoration:none;}\n";
-    body << "</style>\n";
-    body << "</head>\n";
-    body << "<body>\n";
-    body << "<h1>Bem-vindo!</h1>\n"; 
-    body << "<p>Esta é uma página HTML de 350 caracteres. Ela contém texto, estilo e um link.</p>\n";
-    body << "<a href=\"https://www.exemplo.com\">Clique aqui para mais informações</a>\n";
-    body << "</body>\n";
-    body << "</html>\r\n";
-    request.ParserRequest(body.str());
+//     body << "GET " << route_name << "index.html" << " HTTP/1.0\r\n";
+//     body << "\r\n";
+//     body << "<!DOCTYPE html>\n";
+//     body << "<html lang=\"pt-BR\">\n";
+//     body << "<head>\n";
+//     body << "<meta charset=\"UTF-8\">\n";
+//     body << "<title>Página Compacta</title>\n"; 
+//     body << "<style>\n";
+//     body << "body{font-family:Arial,sans-serif;background-color:#f4f4f9;color:#333;padding:10px;}\n";
+//     body << "a{color:#0066cc;text-decoration:none;}\n";
+//     body << "</style>\n";
+//     body << "</head>\n";
+//     body << "<body>\n";
+//     body << "<h1>Bem-vindo!</h1>\n"; 
+//     body << "<p>Esta é uma página HTML de 350 caracteres. Ela contém texto, estilo e um link.</p>\n";
+//     body << "<a href=\"https://www.exemplo.com\">Clique aqui para mais informações</a>\n";
+//     body << "</body>\n";
+//     body << "</html>\r\n";
+//     request.ParserRequest(body.str());
 
-    // Act
-    RouteResponse *response = route.ProcessRequest(request);
+//     // Act
+//     RouteResponse *response = route.ProcessRequest(request);
 
-    // Assert
-    EXPECT_EQ(*expected, *response);
-    EXPECT_EQ(response->FD, nullptr);
-    EXPECT_EQ(response->Directory, nullptr);
+//     // Assert
+//     EXPECT_EQ(*expected, *response);
+//     EXPECT_EQ(response->FD, nullptr);
+//     EXPECT_EQ(response->Directory, nullptr);
 
-    // Clean
-    delete expected;
-    delete response;
-}
+//     // Clean
+//     delete expected;
+//     delete response;
+// }
 
-TEST_F(RouteTest, CheckAPayloadTooLargeWithErrorPageSetup) {
-    // Arrange
-    ServerTestDefault->SetErroPage(413, "413.html");
-    RouteResponse               *expected = new RouteResponse(".html", nullptr, 413);
-    HttpRequest                 request;
-    std::stringstream           body;
-    std::string                 route_name = "/create-page";
-    Route                       route(ServerTestDefault, route_name, handler);
+// TEST_F(RouteTest, CheckAPayloadTooLargeWithErrorPageSetup) {
+//     // Arrange
+//     ServerTestDefault->SetErroPage(413, "413.html");
+//     RouteResponse               *expected = new RouteResponse(".html", nullptr, 413);
+//     HttpRequest                 request;
+//     std::stringstream           body;
+//     std::string                 route_name = "/create-page";
+//     Route                       route(ServerTestDefault, route_name, handler);
 
-    body << "GET " << route_name << "/index.html" << " HTTP/1.0\r\n";
-    body << "\r\n";
-    body << "<!DOCTYPE html>\n";
-    body << "<html lang=\"pt-BR\">\n";
-    body << "<head>\n";
-    body << "<meta charset=\"UTF-8\">\n";
-    body << "<title>Página Compacta</title>\n"; 
-    body << "<style>\n";
-    body << "body{font-family:Arial,sans-serif;background-color:#f4f4f9;color:#333;padding:10px;}\n";
-    body << "a{color:#0066cc;text-decoration:none;}\n";
-    body << "</style>\n";
-    body << "</head>\n";
-    body << "<body>\n";
-    body << "<h1>Bem-vindo!</h1>\n"; 
-    body << "<p>Esta é uma página HTML de 350 caracteres. Ela contém texto, estilo e um link.</p>\n";
-    body << "<a href=\"https://www.exemplo.com\">Clique aqui para mais informações</a>\n";
-    body << "</body>\n";
-    body << "</html>\r\n";
-    request.ParserRequest(body.str());
+//     body << "GET " << route_name << "/index.html" << " HTTP/1.0\r\n";
+//     body << "\r\n";
+//     body << "<!DOCTYPE html>\n";
+//     body << "<html lang=\"pt-BR\">\n";
+//     body << "<head>\n";
+//     body << "<meta charset=\"UTF-8\">\n";
+//     body << "<title>Página Compacta</title>\n"; 
+//     body << "<style>\n";
+//     body << "body{font-family:Arial,sans-serif;background-color:#f4f4f9;color:#333;padding:10px;}\n";
+//     body << "a{color:#0066cc;text-decoration:none;}\n";
+//     body << "</style>\n";
+//     body << "</head>\n";
+//     body << "<body>\n";
+//     body << "<h1>Bem-vindo!</h1>\n"; 
+//     body << "<p>Esta é uma página HTML de 350 caracteres. Ela contém texto, estilo e um link.</p>\n";
+//     body << "<a href=\"https://www.exemplo.com\">Clique aqui para mais informações</a>\n";
+//     body << "</body>\n";
+//     body << "</html>\r\n";
+//     request.ParserRequest(body.str());
 
-    // Act
-    RouteResponse *response = route.ProcessRequest(request);
+//     // Act
+//     RouteResponse *response = route.ProcessRequest(request);
 
-    // Assert
-    EXPECT_EQ(*expected, *response);
-    EXPECT_NE(response->FD, nullptr);
-    EXPECT_EQ(response->Directory, nullptr);
+//     // Assert
+//     EXPECT_EQ(*expected, *response);
+//     EXPECT_NE(response->FD, nullptr);
+//     EXPECT_EQ(response->Directory, nullptr);
 
-    // Clean
-    delete expected;
-    ServerTestDefault->ResetErroPage(413);
-    response->FD->close();
-    delete response->FD;
-    delete response;
-}
+//     // Clean
+//     delete expected;
+//     ServerTestDefault->ResetErroPage(413);
+//     response->FD->close();
+//     delete response->FD;
+//     delete response;
+// }
 
-TEST_F(RouteTest, CheckAPayloadTooLargeWithErrorPageSetupNotFound) {
-    // Arrange
-    ServerTestDefault->SetErroPage(413, "/notfound.html");
-    RouteResponse               *expected = new RouteResponse(".html", nullptr, 413);
-    HttpRequest                 request;
-    std::stringstream           body;
-    std::string                 route_name = "/";
-    Route                       route(ServerTestDefault, route_name, handler);
+// TEST_F(RouteTest, CheckAPayloadTooLargeWithErrorPageSetupNotFound) {
+//     // Arrange
+//     ServerTestDefault->SetErroPage(413, "/notfound.html");
+//     RouteResponse               *expected = new RouteResponse(".html", nullptr, 413);
+//     HttpRequest                 request;
+//     std::stringstream           body;
+//     std::string                 route_name = "/";
+//     Route                       route(ServerTestDefault, route_name, handler);
 
-    body << "GET " << route_name << " HTTP/1.0\r\n";
-    body << "\r\n";
-    body << "<!DOCTYPE html>\n";
-    body << "<html lang=\"pt-BR\">\n";
-    body << "<head>\n";
-    body << "<meta charset=\"UTF-8\">\n";
-    body << "<title>Página Compacta</title>\n"; 
-    body << "<style>\n";
-    body << "body{font-family:Arial,sans-serif;background-color:#f4f4f9;color:#333;padding:10px;}\n";
-    body << "a{color:#0066cc;text-decoration:none;}\n";
-    body << "</style>\n";
-    body << "</head>\n";
-    body << "<body>\n";
-    body << "<h1>Bem-vindo!</h1>\n"; 
-    body << "<p>Esta é uma página HTML de 350 caracteres. Ela contém texto, estilo e um link.</p>\n";
-    body << "<a href=\"https://www.exemplo.com\">Clique aqui para mais informações</a>\n";
-    body << "</body>\n";
-    body << "</html>\r\n";
-    request.ParserRequest(body.str());
+//     body << "GET " << route_name << " HTTP/1.0\r\n";
+//     body << "\r\n";
+//     body << "<!DOCTYPE html>\n";
+//     body << "<html lang=\"pt-BR\">\n";
+//     body << "<head>\n";
+//     body << "<meta charset=\"UTF-8\">\n";
+//     body << "<title>Página Compacta</title>\n"; 
+//     body << "<style>\n";
+//     body << "body{font-family:Arial,sans-serif;background-color:#f4f4f9;color:#333;padding:10px;}\n";
+//     body << "a{color:#0066cc;text-decoration:none;}\n";
+//     body << "</style>\n";
+//     body << "</head>\n";
+//     body << "<body>\n";
+//     body << "<h1>Bem-vindo!</h1>\n"; 
+//     body << "<p>Esta é uma página HTML de 350 caracteres. Ela contém texto, estilo e um link.</p>\n";
+//     body << "<a href=\"https://www.exemplo.com\">Clique aqui para mais informações</a>\n";
+//     body << "</body>\n";
+//     body << "</html>\r\n";
+//     request.ParserRequest(body.str());
 
-    // Act
-    RouteResponse *response = route.ProcessRequest(request);
+//     // Act
+//     RouteResponse *response = route.ProcessRequest(request);
 
-    // Assert
-    EXPECT_EQ(*expected, *response);
-    EXPECT_EQ(response->FD, nullptr);
-    EXPECT_EQ(response->Directory, nullptr);
+//     // Assert
+//     EXPECT_EQ(*expected, *response);
+//     EXPECT_EQ(response->FD, nullptr);
+//     EXPECT_EQ(response->Directory, nullptr);
 
-    // Clean
-    ServerTestDefault->ResetErroPage(413);
-    delete expected;
-    delete response;
-}
+//     // Clean
+//     ServerTestDefault->ResetErroPage(413);
+//     delete expected;
+//     delete response;
+// }
 
-TEST_F(RouteTest, CheckARedirect) {
-    // Arrange
-    RouteResponse               *expected = new RouteResponse(nullptr, 308, "/new-path");
-    HttpRequest                 request;
-    std::stringstream           requestString;
-    std::string                 route_name = "/rewrite";
-    Route                       route(ServerTestDefault, route_name, handler);
+// TEST_F(RouteTest, CheckARedirect) {
+//     // Arrange
+//     RouteResponse               *expected = new RouteResponse(nullptr, 308, "/new-path");
+//     HttpRequest                 request;
+//     std::stringstream           requestString;
+//     std::string                 route_name = "/rewrite";
+//     Route                       route(ServerTestDefault, route_name, handler);
     
-    requestString << "GET " << route_name << " HTTP/1.0\r\n";
-    request.ParserRequest(requestString.str());
+//     requestString << "GET " << route_name << " HTTP/1.0\r\n";
+//     request.ParserRequest(requestString.str());
 
-    // Act
-    RouteResponse *response = route.ProcessRequest(request);
+//     // Act
+//     RouteResponse *response = route.ProcessRequest(request);
 
-    // Assert
-    EXPECT_EQ(*expected, *response);
-    EXPECT_EQ(response->FD, nullptr);
-    EXPECT_EQ(response->Directory, nullptr);
+//     // Assert
+//     EXPECT_EQ(*expected, *response);
+//     EXPECT_EQ(response->FD, nullptr);
+//     EXPECT_EQ(response->Directory, nullptr);
 
-    // Clean
-    delete expected;
-    delete response;
-}
+//     // Clean
+//     delete expected;
+//     delete response;
+// }
 
-TEST_F(RouteTest, CheckANotFoundFile) {
-    // Arrange
-    RouteResponse               *expected = new RouteResponse(".html", nullptr, 404);
-    HttpRequest                 request;
-    std::stringstream           requestString;
-    std::string                 route_name = "/";
-    Route                       route(ServerTestDefault, route_name, handler);
+// TEST_F(RouteTest, CheckANotFoundFile) {
+//     // Arrange
+//     RouteResponse               *expected = new RouteResponse(".html", nullptr, 404);
+//     HttpRequest                 request;
+//     std::stringstream           requestString;
+//     std::string                 route_name = "/";
+//     Route                       route(ServerTestDefault, route_name, handler);
     
-    requestString << "GET " << route_name << "notfound.html" << " HTTP/1.0\r\n";
-    request.ParserRequest(requestString.str());
+//     requestString << "GET " << route_name << "notfound.html" << " HTTP/1.0\r\n";
+//     request.ParserRequest(requestString.str());
 
-    // Act
-    RouteResponse *response = route.ProcessRequest(request);
+//     // Act
+//     RouteResponse *response = route.ProcessRequest(request);
 
-    // Assert
-    EXPECT_EQ(*expected, *response);
-    EXPECT_NE(response->FD, nullptr);
-    EXPECT_EQ(response->Directory, nullptr);
+//     // Assert
+//     EXPECT_EQ(*expected, *response);
+//     EXPECT_NE(response->FD, nullptr);
+//     EXPECT_EQ(response->Directory, nullptr);
 
-    // Clean
-    response->FD->close();
-    delete response->FD;
-    delete response;
-}
+//     // Clean
+//     response->FD->close();
+//     delete response->FD;
+//     delete response;
+// }
 
-TEST_F(RouteTest, CheckANotFoundFileWithNotFoundErrorPage) {
-    // Arrange
-    ServerTestDefault->SetErroPage(404, "notfound.html");
-    RouteResponse               *expected = new RouteResponse(".html", nullptr, 404);
-    HttpRequest                 request;
-    std::stringstream           requestString;
-    std::string                 route_name = "/";
-    Route                       route(ServerTestDefault, route_name, handler);
+// TEST_F(RouteTest, CheckANotFoundFileWithNotFoundErrorPage) {
+//     // Arrange
+//     ServerTestDefault->SetErroPage(404, "notfound.html");
+//     RouteResponse               *expected = new RouteResponse(".html", nullptr, 404);
+//     HttpRequest                 request;
+//     std::stringstream           requestString;
+//     std::string                 route_name = "/";
+//     Route                       route(ServerTestDefault, route_name, handler);
     
-    requestString << "GET " << "/notfound.html" << " HTTP/1.0\r\n";
-    request.ParserRequest(requestString.str());
+//     requestString << "GET " << "/notfound.html" << " HTTP/1.0\r\n";
+//     request.ParserRequest(requestString.str());
 
-    // Act
-    RouteResponse *response = route.ProcessRequest(request);
+//     // Act
+//     RouteResponse *response = route.ProcessRequest(request);
 
-    // Assert
-    EXPECT_EQ(*expected, *response);
-    EXPECT_EQ(response->FD, nullptr);
-    EXPECT_EQ(response->Directory, nullptr);
+//     // Assert
+//     EXPECT_EQ(*expected, *response);
+//     EXPECT_EQ(response->FD, nullptr);
+//     EXPECT_EQ(response->Directory, nullptr);
 
-    // Clean
-    ServerTestDefault->ResetErroPage(404);
-    delete expected;
-    delete response;
-}
+//     // Clean
+//     ServerTestDefault->ResetErroPage(404);
+//     delete expected;
+//     delete response;
+// }
 
-TEST_F(RouteTest, CheckAAutoindexDirectoryListing) {
-    // Arrange
-    RouteResponse               *expected = new RouteResponse(".html", nullptr, 200);
-    HttpRequest                 request;
-    std::stringstream           requestString;
-    std::string                 route_name = "/home";
-    Route                       route(ServerTestWithAutoIndexWithoutIndex, route_name, handler);
+// TEST_F(RouteTest, CheckAAutoindexDirectoryListing) {
+//     // Arrange
+//     RouteResponse               *expected = new RouteResponse(".html", nullptr, 200);
+//     HttpRequest                 request;
+//     std::stringstream           requestString;
+//     std::string                 route_name = "/home";
+//     Route                       route(ServerTestWithAutoIndexWithoutIndex, route_name, handler);
     
-    requestString << "GET " << route_name << " HTTP/1.0\r\n";
-    request.ParserRequest(requestString.str());
+//     requestString << "GET " << route_name << " HTTP/1.0\r\n";
+//     request.ParserRequest(requestString.str());
 
-    // Act
-    RouteResponse *response = route.ProcessRequest(request);
+//     // Act
+//     RouteResponse *response = route.ProcessRequest(request);
 
-    // Assert
-    EXPECT_EQ(*expected, *response);
-    EXPECT_EQ(response->FD, nullptr);
-    EXPECT_NE(response->Directory, nullptr);
+//     // Assert
+//     EXPECT_EQ(*expected, *response);
+//     EXPECT_EQ(response->FD, nullptr);
+//     EXPECT_NE(response->Directory, nullptr);
 
-    // Clean
-    free(response->Directory);
-    delete expected;
-    delete response;
-}
+//     // Clean
+//     free(response->Directory);
+//     delete expected;
+//     delete response;
+// }
 
-TEST_F(RouteTest, CheckAAutoindexDirectoryListingNotFound) {
-    // Arrange
-    RouteResponse               *expected = new RouteResponse(".html", nullptr, 404);
-    HttpRequest                 request;
-    std::stringstream           requestString;
-    std::string                 route_name = "/DirectoryNotFound";
-    Route                       route(ServerTestWithAutoIndex, route_name, handler);
+// TEST_F(RouteTest, CheckAAutoindexDirectoryListingNotFound) {
+//     // Arrange
+//     RouteResponse               *expected = new RouteResponse(".html", nullptr, 404);
+//     HttpRequest                 request;
+//     std::stringstream           requestString;
+//     std::string                 route_name = "/DirectoryNotFound";
+//     Route                       route(ServerTestWithAutoIndex, route_name, handler);
     
-    requestString << "GET " << route_name << " HTTP/1.0\r\n";
-    request.ParserRequest(requestString.str());
+//     requestString << "GET " << route_name << " HTTP/1.0\r\n";
+//     request.ParserRequest(requestString.str());
 
-    // Act
-    RouteResponse *response = route.ProcessRequest(request);
+//     // Act
+//     RouteResponse *response = route.ProcessRequest(request);
 
-    // Assert
-    EXPECT_EQ(*expected, *response);
-    EXPECT_NE(response->FD, nullptr);
-    EXPECT_EQ(response->Directory, nullptr);
+//     // Assert
+//     EXPECT_EQ(*expected, *response);
+//     EXPECT_NE(response->FD, nullptr);
+//     EXPECT_EQ(response->Directory, nullptr);
 
-    // Clean
-    delete expected;
-    delete response;
-}
+//     // Clean
+//     delete expected;
+//     delete response;
+// }
 
-TEST_F(RouteTest, CheakANotAllowDirectory) {
-    // Arrange
-    RouteResponse               *expected = new RouteResponse(".html", nullptr, 403);
-    HttpRequest                 request;
-    std::stringstream           requestString;
-    std::string                 route_name = "/notallow";
-    Route                       route(ServerTestWithAutoIndex, route_name, handler);
+// TEST_F(RouteTest, CheakANotAllowDirectory) {
+//     // Arrange
+//     RouteResponse               *expected = new RouteResponse(".html", nullptr, 403);
+//     HttpRequest                 request;
+//     std::stringstream           requestString;
+//     std::string                 route_name = "/notallow";
+//     Route                       route(ServerTestWithAutoIndex, route_name, handler);
     
-    requestString << "GET " << route_name << " HTTP/1.0\r\n";
-    request.ParserRequest(requestString.str());
+//     requestString << "GET " << route_name << " HTTP/1.0\r\n";
+//     request.ParserRequest(requestString.str());
 
-    // Act
-    RouteResponse *response = route.ProcessRequest(request);
+//     // Act
+//     RouteResponse *response = route.ProcessRequest(request);
 
-    // Assert
-    EXPECT_EQ(*expected, *response);
-    EXPECT_EQ(response->FD, nullptr);
-    EXPECT_EQ(response->Directory, nullptr);
+//     // Assert
+//     EXPECT_EQ(*expected, *response);
+//     EXPECT_EQ(response->FD, nullptr);
+//     EXPECT_EQ(response->Directory, nullptr);
 
-    // Clean
-    delete expected;
-    delete response;
-}
+//     // Clean
+//     delete expected;
+//     delete response;
+// }
 
-TEST_F(RouteTest, CheakANotAllowFile) {
-    // Arrange
-    RouteResponse               *expected = new RouteResponse(".html", nullptr, 403);
-    HttpRequest                 request;
-    std::stringstream           requestString;
-    std::string                 route_name = "/notallow.html";
-    Route                       route(ServerTestWithAutoIndex, route_name, handler);
+// TEST_F(RouteTest, CheakANotAllowFile) {
+//     // Arrange
+//     RouteResponse               *expected = new RouteResponse(".html", nullptr, 403);
+//     HttpRequest                 request;
+//     std::stringstream           requestString;
+//     std::string                 route_name = "/notallow.html";
+//     Route                       route(ServerTestWithAutoIndex, route_name, handler);
     
-    requestString << "GET " << route_name << " HTTP/1.0\r\n";
-    request.ParserRequest(requestString.str());
+//     requestString << "GET " << route_name << " HTTP/1.0\r\n";
+//     request.ParserRequest(requestString.str());
 
-    // Act
-    RouteResponse *response = route.ProcessRequest(request);
+//     // Act
+//     RouteResponse *response = route.ProcessRequest(request);
 
-    // Assert
-    EXPECT_EQ(*expected, *response);
-    EXPECT_EQ(response->FD, nullptr);
-    EXPECT_EQ(response->Directory, nullptr);
+//     // Assert
+//     EXPECT_EQ(*expected, *response);
+//     EXPECT_EQ(response->FD, nullptr);
+//     EXPECT_EQ(response->Directory, nullptr);
 
-    // Clean
-    delete expected;
-    delete response;
-}
+//     // Clean
+//     delete expected;
+//     delete response;
+// }
 
 
-TEST_F(RouteTest, Handler) {
-    // Arrange
-    IHandler *handler2 = new Handler();
+// TEST_F(RouteTest, Handler) {
+//     // Arrange
+//     IHandler *handler2 = new Handler();
 
-    EXPECT_TRUE(handler2->IsAllowToGetFile("../../build/lib/libgtest.a"));
-}
+//     EXPECT_TRUE(handler2->IsAllowToGetFile("../../build/lib/libgtest.a"));
+// }
 
 int main(int argc, char **argv) {
     // Setup

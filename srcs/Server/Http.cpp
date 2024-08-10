@@ -152,7 +152,7 @@ void Http::SetServer(std::string serverName, Server *server) {
 =================================================*/
 Http::Http(void) {
     this->_stage = H_START;
-    AHttpResponse::SetDefaultAHTTPResponse();
+    HttpResponse::SetDefaultAHTTPResponse();
     std::cout << *this;
 }
 

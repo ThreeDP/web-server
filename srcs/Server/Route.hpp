@@ -4,12 +4,11 @@
 # include "define.hpp"
 # include "Utils.hpp"
 # include "CommonParameters.hpp"
-# include "AHttpResponse.hpp"
+# include "HttpResponse.hpp"
 # include "HttpRequest.hpp"
 # include "IHandler.hpp"
-# include "Response200OK.hpp"
-//# include "HttpResponse.hpp"
 # include "RouteResponse.hpp"
+# include "BuilderResponse.hpp"
 
 
 enum RouteStages {
@@ -29,37 +28,74 @@ class Route {
         bool                                        _autoIndex;
         std::set<std::string>                       &_index;
         
-        AHttpResponse               *_fondStatusResponse(int statusCode, std::string extension);
+        IHttpResponse               *_fondStatusResponse(int statusCode, std::string extension);
 
     public:
         RouteStages                                 _stage;
 
         // Route Methods
 
-        RouteResponse *_handlerErrorResponse(std::ifstream *fd, int statusCode) {
+        HttpStatusCode::Code _handlerErrorResponse(
+            std::ifstream *fd,
+            HttpStatusCode::Code statusCode,
+            IBuilderResponse &builder
+        ) {
             std::string path;
+
             bool hasErrorPage = (path = this->GetErrorPage(statusCode)) != "";
             path = Utils::SanitizePath(this->_root, path);
             if (hasErrorPage && this->_handler->FileExist(path)) {
                 if (this->_handler->IsAllowToGetFile(path)) {
                     fd = this->_handler->OpenFile(path);
-                    return new RouteResponse(Utils::GetFileExtension(path), fd, statusCode);
+                    builder
+                        .WithStatusCode(statusCode)
+                        .WithFileDescriptor(fd)
+                        .WithContentType(Utils::GetFileExtension(path));
+                    return (statusCode);
+                        // builder = new BuilderResponse(this->_handler, statusCode);
+                        // builder->SetFileDescriptor(fd)
+                        //     .SetFileExtension(Utils::GetFileExtension(path)),
+                        //     builder);
+
+                    // return new RouteResponse(Utils::GetFileExtension(path), fd, statusCode);
                 }
             }
-            return new RouteResponse(".html", fd, statusCode);
+            builder
+                .WithStatusCode(statusCode)
+                .WithContentType(".html");
+            return (statusCode);
+            // builder = new BuilderResponse(this->_handler, statusCode);
+            // return (
+            //     builder->SetFileExtension(".html"), builder
+            // );
+            // return new RouteResponse(".html", fd, statusCode);
         }
 
-        RouteResponse *ProcessRequest(HttpRequest &request) {
+        HttpStatusCode::Code ProcessRequest(HttpRequest &request, IBuilderResponse &builder) {
             std::ifstream   *fd = NULL;
             std::string     absolutePath;
             
             absolutePath = Utils::SanitizePath(this->_root, request.GetPath());
             if (!this->IsAllowMethod(request.GetMethod())) {
-                return this->_handlerErrorResponse(fd, 405);
+                return this->_handlerErrorResponse(
+                    fd,
+                    HttpStatusCode::_METHOD_NOT_ALLOWED,
+                    builder
+                );
             } else if (this->_limit_client_body_size < request.GetBodySize()) {
-                return this->_handlerErrorResponse(fd, 413);
+                return this->_handlerErrorResponse(
+                    fd,
+                    HttpStatusCode::_CONTENT_TOO_LARGE,
+                    builder
+                );
             } else if (this->GetRedirectPath() != "") {
-                return new RouteResponse(fd, 308, this->GetRedirectPath());
+                builder
+                    .WithStatusCode(HttpStatusCode::_PERMANENT_REDIRECT)
+                    .WithLocation(this->GetRedirectPath());
+                return (HttpStatusCode::_PERMANENT_REDIRECT);
+                // builder = (new BuilderResponse(this->_handler, 308));
+                // return (builder->SetRedirectPath(this->GetRedirectPath()), builder);
+                // return new RouteResponse(fd, 308, this->GetRedirectPath());
             }
             if (this->_handler->PathExist(absolutePath))
             {
@@ -75,37 +111,57 @@ class Route {
                         && this->_handler->IsAllowToGetFile(pathAutoindex)
                         && !this->_handler->FileIsDirectory(pathAutoindex))
                         {
-                            absolutePath = pathAutoindex;
-                            fd = this->_handler->OpenFile(absolutePath);
-                            // std::string test = Utils::SanitizePath("http://localhost:8081/", );
-                            std::string test = Utils::SanitizePath(request.GetPath(), *it);
-                            return new RouteResponse(
-                                fd,
-                                302,
-                                test
-                            );
+                            // absolutePath = pathAutoindex;
+                            // fd = this->_handler->OpenFile(absolutePath);
+                            builder
+                                .WithStatusCode(HttpStatusCode::_FOUND)
+                                .WithLocation(Utils::SanitizePath(request.GetPath(), *it));
+                            return (HttpStatusCode::_FOUND);
+                            // builder = (new BuilderResponse(this->_handler, 302));
+                            // return (builder->SetRedirectPath(Utils::SanitizePath(request.GetPath(), *it))
+                            //     .SetFileExtension(".html")
+                            //     .SetFileDescriptor(fd), builder);
+                            // std::string test = ;
+                            // return new RouteResponse(
+                            //     fd,
+                            //     302,
+                            //     test
+                            // );
                         }
                     }
                     if (this->_autoIndex) {
                         DIR *dir = this->_handler->OpenDirectory(absolutePath);
-                        return new RouteResponse(
-                            ".html",
-                            200,
-                            dir
-                        );
+                        builder
+                            .WithStatusCode(HttpStatusCode::_OK)
+                            .WithDirectoryFile(dir)
+                            .WithContentType(".html");
+                        return (HttpStatusCode::_OK);
+                        // builder = (new BuilderResponse(this->_handler, 200));
+                        // return (builder->SetDirectory(dir)
+                        //     .SetFileExtension(".html"), builder);
                     }
                 } else if (allow) {
                     fd = this->_handler->OpenFile(absolutePath);
-                    return new RouteResponse(
-                        Utils::GetFileExtension(absolutePath),
-                        fd,
-                        200
-                    );
+                    builder
+                        .WithStatusCode(HttpStatusCode::_OK)
+                        .WithContentType(Utils::GetFileExtension(absolutePath))
+                        .WithFileDescriptor(fd);
+                    return (HttpStatusCode::_OK);
+                    // builder = (new BuilderResponse(this->_handler, 200));
+                    // return (
+                    //     builder->SetFileDescriptor(fd)
+                    //         .SetFileExtension(Utils::GetFileExtension(absolutePath)),
+                    //     builder);
+                    // return new RouteResponse(
+                    //     Utils::GetFileExtension(absolutePath),
+                    //     fd,
+                    //     200
+                    // );
                 } else if (!allow) {
-                    return this->_handlerErrorResponse(fd, 403);
+                    return this->_handlerErrorResponse(fd, HttpStatusCode::_FORBIDDEN, builder);
                 }
             }
-            return this->_handlerErrorResponse(fd, 404);
+            return this->_handlerErrorResponse(fd, HttpStatusCode::_NOT_FOUND, builder);
         }
 
         std::set<std::string>       *CatDirectorysFiles(std::string path, std::vector<struct dirent *> &dirs);
@@ -113,9 +169,9 @@ class Route {
         std::string                 ReturnFileRequest(std::string path);
         mode_t                      CatFileMode(std::string &path, int &statusCode);
         bool                        FindFilePattern(std::string &path, std::set<std::string> *dirs);
-        AHttpResponse               *DetermineOutputFile(HttpRequest &httpReq);
+        IHttpResponse               *DetermineOutputFile(HttpRequest &httpReq);
         std::string                 GenerateAutoindex(std::vector<struct dirent *> dirs, std::string path);
-        AHttpResponse               *checkFilePermission(HttpRequest &httpReq, int &statusCode);
+        IHttpResponse               *checkFilePermission(HttpRequest &httpReq, int &statusCode);
         
         // Geters
         std::string                 GetRedirectPath(void);

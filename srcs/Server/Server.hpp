@@ -2,10 +2,10 @@
 # define __SERVER_HPP__
 
 # include "Route.hpp"
-#include <netdb.h>
-#include <sys/epoll.h>
-# include "Response201Created.hpp"
-# include "Response404NotFound.hpp"
+# include <netdb.h>
+# include <sys/epoll.h>
+# include "IBuilderResponse.hpp"
+# include "BuilderResponse.hpp"
 
 enum ServerStages {
     S_START,
@@ -38,6 +38,8 @@ class Server : public CommonParameters {
         const static int                        backlog = 10;
 
         std::map<int, RouteResponse *>             ClientsResponse;
+        std::map<int, IBuilderResponse *>        BuildersResponse;
+        std::map<int, IHttpResponse *>        ResponsesMap;
 
     public:
 

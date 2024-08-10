@@ -1,27 +1,7 @@
 # include "Route.hpp"
 
-// Route Methods
-std::set<std::string>     *Route::CatDirectorysFiles(std::string path, std::vector<struct dirent *> &dirs) {
-    DIR                         *dir = NULL;
-    std::set<std::string>       *dirNames = new std::set<std::string>();
-
-    dir = opendir(path.c_str());
-    if (dir != NULL) {
-        struct dirent* entry;
-
-        while ((entry = readdir(dir)) != NULL) {
-            // if (this->_autoIndex)
-                dirs.push_back(entry);
-            std::string d_name = entry->d_name;
-            dirNames->insert(d_name);
-        }
-        closedir(dir);
-    }
-    return dirNames;
-}
-
 RouteResponse    *Route::ProcessRoute(HttpRequest &httpReq) {
-    return this->ProcessRequest(httpReq);
+    return NULL; // (void)this->ProcessRequest(httpReq);
 }
 
 std::string Route::ReturnFileRequest(std::string path) {
@@ -38,28 +18,6 @@ std::string Route::ReturnFileRequest(std::string path) {
     return body;
 }
 
-mode_t Route::CatFileMode(std::string &path, int &statusCode) {
-    struct stat sb;
-    std::string newPath;
-    bool        error = false;
-
-    memset(&sb, 0, sizeof(struct stat));
-    newPath = path;
-    while (1) {
-        if (stat(newPath.c_str(), &sb) == -1 && error == false) {
-            statusCode = 404;
-            this->pathReset(newPath);
-            newPath += this->_error_page[statusCode];
-            error = true;
-            continue ;
-        } else {
-            path = newPath;
-        }
-        break;
-    }
-    return sb.st_mode;
-}
-
 bool Route::FindFilePattern(std::string &path, std::set<std::string> *dirs) {
     std::set<std::string>::iterator it = this->_index.begin();
     for ( ; it != this->_index.end(); ++it) {
@@ -71,108 +29,6 @@ bool Route::FindFilePattern(std::string &path, std::set<std::string> *dirs) {
         }
     }
     return false;
-}
-
-std::string Route::GenerateAutoindex(std::vector<struct dirent *> dirs, std::string path) {
-    std::stringstream   body;
-
-    std::string actualDir = Utils::getActualDir(path);
-    body << "<html data-lt-installed=\"true\">" << "\r\n";
-    body << "<head>\r\n";
-    body << "\t<title>Index of " << actualDir << "</title>\r\n";
-    body << "</head>\r\n";
-    body << "<body>\r\n";
-    body << "\t<h1>index of " << actualDir << "</h1>\r\n";
-    body << "\t<hr>\r\n";
-    body << "\t<pre>\r\n";
-    std::vector<struct dirent *>::iterator it = dirs.begin();
-    for (; it != dirs.end(); ++it) {
-        std::string filePath = path + std::string((*it)->d_name);
-        if ((*it)->d_type == DT_DIR && std::string((*it)->d_name) != ".." && std::string((*it)->d_name) != ".")
-            body << "\t\t<a href=\"" << (*it)->d_name << "/\">" << (*it)->d_name << "/</a>\r\n";
-        else
-            body << "\t\t<a href=\"" << (*it)->d_name << "\">" << (*it)->d_name << "</a>\r\n";
-        body << "\t\t" << Utils::getLastModifiedOfFile(filePath) << " " << Utils::getFileSize(filePath) << "\r\n";
-    }
-    body << "\t</prev>\r\n";
-    body << "\t<hr>\r\n";
-    body << "</body>\r\n";
-    body << "</html>";
-    return body.str();
-}
-
-AHttpResponse *Route::DetermineOutputFile(HttpRequest &httpReq) {
-    std::stringstream   body;
-    int                 statusCode = 200;
-    bool                exitCheck = false;
-    AHttpResponse       *res = NULL;
-
-    this->_stage = R_REQUEST;
-    std::cout << *this; 
-    while (1) {
-        std::set<std::string> *dirNames = NULL;
-        std::vector<struct dirent *> dirs;
-        switch (CatFileMode(httpReq._path, statusCode) & S_IFMT) {
-        case S_IFDIR:
-            dirNames = this->CatDirectorysFiles(httpReq._path, dirs);
-            if (dirNames != NULL && !this->FindFilePattern(httpReq._path, dirNames)) {
-                if ((res = this->checkFilePermission(httpReq, statusCode)))
-                    exitCheck = true;
-                if (statusCode == 200) {
-                    body << GenerateAutoindex(dirs, httpReq._path);
-                    delete dirNames;
-                    exitCheck = true;
-                    res = new Response200OK("text/html", body.str());
-                }
-            }
-            break;
-        case S_IFREG:
-            if ((res = this->checkFilePermission(httpReq, statusCode)))
-                exitCheck = true;
-            if (statusCode == 200) {
-                body << this->ReturnFileRequest(httpReq._path);
-                exitCheck = true;
-                res = new Response200OK("text/html", body.str());
-            }
-            break;
-        default:
-            exitCheck = true;
-            std::stringstream code;
-            code << statusCode;
-            res = new AHttpResponse(code.str(), "text/html");
-            break;
-        }
-        if (exitCheck)
-            break;
-    }
-    return res;
-}
-
-AHttpResponse *Route::checkFilePermission(HttpRequest &httpReq, int &statusCode) {
-    struct stat sb;
-
-    memset(&sb, 0, sizeof(struct stat));
-    stat(httpReq._path.c_str(), &sb);
-    if (httpReq._method == "GET" && !(sb.st_mode & S_IRUSR)) {
-        statusCode = 403;
-        std::map<int, std::string>::iterator it = this->_error_page.find(statusCode);
-        if (it == this->_error_page.end()) {
-            std::stringstream code;
-            code << statusCode;
-            return new AHttpResponse(code.str(), "text/html");
-        } else {
-            this->pathReset(httpReq._path);
-            Utils::checkPathEnd(httpReq._path, it->second);
-        }
-        return NULL;
-    }
-    statusCode = 200;
-    return NULL;
-}
-
-void    Route::pathReset(std::string &path) {
-    path = this->_root;
-    path += this->_route_name; 
 }
 
 // Geters
@@ -257,7 +113,7 @@ Route::Route(IServer *server, std::string route_name, IHandler *handler)  :
     _error_page(server->GetDefaultErrorPage()),
     _limit_client_body_size(server->GetLimitClientBodySize()),
     _root(server->GetRoot()),
-    _autoIndex(server->GetAutoIndex()),
+    _autoIndex(true),
     _index(server->GetIndex()),
     _stage(R_START),
     _handler(handler)

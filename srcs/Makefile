@@ -28,17 +28,14 @@ FLAGS										= 	-Wall -Wextra -std=c++98
 ######################## SOURCES #############################
 SRC_SERVER									=	Route.cpp Server.cpp
 SRC_PARSER									=	Parser.cpp Handler.cpp
-SRC_RESPONSE								=	AHttpResponse.cpp \
-												Response200OK.cpp \
-												Response201Created.cpp \
-												Response404NotFound.cpp
+SRC_RESPONSE								=	HttpResponse.cpp 
 SRC_HTTP									=	Http.cpp HttpRequest.cpp CommonParameters.cpp RouteResponse.cpp
 SRC_UTILS									=	Utils.cpp
 SRC											= 	$(SRC_UTILS)				\
+												$(SRC_RESPONSE)				\
 												$(SRC_SERVER)				\
 												$(SRC_HTTP)					\
 												$(SRC_PARSER)				\
-												$(SRC_RESPONSE)				\
 												main.cpp				
 ######################## OBJECTS #############################
 OBJ											=	$(patsubst %.cpp, $(OBJS_PATH)%.o, $(SRC))
