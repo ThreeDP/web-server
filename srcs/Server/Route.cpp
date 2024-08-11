@@ -1,178 +1,105 @@
 # include "Route.hpp"
 
-// Route Methods
-std::set<std::string>     *Route::CatDirectorysFiles(std::string path, std::vector<struct dirent *> &dirs) {
-    DIR                         *dir = NULL;
-    std::set<std::string>       *dirNames = new std::set<std::string>();
+HttpStatusCode::Code Route::_handlerErrorResponse(
+    std::ifstream *fd,
+    HttpStatusCode::Code statusCode,
+    IBuilderResponse &builder
+) {
+    std::string path;
 
-    dir = opendir(path.c_str());
-    if (dir != NULL) {
-        struct dirent* entry;
-
-        while ((entry = readdir(dir)) != NULL) {
-            // if (this->_autoIndex)
-                dirs.push_back(entry);
-            std::string d_name = entry->d_name;
-            dirNames->insert(d_name);
-        }
-        closedir(dir);
-    }
-    return dirNames;
-}
-
-RouteResponse    *Route::ProcessRoute(HttpRequest &httpReq) {
-    return this->ProcessRequest(httpReq);
-}
-
-std::string Route::ReturnFileRequest(std::string path) {
-    std::string body;
-
-    std::ifstream file(path.c_str());
-    if (file.is_open()) {
-        std::string line;
-        while (std::getline(file, line)) {
-            body += line;
-        }
-        file.close();
-    }
-    return body;
-}
-
-mode_t Route::CatFileMode(std::string &path, int &statusCode) {
-    struct stat sb;
-    std::string newPath;
-    bool        error = false;
-
-    memset(&sb, 0, sizeof(struct stat));
-    newPath = path;
-    while (1) {
-        if (stat(newPath.c_str(), &sb) == -1 && error == false) {
-            statusCode = 404;
-            this->pathReset(newPath);
-            newPath += this->_error_page[statusCode];
-            error = true;
-            continue ;
-        } else {
-            path = newPath;
-        }
-        break;
-    }
-    return sb.st_mode;
-}
-
-bool Route::FindFilePattern(std::string &path, std::set<std::string> *dirs) {
-    std::set<std::string>::iterator it = this->_index.begin();
-    for ( ; it != this->_index.end(); ++it) {
-        std::set<std::string>::iterator i = dirs->find(*it);
-        if (i != dirs->end()) {
-            Utils::checkPathEnd(path, *it);
-            delete dirs;
-            return true;
+    bool hasErrorPage = (path = this->GetErrorPage(statusCode)) != "";
+    path = Utils::SanitizePath(this->_root, path);
+    if (hasErrorPage && this->_handler->FileExist(path)) {
+        if (this->_handler->IsAllowToGetFile(path)) {
+            fd = this->_handler->OpenFile(path);
+            builder
+                .SetupResponse()
+                .WithStatusCode(statusCode)
+                .WithFileDescriptor(fd)
+                .WithContentType(Utils::GetFileExtension(path));
+            return (statusCode);
         }
     }
-    return false;
+    builder
+        .SetupResponse()
+        .WithStatusCode(statusCode)
+        .WithContentType(".html")
+        .WithDefaultPage();
+    return (statusCode);
 }
 
-std::string Route::GenerateAutoindex(std::vector<struct dirent *> dirs, std::string path) {
-    std::stringstream   body;
-
-    std::string actualDir = Utils::getActualDir(path);
-    body << "<html data-lt-installed=\"true\">" << "\r\n";
-    body << "<head>\r\n";
-    body << "\t<title>Index of " << actualDir << "</title>\r\n";
-    body << "</head>\r\n";
-    body << "<body>\r\n";
-    body << "\t<h1>index of " << actualDir << "</h1>\r\n";
-    body << "\t<hr>\r\n";
-    body << "\t<pre>\r\n";
-    std::vector<struct dirent *>::iterator it = dirs.begin();
-    for (; it != dirs.end(); ++it) {
-        std::string filePath = path + std::string((*it)->d_name);
-        if ((*it)->d_type == DT_DIR && std::string((*it)->d_name) != ".." && std::string((*it)->d_name) != ".")
-            body << "\t\t<a href=\"" << (*it)->d_name << "/\">" << (*it)->d_name << "/</a>\r\n";
-        else
-            body << "\t\t<a href=\"" << (*it)->d_name << "\">" << (*it)->d_name << "</a>\r\n";
-        body << "\t\t" << Utils::getLastModifiedOfFile(filePath) << " " << Utils::getFileSize(filePath) << "\r\n";
+HttpStatusCode::Code Route::ProcessRequest(
+    HttpRequest &request,
+    IBuilderResponse &builder
+) {
+    std::ifstream   *fd = NULL;
+    std::string     absolutePath;
+    
+    absolutePath = Utils::SanitizePath(this->_root, request.GetPath());
+    if (!this->IsAllowMethod(request.GetMethod())) {
+        return this->_handlerErrorResponse(
+            fd,
+            HttpStatusCode::_METHOD_NOT_ALLOWED,
+            builder
+        );
+    } else if (this->_limit_client_body_size < request.GetBodySize()) {
+        return this->_handlerErrorResponse(
+            fd,
+            HttpStatusCode::_CONTENT_TOO_LARGE,
+            builder
+        );
+    } else if (this->GetRedirectPath() != "") {
+        builder
+            .SetupResponse()
+            .WithStatusCode(HttpStatusCode::_PERMANENT_REDIRECT)
+            .WithLocation("/" + this->GetRedirectPath())
+            .WithDefaultPage();
+        return (HttpStatusCode::_PERMANENT_REDIRECT);
     }
-    body << "\t</prev>\r\n";
-    body << "\t<hr>\r\n";
-    body << "</body>\r\n";
-    body << "</html>";
-    return body.str();
-}
-
-AHttpResponse *Route::DetermineOutputFile(HttpRequest &httpReq) {
-    std::stringstream   body;
-    int                 statusCode = 200;
-    bool                exitCheck = false;
-    AHttpResponse       *res = NULL;
-
-    this->_stage = R_REQUEST;
-    std::cout << *this; 
-    while (1) {
-        std::set<std::string> *dirNames = NULL;
-        std::vector<struct dirent *> dirs;
-        switch (CatFileMode(httpReq._path, statusCode) & S_IFMT) {
-        case S_IFDIR:
-            dirNames = this->CatDirectorysFiles(httpReq._path, dirs);
-            if (dirNames != NULL && !this->FindFilePattern(httpReq._path, dirNames)) {
-                if ((res = this->checkFilePermission(httpReq, statusCode)))
-                    exitCheck = true;
-                if (statusCode == 200) {
-                    body << GenerateAutoindex(dirs, httpReq._path);
-                    delete dirNames;
-                    exitCheck = true;
-                    res = new Response200OK("text/html", body.str());
+    if (this->_handler->PathExist(absolutePath))
+    {
+        bool isDirectory = this->_handler->FileIsDirectory(absolutePath);
+        bool allow = this->_handler->IsAllowToGetFile(absolutePath);
+        if (allow && isDirectory)
+        {
+            std::string pathAutoindex = absolutePath;
+            for (std::set<std::string>::iterator it = this->_index.begin(); it != this->_index.end(); ++it)
+            {
+                pathAutoindex = Utils::SanitizePath(pathAutoindex, *it);
+                if (this->_handler->PathExist(pathAutoindex)
+                && this->_handler->IsAllowToGetFile(pathAutoindex)
+                && !this->_handler->FileIsDirectory(pathAutoindex))
+                {
+                    builder
+                        .SetupResponse()
+                        .WithStatusCode(HttpStatusCode::_FOUND)
+                        .WithLocation(Utils::SanitizePath("http://localhost:8081", Utils::SanitizePath(request.GetPath(), *it)))
+                        .WithDefaultPage();
+                    return (HttpStatusCode::_FOUND);
                 }
             }
-            break;
-        case S_IFREG:
-            if ((res = this->checkFilePermission(httpReq, statusCode)))
-                exitCheck = true;
-            if (statusCode == 200) {
-                body << this->ReturnFileRequest(httpReq._path);
-                exitCheck = true;
-                res = new Response200OK("text/html", body.str());
+            if (this->_autoIndex) {
+                DIR *dir = this->_handler->OpenDirectory(absolutePath);
+                builder
+                    .SetupResponse()
+                    .WithStatusCode(HttpStatusCode::_OK)
+                    .WithDirectoryFile(dir, request.GetPath())
+                    .WithContentType(".html");
+                return (HttpStatusCode::_OK);
             }
-            break;
-        default:
-            exitCheck = true;
-            std::stringstream code;
-            code << statusCode;
-            res = new AHttpResponse(code.str(), "text/html");
-            break;
+        } else if (allow) {
+            fd = this->_handler->OpenFile(absolutePath);
+            builder
+                .SetupResponse()
+                .WithStatusCode(HttpStatusCode::_OK)
+                .WithContentType(Utils::GetFileExtension(absolutePath))
+                .WithFileDescriptor(fd);
+            return (HttpStatusCode::_OK);
+        } else if (!allow) {
+            return this->_handlerErrorResponse(fd, HttpStatusCode::_FORBIDDEN, builder);
         }
-        if (exitCheck)
-            break;
     }
-    return res;
-}
-
-AHttpResponse *Route::checkFilePermission(HttpRequest &httpReq, int &statusCode) {
-    struct stat sb;
-
-    memset(&sb, 0, sizeof(struct stat));
-    stat(httpReq._path.c_str(), &sb);
-    if (httpReq._method == "GET" && !(sb.st_mode & S_IRUSR)) {
-        statusCode = 403;
-        std::map<int, std::string>::iterator it = this->_error_page.find(statusCode);
-        if (it == this->_error_page.end()) {
-            std::stringstream code;
-            code << statusCode;
-            return new AHttpResponse(code.str(), "text/html");
-        } else {
-            this->pathReset(httpReq._path);
-            Utils::checkPathEnd(httpReq._path, it->second);
-        }
-        return NULL;
-    }
-    statusCode = 200;
-    return NULL;
-}
-
-void    Route::pathReset(std::string &path) {
-    path = this->_root;
-    path += this->_route_name; 
+    return this->_handlerErrorResponse(fd, HttpStatusCode::_NOT_FOUND, builder);
 }
 
 // Geters
@@ -257,7 +184,7 @@ Route::Route(IServer *server, std::string route_name, IHandler *handler)  :
     _error_page(server->GetDefaultErrorPage()),
     _limit_client_body_size(server->GetLimitClientBodySize()),
     _root(server->GetRoot()),
-    _autoIndex(server->GetAutoIndex()),
+    _autoIndex(true),
     _index(server->GetIndex()),
     _stage(R_START),
     _handler(handler)

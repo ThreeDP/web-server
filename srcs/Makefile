@@ -6,7 +6,7 @@
 #    By: dapaulin <dapaulin@student.42sp.org.br>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/11/03 15:04:07 by dapaulin          #+#    #+#              #
-#    Updated: 2024/07/27 18:57:02 by dapaulin         ###   ########.fr        #
+#    Updated: 2024/08/10 21:45:48 by dapaulin         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -28,17 +28,14 @@ FLAGS										= 	-Wall -Wextra -std=c++98
 ######################## SOURCES #############################
 SRC_SERVER									=	Route.cpp Server.cpp
 SRC_PARSER									=	Parser.cpp Handler.cpp
-SRC_RESPONSE								=	AHttpResponse.cpp \
-												Response200OK.cpp \
-												Response201Created.cpp \
-												Response404NotFound.cpp
-SRC_HTTP									=	Http.cpp HttpRequest.cpp CommonParameters.cpp RouteResponse.cpp
+SRC_RESPONSE								=	HttpResponse.cpp 
+SRC_HTTP									=	Http.cpp HttpRequest.cpp CommonParameters.cpp
 SRC_UTILS									=	Utils.cpp
 SRC											= 	$(SRC_UTILS)				\
+												$(SRC_RESPONSE)				\
 												$(SRC_SERVER)				\
 												$(SRC_HTTP)					\
 												$(SRC_PARSER)				\
-												$(SRC_RESPONSE)				\
 												main.cpp				
 ######################## OBJECTS #############################
 OBJ											=	$(patsubst %.cpp, $(OBJS_PATH)%.o, $(SRC))
