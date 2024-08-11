@@ -69,6 +69,21 @@ AHttpResponse::AHttpResponse(std::string statusCode, std::string extension, std:
     this->_headers["Server:"] = this->_server;
 }
 
+AHttpResponse::AHttpResponse(std::string statusCode, std::string extension, std::string body, std::string Location) :
+    _HTTPVersion("HTTP/1.1"),
+    _statusCode(statusCode),
+    _statusMessage(this->GetStatusName(statusCode)),
+    _body(body)
+{
+    std::stringstream size;
+    size << this->_body.size() + 2;
+    this->_headers["Location:"] = Location;
+    this->_headers["Content-Type:"] = this->GetTextContent(extension);
+    this->_headers["Content-Length:"] = std::string(size.str());
+    this->_headers["Date:"] = Utils::getCurrentTimeInGMT();
+    this->_headers["Server:"] = this->_server;
+}
+
 AHttpResponse::AHttpResponse(std::string statusCode, std::string extension) :
     _HTTPVersion("HTTP/1.1"),
     _statusCode(statusCode),
