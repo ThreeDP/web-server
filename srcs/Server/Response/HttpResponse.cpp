@@ -55,7 +55,10 @@ void HttpResponse::_defaultErrorPage(void) {
 	this->_body = sb.str();
 }
 
-void    HttpResponse::_createBodyByDirectory(std::vector<struct dirent*> *dirent, std::string path) {
+void    HttpResponse::_createBodyByDirectory(
+    std::set<struct dirent*> *dirent,
+    std::string path,
+    IHandler &handler) {
     std::stringstream   body;
     
     std::string actualDir = Utils::getActualDir(path);
@@ -67,14 +70,17 @@ void    HttpResponse::_createBodyByDirectory(std::vector<struct dirent*> *dirent
     body << "\t<h1>index of " << actualDir << "</h1>\r\n";
     body << "\t<hr>\r\n";
     body << "\t<pre>\r\n";
-    std::vector<struct dirent *>::iterator it = dirent->begin();
+    std::set<struct dirent *>::iterator it = dirent->begin();
     for (; it != dirent->end(); ++it) {
         std::string filePath = Utils::SanitizePath(path, std::string((*it)->d_name));
-        if ((*it)->d_type == DT_DIR && std::string((*it)->d_name) != ".." && std::string((*it)->d_name) != ".")
-            body << "\t\t<a href=\"" << (*it)->d_name << "/\">" << (*it)->d_name << "/</a>\r\n";
-        else
-            body << "\t\t<a href=\"" << (*it)->d_name << "\">" << (*it)->d_name << "</a>\r\n";
-        body << "\t\t" << "Utils::getLastModifiedOfFile(filePath)" << " " << "Utils::getFileSize(filePath)" << "\r\n";
+        if (handler.IsAllowToGetFile(filePath)) {
+            if ((*it)->d_type == DT_DIR && std::string((*it)->d_name) != ".." && std::string((*it)->d_name) != ".")
+
+                body << "\t\t<a href=\"" << (*it)->d_name << "/\">" << (*it)->d_name << "/</a>\r\n";
+            else
+                body << "\t\t<a href=\"" << (*it)->d_name << "\">" << (*it)->d_name << "</a>\r\n";
+            body << "\t\t" << Utils::getLastModifiedOfFile(filePath) << " " << Utils::getFileSize(filePath) << "\r\n";
+        }
     }
     body << "\t</prev>\r\n";
     body << "\t<hr>\r\n";

@@ -28,7 +28,7 @@ FLAGS										= 	-Wall -Wextra -std=c++98
 ######################## SOURCES #############################
 SRC_SERVER									=	Route.cpp Server.cpp
 SRC_PARSER									=	Parser.cpp Handler.cpp
-SRC_RESPONSE								=	HttpResponse.cpp 
+SRC_RESPONSE								=	HttpResponse.cpp BuilderResponse.cpp
 SRC_HTTP									=	Http.cpp HttpRequest.cpp CommonParameters.cpp
 SRC_UTILS									=	Utils.cpp
 SRC											= 	$(SRC_UTILS)				\

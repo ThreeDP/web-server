@@ -95,11 +95,11 @@ bool Handler::IsAllowToRunScript(std::string path) {
     return false;
 }
 
-std::vector<struct dirent *> *Handler::ReadDirectory(DIR *directory) {
-    std::vector<struct dirent *>	*dirnames = new std::vector<struct dirent *>();
+std::set<struct dirent *> *Handler::ReadDirectory(DIR *directory) {
+    std::set<struct dirent *>	*dirnames = new std::set<struct dirent *>();
     struct dirent* entry;
     while ((entry = readdir(directory)) != NULL) {
-        dirnames->push_back(entry);
+        dirnames->insert(entry);
     }
     return dirnames;
 }
