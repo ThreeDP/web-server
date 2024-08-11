@@ -74,7 +74,7 @@ void    HttpResponse::_createBodyByDirectory(std::vector<struct dirent*> *dirent
             body << "\t\t<a href=\"" << (*it)->d_name << "/\">" << (*it)->d_name << "/</a>\r\n";
         else
             body << "\t\t<a href=\"" << (*it)->d_name << "\">" << (*it)->d_name << "</a>\r\n";
-        body << "\t\t" << "Utils::getLastModifiedOfFile(filePath)" << " " << "Utils::getFileSize(filePath)" << "\r\n";
+        body << "\t\t" << Utils::getLastModifiedOfFile(filePath) << " " << Utils::getFileSize(filePath) << "\r\n";
     }
     body << "\t</prev>\r\n";
     body << "\t<hr>\r\n";

@@ -72,43 +72,10 @@ int Server::AcceptClientConnect(void) {
     return this->_actualClientFD;
 }
 
-
-std::string Server::GenerateAutoindex(std::vector<struct dirent *> *dirs, std::string path) {
-    std::stringstream   body;
-
-    std::string actualDir = "Utils::getActualDir(path);";
-    body << "<html data-lt-installed=\"true\">" << "\r\n";
-    body << "<head>\r\n";
-    body << "\t<title>Index of " << actualDir << "</title>\r\n";
-    body << "</head>\r\n";
-    body << "<body>\r\n";
-    body << "\t<h1>index of " << actualDir << "</h1>\r\n";
-    body << "\t<hr>\r\n";
-    body << "\t<pre>\r\n";
-    std::vector<struct dirent *>::iterator it = dirs->begin();
-    for (; it != dirs->end(); ++it) {
-        std::string filePath = path + std::string((*it)->d_name);
-        if ((*it)->d_type == DT_DIR && std::string((*it)->d_name) != ".." && std::string((*it)->d_name) != ".")
-            body << "\t\t<a href=\"" << (*it)->d_name << "/\">" << (*it)->d_name << "/</a>\r\n";
-        else
-            body << "\t\t<a href=\"" << (*it)->d_name << "\">" << (*it)->d_name << "</a>\r\n";
-        body << "\t\t" << "Utils::getLastModifiedOfFile(filePath)" << " " << "Utils::getFileSize(filePath)" << "\r\n";
-    }
-    body << "\t</prev>\r\n";
-    body << "\t<hr>\r\n";
-    body << "</body>\r\n";
-    body << "</html>";
-    return body.str();
-}
 /* Server Process
 =======================================*/
 
-std::string         Server::ProcessResponse(int client_fd) {
-    std::string res = this->ResponsesMap[client_fd]->ToString();
-    this->ResponsesMap.erase(client_fd);
-    this->UpdateState(S_SERVER_RESPONSE, client_fd);
-    return res;
-}
+
 
 std::string         Server::FindMatchRoute(HttpRequest &res) {
     std::string keyPath = "";
@@ -133,12 +100,16 @@ std::string         Server::FindMatchRoute(HttpRequest &res) {
 void                Server::ProcessRequest(HttpRequest &request, int client_fd) {
     this->UpdateState(S_CLIENT_REQUEST, client_fd);
     BuilderResponse builder = BuilderResponse(new Handler());
-    // std::cout << *this;
     std::string keyPath = this->FindMatchRoute(request);
     this->routes[keyPath]->ProcessRequest(request, builder);
-
     this->ResponsesMap[client_fd] = builder.GetResult();
-    // this->ClientsResponse[client_fd] = routeRes;
+}
+
+std::string         Server::ProcessResponse(int client_fd) {
+    std::string res = this->ResponsesMap[client_fd]->ToString();
+    this->ResponsesMap.erase(client_fd);
+    this->UpdateState(S_SERVER_RESPONSE, client_fd);
+    return res;
 }
 
 /* Geters

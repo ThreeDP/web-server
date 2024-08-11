@@ -83,7 +83,7 @@ HttpStatusCode::Code Route::ProcessRequest(
                 builder
                     .SetupResponse()
                     .WithStatusCode(HttpStatusCode::_OK)
-                    .WithDirectoryFile(dir, request.GetPath())
+                    .WithDirectoryFile(dir, absolutePath)
                     .WithContentType(".html");
                 return (HttpStatusCode::_OK);
             }
