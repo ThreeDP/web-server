@@ -92,7 +92,7 @@ std::string Server::GenerateAutoindex(std::vector<struct dirent *> *dirs, std::s
             body << "\t\t<a href=\"" << (*it)->d_name << "/\">" << (*it)->d_name << "/</a>\r\n";
         else
             body << "\t\t<a href=\"" << (*it)->d_name << "\">" << (*it)->d_name << "</a>\r\n";
-        body << "\t\t" << Utils::getLastModifiedOfFile(filePath) << " " << Utils::getFileSize(filePath) << "\r\n";
+        body << "\t\t" << "Utils::getLastModifiedOfFile(filePath)" << " " << "Utils::getFileSize(filePath)" << "\r\n";
     }
     body << "\t</prev>\r\n";
     body << "\t<hr>\r\n";
@@ -133,7 +133,6 @@ std::string         Server::FindMatchRoute(HttpRequest &res) {
 void                Server::ProcessRequest(HttpRequest &request, int client_fd) {
     this->UpdateState(S_CLIENT_REQUEST, client_fd);
     BuilderResponse builder = BuilderResponse(new Handler());
-    builder.Setup();
     // std::cout << *this;
     std::string keyPath = this->FindMatchRoute(request);
     this->routes[keyPath]->ProcessRequest(request, builder);

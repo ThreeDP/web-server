@@ -11,17 +11,23 @@ class BuilderResponse : public IBuilderResponse {
     public:
         BuilderResponse(IHandler *handler) : _handler(handler) {
             _handler = handler;
+            _response = NULL;
         }
 
         ~BuilderResponse(void) {
-            if (_response != NULL)
+            if (_response != NULL) {
                 delete _response;
+                _response = NULL;
+            }
         }
 
-        void Setup(void) {
-            if (_response != NULL)
+        IBuilderResponse &SetupResponse(void) {
+            if (_response != NULL) {
                 delete _response;
+                _response = NULL;
+            }
             _response = new HttpResponse();
+            return *this;
         }
 
         IBuilderResponse &WithStatusCode(HttpStatusCode::Code statusCode) {
@@ -34,10 +40,10 @@ class BuilderResponse : public IBuilderResponse {
             return *this;
         }
 
-        IBuilderResponse &WithDirectoryFile(DIR *directory) {
+        IBuilderResponse &WithDirectoryFile(DIR *directory, std::string path) {
             if (directory != NULL && _response->GetBody() == "") {
                 std::vector<struct dirent*> *directories = _handler->ReadDirectory(directory);
-                _response->_createBodyByDirectory(directories);
+                _response->_createBodyByDirectory(directories, path);
             }
             closedir(directory);
             return *this;
@@ -70,7 +76,24 @@ class BuilderResponse : public IBuilderResponse {
         };
 
         IHttpResponse *GetResult(void) {
-            return _response;
+            IHttpResponse *res = _response;
+            _response = NULL;
+            return res;
+        }
+
+        bool CompareResponses(IHttpResponse &left, IHttpResponse &right) {
+            bool res = left.GetHttpVersion() == right.GetHttpVersion()
+                && left.GetStatusCode() == right.GetStatusCode()
+                && left.GetStatusMessage() == right.GetStatusMessage();
+            std::map<std::string, std::string> leftHeaders = left.GetHeaders();
+            std::map<std::string, std::string> rightHeaders = right.GetHeaders();
+            std::map<std::string, std::string>::iterator it = leftHeaders.begin();
+            for ( ; it != leftHeaders.end(); ++it) {
+                res = res && it->second == rightHeaders[it->first];
+            }
+            std::cout << "Left: " << left.GetBody() << "\n\n";
+            std::cout << "Right: " << right.GetBody() << "\n\n";
+            return res && left.GetBody() == right.GetBody();
         }
 };
 

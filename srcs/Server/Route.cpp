@@ -1,34 +1,105 @@
 # include "Route.hpp"
 
-RouteResponse    *Route::ProcessRoute(HttpRequest &httpReq) {
-    return NULL; // (void)this->ProcessRequest(httpReq);
-}
+HttpStatusCode::Code Route::_handlerErrorResponse(
+    std::ifstream *fd,
+    HttpStatusCode::Code statusCode,
+    IBuilderResponse &builder
+) {
+    std::string path;
 
-std::string Route::ReturnFileRequest(std::string path) {
-    std::string body;
-
-    std::ifstream file(path.c_str());
-    if (file.is_open()) {
-        std::string line;
-        while (std::getline(file, line)) {
-            body += line;
-        }
-        file.close();
-    }
-    return body;
-}
-
-bool Route::FindFilePattern(std::string &path, std::set<std::string> *dirs) {
-    std::set<std::string>::iterator it = this->_index.begin();
-    for ( ; it != this->_index.end(); ++it) {
-        std::set<std::string>::iterator i = dirs->find(*it);
-        if (i != dirs->end()) {
-            Utils::checkPathEnd(path, *it);
-            delete dirs;
-            return true;
+    bool hasErrorPage = (path = this->GetErrorPage(statusCode)) != "";
+    path = Utils::SanitizePath(this->_root, path);
+    if (hasErrorPage && this->_handler->FileExist(path)) {
+        if (this->_handler->IsAllowToGetFile(path)) {
+            fd = this->_handler->OpenFile(path);
+            builder
+                .SetupResponse()
+                .WithStatusCode(statusCode)
+                .WithFileDescriptor(fd)
+                .WithContentType(Utils::GetFileExtension(path));
+            return (statusCode);
         }
     }
-    return false;
+    builder
+        .SetupResponse()
+        .WithStatusCode(statusCode)
+        .WithContentType(".html")
+        .WithDefaultPage();
+    return (statusCode);
+}
+
+HttpStatusCode::Code Route::ProcessRequest(
+    HttpRequest &request,
+    IBuilderResponse &builder
+) {
+    std::ifstream   *fd = NULL;
+    std::string     absolutePath;
+    
+    absolutePath = Utils::SanitizePath(this->_root, request.GetPath());
+    if (!this->IsAllowMethod(request.GetMethod())) {
+        return this->_handlerErrorResponse(
+            fd,
+            HttpStatusCode::_METHOD_NOT_ALLOWED,
+            builder
+        );
+    } else if (this->_limit_client_body_size < request.GetBodySize()) {
+        return this->_handlerErrorResponse(
+            fd,
+            HttpStatusCode::_CONTENT_TOO_LARGE,
+            builder
+        );
+    } else if (this->GetRedirectPath() != "") {
+        builder
+            .SetupResponse()
+            .WithStatusCode(HttpStatusCode::_PERMANENT_REDIRECT)
+            .WithLocation("/" + this->GetRedirectPath())
+            .WithDefaultPage();
+        return (HttpStatusCode::_PERMANENT_REDIRECT);
+    }
+    if (this->_handler->PathExist(absolutePath))
+    {
+        bool isDirectory = this->_handler->FileIsDirectory(absolutePath);
+        bool allow = this->_handler->IsAllowToGetFile(absolutePath);
+        if (allow && isDirectory)
+        {
+            std::string pathAutoindex = absolutePath;
+            for (std::set<std::string>::iterator it = this->_index.begin(); it != this->_index.end(); ++it)
+            {
+                pathAutoindex = Utils::SanitizePath(pathAutoindex, *it);
+                if (this->_handler->PathExist(pathAutoindex)
+                && this->_handler->IsAllowToGetFile(pathAutoindex)
+                && !this->_handler->FileIsDirectory(pathAutoindex))
+                {
+                    builder
+                        .SetupResponse()
+                        .WithStatusCode(HttpStatusCode::_FOUND)
+                        .WithLocation(Utils::SanitizePath("http://localhost:8081", Utils::SanitizePath(request.GetPath(), *it)))
+                        .WithDefaultPage();
+                    return (HttpStatusCode::_FOUND);
+                }
+            }
+            if (this->_autoIndex) {
+                DIR *dir = this->_handler->OpenDirectory(absolutePath);
+                builder
+                    .SetupResponse()
+                    .WithStatusCode(HttpStatusCode::_OK)
+                    .WithDirectoryFile(dir, request.GetPath())
+                    .WithContentType(".html");
+                return (HttpStatusCode::_OK);
+            }
+        } else if (allow) {
+            fd = this->_handler->OpenFile(absolutePath);
+            builder
+                .SetupResponse()
+                .WithStatusCode(HttpStatusCode::_OK)
+                .WithContentType(Utils::GetFileExtension(absolutePath))
+                .WithFileDescriptor(fd);
+            return (HttpStatusCode::_OK);
+        } else if (!allow) {
+            return this->_handlerErrorResponse(fd, HttpStatusCode::_FORBIDDEN, builder);
+        }
+    }
+    return this->_handlerErrorResponse(fd, HttpStatusCode::_NOT_FOUND, builder);
 }
 
 // Geters

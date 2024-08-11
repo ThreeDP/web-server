@@ -55,9 +55,32 @@ void HttpResponse::_defaultErrorPage(void) {
 	this->_body = sb.str();
 }
 
-void    HttpResponse::_createBodyByDirectory(std::vector<struct dirent*> *dirent) {
-    _body = "test directory";
-    (void)dirent;
+void    HttpResponse::_createBodyByDirectory(std::vector<struct dirent*> *dirent, std::string path) {
+    std::stringstream   body;
+    
+    std::string actualDir = Utils::getActualDir(path);
+    body << "<html data-lt-installed=\"true\">" << "\r\n";
+    body << "<head>\r\n";
+    body << "\t<title>Index of " << actualDir << "</title>\r\n";
+    body << "</head>\r\n";
+    body << "<body>\r\n";
+    body << "\t<h1>index of " << actualDir << "</h1>\r\n";
+    body << "\t<hr>\r\n";
+    body << "\t<pre>\r\n";
+    std::vector<struct dirent *>::iterator it = dirent->begin();
+    for (; it != dirent->end(); ++it) {
+        std::string filePath = Utils::SanitizePath(path, std::string((*it)->d_name));
+        if ((*it)->d_type == DT_DIR && std::string((*it)->d_name) != ".." && std::string((*it)->d_name) != ".")
+            body << "\t\t<a href=\"" << (*it)->d_name << "/\">" << (*it)->d_name << "/</a>\r\n";
+        else
+            body << "\t\t<a href=\"" << (*it)->d_name << "\">" << (*it)->d_name << "</a>\r\n";
+        body << "\t\t" << "Utils::getLastModifiedOfFile(filePath)" << " " << "Utils::getFileSize(filePath)" << "\r\n";
+    }
+    body << "\t</prev>\r\n";
+    body << "\t<hr>\r\n";
+    body << "</body>\r\n";
+    body << "</html>";
+    _body = body.str();
 }
 
 void    HttpResponse::_createBodyByFileDescriptor(std::ifstream *fd) {
@@ -75,9 +98,34 @@ std::string HttpResponse::GetTextContent(std::string extension) {
     return _mapTextContent[extension];
 }
 
+std::string HttpResponse::GetHttpVersion(void) const {
+    return this->_HTTPVersion;
+}
+
+std::string HttpResponse::GetStatusCode(void) const {
+    return this->_statusCode;
+}
+
+std::string HttpResponse::GetStatusMessage(void) const {
+    return this->_statusMessage;
+}
+
+std::pair<std::string, std::string> HttpResponse::GetHeader(std::string key) {
+    std::map<std::string, std::string>::iterator it = this->_headers.find(key);
+    if (it != this->_headers.end()) {
+        return std::make_pair(it->first, it->second);
+    }
+    return std::make_pair("", "");
+}
+
+std::map<std::string, std::string> HttpResponse::GetHeaders(void) const {
+    return this->_headers;
+}
+
 std::string HttpResponse::GetBody(void) const {
     return this->_body;
 }
+
 
 void    HttpResponse::SetStatusCode(HttpStatusCode::Code statusCode) {
     std::stringstream code;

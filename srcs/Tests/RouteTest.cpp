@@ -74,7 +74,7 @@ class HandlerTest : public IHandler {
         }
 
         std::string ReadRegularFile(std::ifstream *file) {
-            return "";
+            return "<html>File Descriptor<html>";
         }
 };
 
@@ -194,11 +194,14 @@ ServerTest *ServerTestWithAutoIndex;
 ServerTest *ServerTestWithAutoIndexWithoutIndex;
 
 IHandler            *handler;
+IBuilderResponse    *expBuilder;
 
 class RouteTest : public ::testing::Test {
 protected:
     void SetUp() override {
         handler = new HandlerTest();
+        HttpResponse::SetDefaultHTTPResponse();
+        expBuilder = new BuilderResponse(handler);
         ServerTestDefault = new ServerTest();
         ServerTestWithoutGet = new ServerTest(CONFIGS::NoMethods);
         ServerTestWithAutoIndex = new ServerTest(CONFIGS::WithAutoIndex);
@@ -231,10 +234,15 @@ TEST_F(RouteTest, CreateARoute) {
     EXPECT_EQ(indexs.find("index.py"), indexs.end());
 }
 
-TEST_F(RouteTest, CheckAAllowMethod_CheckContentTypeIsHTML) {
+TEST_F(RouteTest, GetAFile_ShouldBeStatusOkWithFileContentInTypeHTML_WhenHasAAllowMethod) {
     // Arrange
     BuilderResponse     builder = BuilderResponse(handler);
-    builder.Setup();
+    expBuilder
+        ->SetupResponse()
+        .WithFileDescriptor(new std::ifstream())
+        .WithStatusCode(HttpStatusCode::_OK)
+        .WithContentType(".html");
+    
     std::string         route_name = "/imagens";
     Route               route(ServerTestDefault, route_name, handler);
 
@@ -247,104 +255,125 @@ TEST_F(RouteTest, CheckAAllowMethod_CheckContentTypeIsHTML) {
     HttpStatusCode::Code res = route.ProcessRequest(request, builder);
 
     // Assert
+    IHttpResponse *expected = expBuilder->GetResult();
+    IHttpResponse *result = builder.GetResult();
     EXPECT_EQ(HttpStatusCode::_OK, res);
-    EXPECT_EQ("test", builder.GetResult()->GetStatusName(HttpStatusCode::_OK));
-    // EXPECT_NE(response->FD, nullptr);
-    // EXPECT_EQ(response->Directory, nullptr);
+    EXPECT_TRUE(builder.CompareResponses(*expected, *result));
 
     // // Clean
-    // delete expected;
-    // response->FD->close();
-    // delete response->FD;
-    // delete response;
+    delete expected;
+    delete result;
 }
 
-// TEST_F(RouteTest, CheckNotAllowMethod) {
-//     // Arrange
-//     RouteResponse               *expected = new RouteResponse(".html", nullptr, 405);
-//     HttpRequest                 request;
-//     std::string                 route_name = "/create";
-//     std::stringstream           requestString;
-//     Route                       route(ServerTestWithoutGet, route_name, handler);
+TEST_F(RouteTest, GetAFile_ShouldBeStatus405WithDefaultContent_WhenMethodIsNotAllow) {
+    // Arrange
+    BuilderResponse     builder = BuilderResponse(handler);
+    expBuilder
+        ->SetupResponse()
+        .WithStatusCode(HttpStatusCode::_METHOD_NOT_ALLOWED)
+        .WithContentType(".html")
+        .WithDefaultPage();
 
-//     requestString << "GET " << route_name << "/index.html" << " HTTP/1.0\r\n";
-//     request.ParserRequest(requestString.str());
+    std::string                 route_name = "/create";
+    Route                       route(ServerTestWithoutGet, route_name, handler);
 
-//     // Act
-//     RouteResponse *response = route.ProcessRequest(request);
+    HttpRequest                 request;
+    std::stringstream           requestString;
+    requestString << "GET " << route_name << "/index.html" << " HTTP/1.0\r\n";
+    request.ParserRequest(requestString.str());
 
-//     // Assert
-//     EXPECT_EQ(*expected, *response);
-//     EXPECT_EQ(response->FD, nullptr);
-//     EXPECT_EQ(response->Directory, nullptr);
+    // Act
+    HttpStatusCode::Code res = route.ProcessRequest(request, builder);
 
-//     // Clean
-//     delete expected;
-//     delete response;
-// }
+    // Assert
+    IHttpResponse *expected = expBuilder->GetResult();
+    IHttpResponse *result = builder.GetResult();
+    EXPECT_EQ(HttpStatusCode::_METHOD_NOT_ALLOWED, res);
+    EXPECT_TRUE(builder.CompareResponses(*expected, *result));
 
-// TEST_F(RouteTest, CheckNotAllowMethodWithSetErrorPage) {
-//     // Arrange
-//     ServerTestWithoutGet->SetErroPage(405, "405.html");
-//     RouteResponse               *expected = new RouteResponse(".html", nullptr, 405);
-//     HttpRequest                 request;
-//     std::string                 route_name = "/create";
-//     Route                       route(ServerTestWithoutGet, route_name, handler);
-//     std::stringstream           requestString;
+    // Clean
+    delete expected;
+    delete result;
+}
 
-//     requestString << "GET " << route_name << "/index.html" << " HTTP/1.0\r\n";
-//     request.ParserRequest(requestString.str());
+TEST_F(RouteTest, GetAFile_ShouldBeStatus405WithErrorPageSet_WhenMethodIsNotAllowAndErrorPageIsSet) {
+    // Arrange
+    BuilderResponse     builder = BuilderResponse(handler);
+    expBuilder
+        ->SetupResponse()
+        .WithStatusCode(HttpStatusCode::_METHOD_NOT_ALLOWED)
+        .WithContentType(".html")
+        .WithFileDescriptor(new std::ifstream());
+    
+    ServerTestWithoutGet->SetErroPage(405, "405.html");
+    std::string                 route_name = "/create";
+    Route                       route(ServerTestWithoutGet, route_name, handler);
 
-//     // Act
-//     RouteResponse *response = route.ProcessRequest(request);
+    HttpRequest                 request;
+    std::stringstream           requestString;
+    requestString << "GET " << route_name << "/index.html" << " HTTP/1.0\r\n";
+    request.ParserRequest(requestString.str());
 
-//     // Assert
-//     EXPECT_EQ(*expected, *response);
-//     EXPECT_NE(response->FD, nullptr);
-//     EXPECT_EQ(response->Directory, nullptr);
+    // Act
+    HttpStatusCode::Code res = route.ProcessRequest(request, builder);
 
-//     // Clean
-//     ServerTestWithoutGet->ResetErroPage(405);
-//     delete expected;
-//     response->FD->close();
-//     delete response->FD;
-//     delete response;
-// }
+    // Assert
+    IHttpResponse *expected = expBuilder->GetResult();
+    IHttpResponse *result = builder.GetResult();
+    EXPECT_EQ(HttpStatusCode::_METHOD_NOT_ALLOWED, res);
+    EXPECT_TRUE(builder.CompareResponses(*expected, *result));
 
-// TEST_F(RouteTest, CheckNotAllowMethodWithNotFoundErrorPage) {
-//     // Arrange
-//     ServerTestWithoutGet->SetErroPage(405, "notfound.html");
-//     RouteResponse               *expected = new RouteResponse(".html", nullptr, 405);
-//     HttpRequest                 request;
-//     std::string                 route_name = "/page";
-//     Route                       route(ServerTestWithoutGet, route_name, handler);
-//     std::stringstream           requestString;
+    // Clean
+    delete expected;
+    delete result;
+}
 
-//     requestString << "GET " << route_name << "index.html" << " HTTP/1.0\r\n";
-//     request.ParserRequest(requestString.str());
+TEST_F(RouteTest, GetANotFoundFile_ShouldBe405WithDefaultPage_WhenMethodIsNotAllowAndErrorPageNotFound) {
+    // Arrange
+    BuilderResponse     builder = BuilderResponse(handler);
+    expBuilder
+        ->SetupResponse()
+        .WithStatusCode(HttpStatusCode::_METHOD_NOT_ALLOWED)
+        .WithContentType(".html")
+        .WithDefaultPage();
 
-//     // Act
-//     RouteResponse *response = route.ProcessRequest(request);
+    ServerTestWithoutGet->SetErroPage(405, "notfound.html");
+    std::string                 route_name = "/page";
+    Route                       route(ServerTestWithoutGet, route_name, handler);
 
-//     // Assert
-//     EXPECT_EQ(*expected, *response);
-//     EXPECT_EQ(response->FD, nullptr);
-//     EXPECT_EQ(response->Directory, nullptr);
+    HttpRequest                 request;
+    std::stringstream           requestString;
+    requestString << "GET " << route_name << "index.html" << " HTTP/1.0\r\n";
+    request.ParserRequest(requestString.str());
 
-//     // Clean
-//     ServerTestWithoutGet->ResetErroPage(405);
-//     delete expected;
-//     delete response;
-// }
+    // Act
+    HttpStatusCode::Code res = route.ProcessRequest(request, builder);
+
+    // Assert
+    IHttpResponse *expected = expBuilder->GetResult();
+    IHttpResponse *result = builder.GetResult();
+    EXPECT_EQ(HttpStatusCode::_METHOD_NOT_ALLOWED, res);
+    EXPECT_TRUE(builder.CompareResponses(*expected, *result));
+
+    // Clean
+    delete expected;
+    delete result;
+}
 
 // TEST_F(RouteTest, CheckAPayloadTooLarge) {
 //     // Arrange
-//     RouteResponse               *expected = new RouteResponse(".html", nullptr, 413);
-//     HttpRequest                 request;
-//     std::stringstream           body;
+//     BuilderResponse     builder = BuilderResponse(handler);
+//     expBuilder
+//         ->SetupResponse()
+//         .WithStatusCode(HttpStatusCode::_OK)
+//         .WithContentType(".html")
+//         .WithFileDescriptor(new std::ifstream());
+
 //     std::string                 route_name = "/create-page";
 //     Route                       route(ServerTestDefault, route_name, handler);
      
+//     std::stringstream           body;
+//     HttpRequest                 request;
 //     body << "GET " << route_name << "index.html" << " HTTP/1.0\r\n";
 //     body << "\r\n";
 //     body << "<!DOCTYPE html>\n";
@@ -366,16 +395,17 @@ TEST_F(RouteTest, CheckAAllowMethod_CheckContentTypeIsHTML) {
 //     request.ParserRequest(body.str());
 
 //     // Act
-//     RouteResponse *response = route.ProcessRequest(request);
+//     HttpStatusCode::Code res = route.ProcessRequest(request, builder);
 
 //     // Assert
-//     EXPECT_EQ(*expected, *response);
-//     EXPECT_EQ(response->FD, nullptr);
-//     EXPECT_EQ(response->Directory, nullptr);
+//     IHttpResponse *expected = expBuilder->GetResult();
+//     IHttpResponse *result = builder.GetResult();
+//     EXPECT_EQ(HttpStatusCode::_OK, res);
+//     EXPECT_TRUE(builder.CompareResponses(*expected, *result));
 
 //     // Clean
 //     delete expected;
-//     delete response;
+//     delete result;
 // }
 
 // TEST_F(RouteTest, CheckAPayloadTooLargeWithErrorPageSetup) {

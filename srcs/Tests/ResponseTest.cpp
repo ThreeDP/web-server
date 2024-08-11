@@ -5,7 +5,7 @@
 class ResponseTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        HttpResponse::SetDefaultAHTTPResponse();
+        HttpResponse::SetDefaultHTTPResponse();
     }
 };
 

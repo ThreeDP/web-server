@@ -37,8 +37,6 @@ class Server : public CommonParameters {
         int                                     listener;
         const static int                        backlog = 10;
 
-        std::map<int, RouteResponse *>             ClientsResponse;
-        std::map<int, IBuilderResponse *>        BuildersResponse;
         std::map<int, IHttpResponse *>        ResponsesMap;
 
     public:
