@@ -22,7 +22,7 @@ class HttpResponse : public IHttpResponse {
 
         // Create Body Methods
         void                    _defaultErrorPage(void);
-        void                    _createBodyByDirectory(std::vector<struct dirent*> *dirent, std::string path);
+        void                    _createBodyByDirectory(std::set<struct dirent*> *dirent, std::string path, IHandler &handler);
         void                    _createBodyByFileDescriptor(std::ifstream *fd);
         std::string             GetHttpVersion(void) const;
         std::string             GetStatusCode(void) const;

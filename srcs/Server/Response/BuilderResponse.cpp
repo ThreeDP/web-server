@@ -34,7 +34,7 @@ IBuilderResponse &BuilderResponse::WithHeader(std::pair<std::string, std::string
 IBuilderResponse &BuilderResponse::WithDirectoryFile(DIR *directory, std::string path) {
     if (directory != NULL && _response->GetBody() == "") {
         std::set<struct dirent*> *directories = _handler->ReadDirectory(directory);
-        _response->_createBodyByDirectory(directories, path);
+        _response->_createBodyByDirectory(directories, path, *_handler);
     }
     closedir(directory);
     return *this;

@@ -7,6 +7,7 @@
 # include <sys/types.h>
 # include <dirent.h>
 # include <vector>
+# include <set>
 # include <cstring>
 # include <sstream>
 
