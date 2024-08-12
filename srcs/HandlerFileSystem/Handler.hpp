@@ -19,7 +19,7 @@ class Handler : public IHandler {
 		bool							IsAllowToGetFile(std::string path);
 		bool							IsAllowToRunScript(std::string path);
 
-		std::set<struct dirent *> 		*ReadDirectory(DIR *directory);
+		std::set<std::string> 			ReadDirectory(DIR *directory);
 		std::string						ReadRegularFile(std::ifstream *file);
 
 		bool                            PathExist(std::string path);

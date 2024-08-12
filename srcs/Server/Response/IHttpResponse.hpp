@@ -10,7 +10,7 @@ class IBuilderResponse;
 class IHttpResponse {
     private:
         virtual void _defaultErrorPage(void) = 0;
-        virtual void _createBodyByDirectory(std::set<struct dirent*> *dirent, std::string path, IHandler &handler) = 0;
+        virtual void _createBodyByDirectory(std::set<std::string> dirent, std::string path, IHandler &handler) = 0;
         virtual void _createBodyByFileDescriptor(std::ifstream *fd) = 0;
         virtual std::string             GetHttpVersion(void) const = 0;
         virtual std::string             GetStatusCode(void) const = 0;

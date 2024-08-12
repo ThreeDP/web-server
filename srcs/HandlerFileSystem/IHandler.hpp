@@ -23,7 +23,7 @@ class IHandler {
         virtual bool                            IsAllowToRunScript(std::string path) = 0;
         virtual bool                            PathExist(std::string path) = 0;
 
-        virtual std::set<struct dirent *>       *ReadDirectory(DIR *directory) = 0;
+        virtual std::set<std::string>           ReadDirectory(DIR *directory) = 0;
         virtual std::string                     ReadRegularFile(std::ifstream *file) = 0;
         virtual ~IHandler(void) {}
 };
