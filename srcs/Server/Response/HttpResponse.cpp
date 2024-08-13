@@ -158,6 +158,4 @@ HttpResponse::HttpResponse(void) :
 {
     this->_headers["Content-Type:"] = this->_mapTextContent["text"];
     this->_headers["Server:"] = this->_server;
-    // this->_headers["Content-Disposition:"] = "inline";
-    // this->_headers["Accept-Encoding:"] = "gzip, deflate, br, zstd";
 }
