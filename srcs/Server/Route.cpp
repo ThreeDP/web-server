@@ -8,7 +8,8 @@ HttpStatusCode::Code Route::_handlerErrorResponse(
     std::string path;
 
     bool hasErrorPage = (path = this->GetErrorPage(statusCode)) != "";
-    path = Utils::SanitizePath(this->_root, path);
+    std::string abspath = Utils::SanitizePath(this->_root, this->_route_name);
+    path = Utils::SanitizePath(abspath, path);
     if (hasErrorPage && this->_handler->FileExist(path)) {
         if (this->_handler->IsAllowToGetFile(path)) {
             fd = this->_handler->OpenFile(path);

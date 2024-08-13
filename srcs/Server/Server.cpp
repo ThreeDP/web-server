@@ -103,6 +103,7 @@ void                Server::ProcessRequest(HttpRequest &request, int client_fd) 
     std::string keyPath = this->FindMatchRoute(request);
     this->routes[keyPath]->ProcessRequest(request, builder);
     this->ResponsesMap[client_fd] = builder.GetResult();
+    std::cout << this->ResponsesMap[client_fd]->ToString() << std::endl;
 }
 
 std::string         Server::ProcessResponse(int client_fd) {

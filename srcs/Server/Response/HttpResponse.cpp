@@ -32,9 +32,7 @@ std::string HttpResponse::ToString(void) {
     for ( ; it != this->_headers.end(); ++it) {
         os << it->first << " " << it->second << "\r\n";
     }
-    os << "\r\n";
-    if (this->_body != "")
-        os << this->_body << "\r\n";
+    os << "\r\n" << this->_body << "\r\n";
     return os.str();
 }
 
@@ -158,6 +156,8 @@ HttpResponse::HttpResponse(int num) {
 HttpResponse::HttpResponse(void) :
     _HTTPVersion("HTTP/1.1")
 {
-    this->_headers["Content-Type"] = this->_mapTextContent["text"];
+    this->_headers["Content-Type:"] = this->_mapTextContent["text"];
     this->_headers["Server:"] = this->_server;
+    // this->_headers["Content-Disposition:"] = "inline";
+    // this->_headers["Accept-Encoding:"] = "gzip, deflate, br, zstd";
 }
