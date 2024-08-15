@@ -79,7 +79,7 @@ int Server::AcceptClientConnect(void) {
 
 std::string         Server::FindMatchRoute(HttpRequest &res) {
     std::string keyPath = "";
-    std::map<std::string, Route *>::iterator it = this->routes.begin();
+    std::map<std::string, IRoute *>::iterator it = this->routes.begin();
 
     for (; it != this->routes.end(); ++it) {
         int size = it->first.size();

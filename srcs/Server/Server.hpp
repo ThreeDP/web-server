@@ -4,8 +4,8 @@
 # include "Route.hpp"
 # include <netdb.h>
 # include <sys/epoll.h>
-# include "IBuilderResponse.hpp"
 # include "BuilderResponse.hpp"
+# include "BuilderRoute.hpp"
 
 enum ServerStages {
     S_START,
@@ -28,7 +28,7 @@ class Server : public CommonParameters {
 
     public:
 
-        std::map<std::string, Route *>          routes;
+        std::map<std::string, IRoute *>          routes;
         
         // socket config
         struct addrinfo                         hints;

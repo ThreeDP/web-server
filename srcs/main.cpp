@@ -11,7 +11,6 @@
 /* ************************************************************************** */
 
 # include "Http.hpp"
-# include "Handler.hpp"
 
 int main() {
 	Http http;
@@ -20,10 +19,15 @@ int main() {
     //Server *newServer2 = new Server("localhost2", 8082, ".");
     http.SetServer("localhost", newServer);
     //http.SetServer("localhost2", newServer2);
-    newServer->routes["/"] = new Route(newServer, "/", handler);
-    newServer->routes["/app"] = new Route(newServer, "/app", handler);
-    newServer->routes["/static/imagens"] = new Route(newServer, "/static/imagens", handler);
-    newServer->routes["/ranna-site"] = new Route(newServer, "/ranna-site", handler);
+    IBuilderRoute   *builder = new BuilderRoute(newServer, handler);
+    newServer->routes["/"] =    builder->SetupRoute("/")
+                                    .GetResult();
+    newServer->routes["/app"] = builder->SetupRoute("/app")
+                                    .GetResult();
+    newServer->routes["/static/imagens"] = builder->SetupRoute("/static/imagens")
+                                            .GetResult();
+    newServer->routes["/ranna-site"] = builder->SetupRoute("/ranna-site")
+                                        .GetResult();
     // newServer2->routes["/static"] = new Route(newServer2, "/static");
 
     try {

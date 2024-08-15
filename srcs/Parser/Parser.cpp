@@ -182,7 +182,7 @@ void	Parser::_parserErrorPage(std::istringstream &iss, Server *server, std::stri
 		if (actualRoute.empty()){
 			server->SetErrorPage(map);
 		} else {
-			server->routes[actualRoute]->SetErrorPageRoute(map);
+			server->routes[actualRoute]->SetErrorPage(map.second);
 		}
 	}
 }

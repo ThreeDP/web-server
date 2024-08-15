@@ -29,7 +29,7 @@ class IHttpResponse {
 
 
         // Seters
-        virtual ~IHttpResponse() {};
+        virtual ~IHttpResponse(void) {};
 
         // Seters
         virtual void SetStatusCode(HttpStatusCode::Code statusCode) = 0;
