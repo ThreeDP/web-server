@@ -19,12 +19,12 @@ class IServer {
         virtual bool                        GetAutoIndex(void) = 0;
         virtual std::vector<std::string>    GetHosts(void) = 0;
         virtual std::string                 GetPort(void) = 0;
-        virtual IRoute                      *GetRoute(void) = 0;
+        virtual IRoute                      *GetRoute(std::string routeName) = 0;
 
         // Seters
         virtual void        SetAllowMethods(std::set<std::string> methods) = 0;
-        virtual void        SetErrorPage(std::set<HttpStatusCode::Code> statusCodes, std:;string filePath) = 0;
-        virtual void        SetBodyLimit(bool flag) = 0;
+        virtual void        SetErrorPage(std::set<HttpStatusCode::Code> statusCodes, std::string filePath) = 0;
+        virtual void        SetBodyLimit(int size) = 0;
         virtual void        SetRedirectPath(std::pair<std::string> pair) = 0;
         virtual void        SetRootDirectory(std::string root) = 0;
         virtual void        SetPagesIndexes(std::vector<std::string> indexes) = 0;

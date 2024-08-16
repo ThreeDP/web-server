@@ -19,6 +19,22 @@ enum ServerStages {
 
 class Server : public CommonParameters {
     private:
+        // Configs
+        std::string                                     _listen_host;
+        unsigned short                                  _listen_port;
+        std::vector<std::string>                        _server_names;
+        std::set<std::string>                           _allowMethods;
+        std::map<HttpStatusCode::Code, std::string>     _errorPages;
+        int                                             _limit_client_body_size;
+        std::map<std::string, std::string>              _redirectionPaths;
+        std::string                                     _root;
+        std::set<std::string>                           _indexes;
+        bool                                            _autoindex;
+        std::map<std::string, IRoute *>                 _routes;
+
+        std::vector<std::string>                        _hosts;
+        std::string                                     _port;
+
         std::string     _ip;
         std::string     _ipVersion;
         ServerStages    _stage;
@@ -27,9 +43,31 @@ class Server : public CommonParameters {
         int             _actualClientFD;
 
     public:
+        // Geters
+        std::map<HttpStatusCode::Code, std::string>
+                                    GetErrorPages(void);
+        std::set<std::string>       GetAllowMethods(void);
+        int                         GetBodyLimit(void);
+        std::string                 GetRedirectPath(std::string path);
+        std::string                 GetRootDirectory(void);
+        std::vector<std::string>    GetPageIndexes(void);
+        bool                        GetAutoIndex(void);
+        std::vector<std::string>    GetHosts(void);
+        std::string                 GetPort(void);
+        IRoute                      *GetRoute(std::string routeName);
 
-        std::map<std::string, IRoute *>          routes;
-        
+        // Seters
+        void                        SetAllowMethods(std::set<std::string> methods);
+        void                        SetErrorPage(std::set<HttpStatusCode::Code> statusCodes, std::string filePath);
+        void                        SetBodyLimit(int size);
+        void                        SetRedirectPath(std::pair<std::string> pair);
+        void                        SetRootDirectory(std::string root);
+        void                        SetPagesIndexes(std::vector<std::string> indexes);
+        void                        SetAutoIndex(bool flag);
+        void                        SetHosts(std::vector<std::string> hosts);
+        void                        SetPort(std::string port);
+        void                        SetRoute(IRoute *route, std::string routeName);
+
         // socket config
         struct addrinfo                         hints;
         struct addrinfo                         *result;
@@ -51,7 +89,6 @@ class Server : public CommonParameters {
 
         std::string             ProcessResponse(int client_fd);
         void                    ProcessRequest(HttpRequest &request, int client_fd);
-        void                    ProcessRequest(std::string buffer, int client_fd);
         std::string             FindMatchRoute(HttpRequest &res);
 
         // Geters
@@ -90,7 +127,5 @@ class Server : public CommonParameters {
 				virtual const char* what() const throw () { return error_message.c_str();}
 		};
 };
-
-std::ostream &operator<<(std::ostream &os, Server const &server);
 
 #endif

@@ -272,32 +272,99 @@ Server::~Server(void) {
     }
 }
 
-std::ostream &operator<<(std::ostream &os, Server const &server) {
-    switch (server.GetStage()) {
-    case S_START:
-        os << HBLU "[ Create Server: " << server.GetIP() << ":" << server.GetListenPort() << " ]" reset << std::endl;
-        break;
-    case S_LISTEN:
-        os << HBLU "[ Start Server with Hosts: " << server.GetHosts() << 
-        "on [" << server.GetIPVersion() << "]: " << server.GetIP() << 
-        " port: " << server.GetListenPort() << " ]" reset << std::endl;
-        break;
-    case S_CLIENT_CONNECT:
-        os << HBLU "[ Client " << server.GetClientFD() << " connected to server " << server.GetIP() << ":" << server.GetListenPort() << " ]" reset << std::endl; 
-        break;
-    case S_CLIENT_DISCONNECT:
-        os << HBLU "[ Client " << server.GetClientFD() << " disconnected to server " << server.GetIP() << ":" << server.GetListenPort() << " ]" reset << std::endl; 
-        break;
-    case S_SERVER_RESPONSE:
-        os << HBLU "[ Server " << server.GetIP() << ":" << server.GetListenPort() <<
-        " sending response to " << server.GetClientFD() << " ]" reset << std::endl;
-        break;
-    case S_CLIENT_REQUEST:
-        os << HBLU "[ Server " << server.GetIP() << ":" << server.GetListenPort() <<
-        " received a request from " << server.GetClientFD() << " ]" reset << std::endl;
-        break;
-    default:
-        os << "Error";
+// Geters
+std::set<std::string> Server::GetAllowMethods(void) {
+    return this->_default_allow_methods;        
+}
+
+std::map<HttpStatusCode::Code, std::string> Server::GetErrorPages(void) {
+    return this->_default_error_page;
+}
+
+int Server::GetBodyLimit(void) {
+    return this->_limit_client_body_size;
+}
+
+std::string Server::GetRedirectPath(std::string path){
+    return this->_rewrites[path];
+}
+
+std::string Server::GetRootDirectory(void) {
+    return this->_root;
+}
+
+std::vector<std::string>    Server::GetPageIndexes(void) {
+    return this->_indexes;
+}
+
+bool    Server::GetAutoIndex(void) {
+    return this->_autoIndex;
+}
+
+std::vector<std::string>    Server::GetHosts(void) {
+    return this->_hosts;
+}
+
+std::string Server::GetPort(void) {
+    return this->_port;
+}
+
+IRoute  Server::*GetRoute(std::string routeName) {
+    return this->_routes[routeName];
+}
+
+// Seters
+void    Server::SetAllowMethods(std::set<std::string> methods) {
+    this->_allowMethods.clear();
+    std::set<std::string>::iterator it = methods.begin();
+    for ( ; it != methods.end(); ++it) {
+        this->_allowMethods.insert(*it);
     }
-	return (os);
+}
+
+void    Server::SetErrorPage(std::set<HttpStatusCode::Code> statusCodes, std::string filePath) {
+    this->_errorPages.clear();
+    std::set<HttpStatusCode:Code>::iterator it = statusCodes.begin();
+    for ( ; it != statusCodes.end(); ++it) {
+        this->_errorPages[*it] = filePath;
+    }
+}
+
+void    Server::SetBodyLimit(int size) {
+    this->_limit_client_body_size = size;
+}
+
+void    Server::SetRedirectPath(std::pair<std::string> pair) {
+    this->_redirectionPaths[pair.fisrt] = pair.second;
+}
+
+void    Server::SetRootDirectory(std::string root) {
+    this->_root = root;
+}
+void    Server::SetPagesIndexes(std::vector<std::string> indexes) {
+    this->_indexes.clear();
+    std::vector<std::string>::iterator it = indexes.begin();
+    for ( ; it != indexes.end(); ++it) {
+        this->_indexes.push_back(*it);
+    }
+}
+
+void    Server::SetAutoIndex(bool flag) {
+    this->_autoIndex = flag;
+}
+
+void    Server::SetHosts(std::vector<std::string> hosts) {
+    this->_hosts.clear();
+    std::vector<std::string>::iterator it = hosts.begin();
+    for ( ; it != hosts.end(); ++it) {
+        this->_hosts.push_back(*it);
+    }
+}
+
+void    Server::SetPort(std::string port) {
+    this->_port = port;
+}
+
+void    Server::SetRoute(IRoute *route, std::string routeName) {
+    this->_routes[routeName] = route;
 }

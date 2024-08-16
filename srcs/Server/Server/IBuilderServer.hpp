@@ -1,6 +1,8 @@
 #ifndef __IBUILDER_SERVER_HPP__
 # define __IBUILDER_SERVER_HPP__
 
+# include "Route.hpp"
+
 class IBuilderServer {
     virtual ~IBuilderServer(void) {}
 
