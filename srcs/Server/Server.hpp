@@ -42,7 +42,6 @@ class Server : public CommonParameters {
     public:
 
         // Server Methods
-        std::string GenerateAutoindex(std::vector<struct dirent *> *dirs, std::string path);
         void                    SetAddrInfo(void);
         void                    CreateSocketAndBind(void);
         int                     StartListen(void);
