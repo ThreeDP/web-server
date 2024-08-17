@@ -2,6 +2,7 @@
 # define __IROUTE_HPP__
 
 # include "IBuilderResponse.hpp"
+# include "HttpRequest.hpp"
 
 class IRoute {
     public:
@@ -11,7 +12,7 @@ class IRoute {
         virtual void        SetRouteName(std::string routeName) = 0;
         virtual void        SetBodyLimit(int size) = 0;
         virtual void        SetAllowMethods(std::set<std::string> methods) = 0;
-        virtual void        SetErrorPage(std::set<HttpStatusCode::Code> statusCode, std::string filePath) = 0;
+        virtual void        SetErrorPage(std::set<HttpStatusCode::Code> statusCodes, std::string filePath) = 0;
         virtual void        SetRedirectPath(std::string redirectPath) = 0;
         virtual void        SetRootDirectory(std::string root) = 0;
         virtual void        SetRouteIndexes(std::vector<std::string> indexes) = 0;

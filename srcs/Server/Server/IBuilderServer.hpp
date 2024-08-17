@@ -4,6 +4,7 @@
 # include "Route.hpp"
 
 class IBuilderServer {
+    public:
     virtual ~IBuilderServer(void) {}
 
     virtual IBuilderServer      &SetupServer(void) = 0;
@@ -19,6 +20,6 @@ class IBuilderServer {
     virtual IBuilderServer      &WithAutoIndex(bool flag) = 0;
 
     virtual IServer             *GetResult(void) = 0;
-}
+};
 
 #endif

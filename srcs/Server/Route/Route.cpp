@@ -122,11 +122,11 @@ void        Route::SetAllowMethods(std::set<std::string> methods) {
     }
 }
 
-void        Route::SetErrorPage(std::set<HttpStatusCode::Code> statusCode, std::string filePath) {
+void        Route::SetErrorPage(std::set<HttpStatusCode::Code> statusCodes, std::string filePath) {
     this->_error_page.clear();
-    std::map<HttpStatusCode::Code, std::string>::iterator it = this->_error_page.begin();
-    for ( ; it != this->_error_page.end(); ++it) {
-        this->_error_page[it->first] = filePath;
+    std::set<HttpStatusCode::Code>::iterator it = statusCodes.begin();
+    for ( ; it != statusCodes.end(); ++it) {
+        this->_error_page[*it] = filePath;
     }
 }
 
@@ -140,8 +140,8 @@ void        Route::SetRootDirectory(std::string root) {
 
 void        Route::SetRouteIndexes(std::vector<std::string> indexes) {
     this->_indexes.clear();
-    std::vector<std::string>::iterator it = this->_indexes.begin();
-    for ( ; it != this->_indexes.end(); ++it) {
+    std::vector<std::string>::iterator it = indexes.begin();
+    for ( ; it != indexes.end(); ++it) {
         this->_indexes.push_back(*it);
     }
 }
@@ -192,21 +192,22 @@ bool Route::GetAutoIndex(void) {
 }
 
 Route::Route(IServer *server, IHandler *handler, std::string route_name)  : 
-    // _allow_methods(server->GetDefaultAllowMethods()),
-    // _error_page(server->GetDefaultErrorPage()),
-    _limit_client_body_size(server->GetLimitClientBodySize()),
-    _root(server->GetRoot()),
-    _autoIndex(false),
-    // _indexes(server->GetIndex()),
+    _allow_methods(server->GetAllowMethods()),
+    _error_page(server->GetErrorPages()),
+    _limit_client_body_size(server->GetBodyLimit()),
+    _root(server->GetRootDirectory()),
+    _autoIndex(server->GetAutoIndex()),
+    _indexes(server->GetPageIndexes()),
     _stage(R_START),
+    _redirectPath(server->GetRedirectPath(route_name)),
     _handler(handler)
 {
-    std::map<std::string, std::string>::iterator it = server->GetReWrites().find(route_name);
-    if (it != server->GetReWrites().end())
-        this->_redirectPath = server->GetReWrites()[route_name];  
-    _indexes.push_back("index.html");
-    _error_page[HttpStatusCode::_NOT_FOUND] = "404.html";
-    _allow_methods.insert("GET");
+    // std::map<std::string, std::string>::iterator it = server->GetReWrites().find(route_name);
+    // if (it != server->GetReWrites().end())
+    //     this->_redirectPath = server->GetReWrites()[route_name];  
+    // _indexes.push_back("index.html");
+    // _error_page[HttpStatusCode::_NOT_FOUND] = "404.html";
+    // _allow_methods.insert("GET");
 }
 
 Route::~Route(void) {

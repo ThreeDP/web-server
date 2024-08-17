@@ -8,6 +8,7 @@
 # include "HttpRequest.hpp"
 # include "IHandler.hpp"
 # include "IRoute.hpp"
+# include "IServer.hpp"
 
 
 enum RouteStages {
@@ -32,7 +33,7 @@ class Route : public IRoute {
         void        SetRouteName(std::string routeName);
         void        SetBodyLimit(int size);
         void        SetAllowMethods(std::set<std::string> methods);
-        void        SetErrorPage(std::set<HttpStatusCode::Code> statusCode, std::string filePath);
+        void        SetErrorPage(std::set<HttpStatusCode::Code> statusCodes, std::string filePath);
         void        SetRedirectPath(std::string redirectPath);
         void        SetRootDirectory(std::string root);
         void        SetRouteIndexes(std::vector<std::string> indexes);
@@ -41,17 +42,17 @@ class Route : public IRoute {
     public:
         RouteStages                                 _stage;
 
-        Route(IServer *server, 
-            IHandler *handler, 
-            std::string route_name
-        );
+        Route(void) {}
+
+        Route(IServer *server, IHandler *handler, std::string route_name);
         ~Route(void);
 
         // Route Process
         HttpStatusCode::Code _handlerErrorResponse(
             std::ifstream *fd,
             HttpStatusCode::Code statusCode,
-            IBuilderResponse &builder);
+            IBuilderResponse &builder
+        );
         
         HttpStatusCode::Code ProcessRequest(
             HttpRequest &request,
@@ -79,7 +80,6 @@ class Route : public IRoute {
 				virtual const char* what() const throw () { return error_message.c_str();}
 		};
 
-        friend class BuilderRoute;
         friend class IBuilderResponse;
 };
 

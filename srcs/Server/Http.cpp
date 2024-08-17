@@ -10,8 +10,9 @@ void    Http::StartPollList(void) {
     if (epollFD == -1) {
         throw Except("Error on create Epoll");
     }
-    std::cout << *this;    
-    std::map<std::string, Server*>::iterator it = this->servers.begin();
+    std::cout << *this;
+    std::cout << "TA AQUI!" << std::endl;
+    std::map<std::string, IServer*>::iterator it = this->servers.begin();
     for (; it != this->servers.end(); ++it) {
         memset(&event, 0, sizeof(struct epoll_event));
         it->second->SetAddrInfo();
@@ -21,6 +22,7 @@ void    Http::StartPollList(void) {
         if (epoll_ctl(epollFD, EPOLL_CTL_ADD, it->second->GetListener(), &event) == -1)
             throw Except("Error on add server: <name> port: <port>");
     }
+    std::cout << "E AQUI?I!" << std::endl;
 }
 
 void    Http::StartWatchSockets(void) {
@@ -65,15 +67,15 @@ void    Http::DisconnectClientToServer(int client_fd) {
         throw Except("epoll_ctl");
     if (close(client_fd) == -1)
         throw Except("close");
-    Server *server = this->clientFD_Server[client_fd];
-    server->UpdateState(S_CLIENT_DISCONNECT, client_fd);
+    IServer *server = this->clientFD_Server[client_fd];
+    // server->UpdateState(S_CLIENT_DISCONNECT, client_fd);
     this->clientFD_Server.erase(client_fd);
-    std::cout << *server; 
+    // std::cout << *server; 
 }
 
 bool    Http::ConnectClientToServer(int i) {
     bool hasHandShake = false;
-    std::map<std::string, Server*>::iterator it = this->servers.begin();
+    std::map<std::string, IServer*>::iterator it = this->servers.begin();
     // Busca o Server compativel com o fd do request.
     for (; it != this->servers.end(); ++it) {
         if (this->clientEvents[i].data.fd == it->second->GetListener()) {
@@ -88,7 +90,7 @@ bool    Http::ConnectClientToServer(int i) {
 ssize_t    Http::HandleRequest(int client_fd) {
     char        buffer[1000000];
     HttpRequest res;
-    Server      *server = this->clientFD_Server[client_fd];
+    IServer      *server = this->clientFD_Server[client_fd];
 
     memset(&buffer, 0, sizeof(char) * 1000000);
     ssize_t numbytes = recv(client_fd, &buffer, sizeof(char) * 1000000, 0);
@@ -99,7 +101,7 @@ ssize_t    Http::HandleRequest(int client_fd) {
 
 void    Http::HandleResponse(int client_fd) {
     // Envia pra o server processar a resposta.
-    Server *server = this->clientFD_Server[client_fd];
+    IServer *server = this->clientFD_Server[client_fd];
     std::string message = server->ProcessResponse(client_fd);
     // Realiza o envio para o client.
     if (send(client_fd, message.c_str(), message.size(), 0) == -1) {
@@ -108,7 +110,7 @@ void    Http::HandleResponse(int client_fd) {
     // std::cout << *server;
 }
 
-void    Http::ClientHandShake(Server *server) {
+void    Http::ClientHandShake(IServer *server) {
     int                         client_fd;
     struct epoll_event          event;
 
@@ -120,13 +122,13 @@ void    Http::ClientHandShake(Server *server) {
         throw Except("Error on add client on epoll.");
     }
     this->clientFD_Server[client_fd] = server;
-    std::cout << *server;
+    // std::cout << *server;
 }
 
 /* Geters
 =================================================*/
-Server *Http::GetServer(std::string server) {
-    std::map<std::string, Server *>::iterator it = this->servers.find(server);
+IServer *Http::GetServer(std::string server) {
+    std::map<std::string, IServer *>::iterator it = this->servers.find(server);
     if (it != this->servers.end()) {
         return it->second;
     }
@@ -144,7 +146,7 @@ HttpStages  Http::GetStage(void) const {
 
 /* Seters
 =================================================*/
-void Http::SetServer(std::string serverName, Server *server) {
+void Http::SetServer(std::string serverName, IServer *server) {
     this->servers[serverName] = server;
 }
 

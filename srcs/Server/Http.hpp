@@ -17,8 +17,8 @@ class Http {
     // Patterns HTTP
 
     // Parser Response
-    std::map<std::string, Server *>  servers;
-    std::map<int, Server *> clientFD_Server;
+    std::map<std::string, IServer *>  servers;
+    std::map<int, IServer *> clientFD_Server;
 
     const static int eventsLimit = 10;
     
@@ -31,7 +31,7 @@ class Http {
         // Http Methods
         void                        StartPollList(void);
         void                        StartWatchSockets(void);
-        void                        ClientHandShake(Server *server);
+        void                        ClientHandShake(IServer *server);
         void                        HandleResponse(int client_fd);
         bool                        ConnectClientToServer(int i);
         void                        DisconnectClientToServer(int client_fd);
@@ -40,7 +40,7 @@ class Http {
         
 
         // Geters
-        Server                      *GetServer(std::string server);
+        IServer                      *GetServer(std::string server);
         int                         &GetEPollFD(void);
         HttpStages                  GetStage(void) const;
 
@@ -58,7 +58,7 @@ class Http {
 		};
 
         // Seters
-        void SetServer(std::string serverName, Server *server);
+        void SetServer(std::string serverName, IServer *server);
 
     private:
 

@@ -18,11 +18,12 @@ OBJS_PATH									= 	objs/
 HEADERS										=	Server/ \
 												HandlerFileSystem/ \
 												Utils/  \
-												Parser/ \
+												Server/Server \
 												Server/Response \
 												Server/Route
+# Parser/
 INCLUDE_FLAGS 								:= 	-g3 -O3 -MMD -MP $(addprefix -I, $(HEADERS))
-VPATH										=	Server/:Utils/:Parser/:Server/Response:HandlerFileSystem:Server/Route
+VPATH										=	Server/:Server/Server/:Utils/:Server/Response:HandlerFileSystem:Server/Route
 
 ######################## FLAGS ###############################
 FLAGS										= 	-Wall -Wextra -std=c++98
@@ -31,7 +32,7 @@ SRC_RESPONSE								=	HttpResponse.cpp BuilderResponse.cpp
 SRC_ROUTE									=	Route.cpp BuilderRoute.cpp
 SRC_SERVER									=	Server.cpp
 # SRC_PARSER									=	Parser.cpp Handler.cpp
-SRC_HTTP									=	Http.cpp HttpRequest.cpp CommonParameters.cpp
+SRC_HTTP									=	Http.cpp HttpRequest.cpp # CommonParameters.cpp
 SRC_UTILS									=	Utils.cpp Handler.cpp
 SRC											= 	$(SRC_UTILS)				\
 												$(SRC_RESPONSE)				\

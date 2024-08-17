@@ -1,6 +1,10 @@
 #ifndef __IBUILDER_ROUTE_HPP__
 # define __IBUILDER_ROUTE_HPP__
 # include "Route.hpp"
+# include "EHttpStatusCode.hpp"
+# include <set>
+# include "IRoute.hpp"
+# include "IServer.hpp"
 
 class IBuilderRoute {
     public:

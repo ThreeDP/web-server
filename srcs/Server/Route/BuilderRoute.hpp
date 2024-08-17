@@ -2,6 +2,9 @@
 # define __BUILDER_ROUTE_HPP__
 
 # include "IBuilderRoute.hpp"
+# include "IRoute.hpp"
+# include "IServer.hpp"
+
 
 class BuilderRoute : public IBuilderRoute {
     private:

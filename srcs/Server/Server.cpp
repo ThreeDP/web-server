@@ -5,18 +5,16 @@
 
 void    Server::SetAddrInfo(void) {
     int status = 0;
-    std::stringstream port;
-
-    port << this->_listen_port;
     status = getaddrinfo(
-        this->_server_names[0].c_str(),
-        port.str().c_str(),
+        "localhost",
+        _port.c_str(),
         &this->hints,
         &this->result
     );
     if (status != 0) {
         throw (Except("Configuration File Not Found!" )); //gai_strerror(status)
     }
+    std::cout << "SERVER ADDRINFO" << std::endl;
 }
 
 void    Server::CreateSocketAndBind(void) {
@@ -51,7 +49,7 @@ int    Server::StartListen(void) {
     if ((listen(this->listener, this->backlog)) == -1) {
         throw Except("Error on listen server: <name> port: <port>");
     }
-    std::cout << *this;
+    // std::cout << *this;
     return this->listener;
 }
 
@@ -79,9 +77,9 @@ int Server::AcceptClientConnect(void) {
 
 std::string         Server::FindMatchRoute(HttpRequest &res) {
     std::string keyPath = "";
-    std::map<std::string, IRoute *>::iterator it = this->routes.begin();
+    std::map<std::string, IRoute *>::iterator it = this->_routes.begin();
 
-    for (; it != this->routes.end(); ++it) {
+    for (; it != this->_routes.end(); ++it) {
         int size = it->first.size();
         std::string comp = it->first;
         if (comp[size - 1] != '/' && size++)
@@ -101,7 +99,7 @@ void                Server::ProcessRequest(HttpRequest &request, int client_fd) 
     this->UpdateState(S_CLIENT_REQUEST, client_fd);
     BuilderResponse builder = BuilderResponse(new Handler());
     std::string keyPath = this->FindMatchRoute(request);
-    this->routes[keyPath]->ProcessRequest(request, builder);
+    this->_routes[keyPath]->ProcessRequest(request, builder);
     this->ResponsesMap[client_fd] = builder.GetResult();
     std::cout << this->ResponsesMap[client_fd]->ToString() << std::endl;
 }
@@ -180,58 +178,58 @@ void    Server::UpdateState(ServerStages st, int client_fd) {
 
 /* Base Methods
 =======================================*/
-Server::Server(void) {
-    memset(&hints, 0, sizeof(struct addrinfo));
-    this->hints.ai_family = AF_UNSPEC;
-    this->hints.ai_socktype = SOCK_STREAM;
-    this->hints.ai_flags = AI_CANONNAME;
+// Server::Server(void) {
+//     memset(&hints, 0, sizeof(struct addrinfo));
+//     this->hints.ai_family = AF_UNSPEC;
+//     this->hints.ai_socktype = SOCK_STREAM;
+//     this->hints.ai_flags = AI_CANONNAME;
 
-    this->result = NULL;
-    this->_stage = S_START;
-    std::cout << *this;
-}
+//     this->result = NULL;
+//     this->_stage = S_START;
+//     std::cout << *this;
+// }
 
-Server::Server(std::vector<std::string> serv, unsigned short port) : CommonParameters(serv, port) {
-    memset(&hints, 0, sizeof(struct addrinfo));
-    this->hints.ai_family = AF_UNSPEC;
-    this->hints.ai_socktype = SOCK_STREAM;
-    this->hints.ai_flags = AI_PASSIVE;
+// Server::Server(std::vector<std::string> serv, unsigned short port) : CommonParameters(serv, port) {
+//     memset(&hints, 0, sizeof(struct addrinfo));
+//     this->hints.ai_family = AF_UNSPEC;
+//     this->hints.ai_socktype = SOCK_STREAM;
+//     this->hints.ai_flags = AI_PASSIVE;
 
-    this->result = NULL;
-    this->_stage = S_START;
-    std::cout << *this;
-}
+//     this->result = NULL;
+//     this->_stage = S_START;
+//     std::cout << *this;
+// }
 
-Server::Server(std::string name) : CommonParameters(){
-    this->_default_error_page[403] = "/errors/403.html";
-    this->_default_error_page[404] = "/404.html";
-    this->_default_error_page[500] = "/50x.html";
-    this->_default_error_page[502] = "/50x.html";
-    this->_default_error_page[503] = "/50x.html";
-    this->_default_error_page[504] = "/50x.html";
-    this->_root = "../home";
-    this->_index.insert("index.html");
-    this->_index.insert("new.html");
-    this->_autoindex = false;
-    this->_stage = S_START;
-    std::cout << *this;
-}
+// Server::Server(std::string name) : CommonParameters(){
+//     this->_default_error_page[403] = "/errors/403.html";
+//     this->_default_error_page[404] = "/404.html";
+//     this->_default_error_page[500] = "/50x.html";
+//     this->_default_error_page[502] = "/50x.html";
+//     this->_default_error_page[503] = "/50x.html";
+//     this->_default_error_page[504] = "/50x.html";
+//     this->_root = "../home";
+//     this->_index.insert("index.html");
+//     this->_index.insert("new.html");
+//     this->_autoindex = false;
+//     this->_stage = S_START;
+//     std::cout << *this;
+// }
 
-Server::Server(std::string name, IHandler *handler) : CommonParameters(){
-    this->_default_error_page[403] = "/errors/403.html";
-    this->_default_error_page[404] = "/404.html";
-    this->_default_error_page[500] = "/50x.html";
-    this->_default_error_page[502] = "/50x.html";
-    this->_default_error_page[503] = "/50x.html";
-    this->_default_error_page[504] = "/50x.html";
-    this->_root = "../home";
-    this->_index.insert("index.html");
-    this->_index.insert("new.html");
-    this->_autoindex = false;
-    this->_stage = S_START;
-    this->_handler = handler;
-    std::cout << *this;
-}
+// Server::Server(std::string name, IHandler *handler) : CommonParameters(){
+//     this->_default_error_page[403] = "/errors/403.html";
+//     this->_default_error_page[404] = "/404.html";
+//     this->_default_error_page[500] = "/50x.html";
+//     this->_default_error_page[502] = "/50x.html";
+//     this->_default_error_page[503] = "/50x.html";
+//     this->_default_error_page[504] = "/50x.html";
+//     this->_root = "../home";
+//     this->_index.insert("index.html");
+//     this->_index.insert("new.html");
+//     this->_autoindex = false;
+//     this->_stage = S_START;
+//     this->_handler = handler;
+//     std::cout << *this;
+// }
 
 // Server(std::string name){
 //     this->_listen_host = "127.0.0.1";
@@ -250,21 +248,21 @@ Server::Server(std::string name, IHandler *handler) : CommonParameters(){
 // }
     
 
-Server::Server(std::string name, int port, std::string root) : CommonParameters(){
-    this->_default_error_page[403] = "/errors/403.html";
-    this->_default_error_page[404] = "/404.html";
-    this->_default_error_page[500] = "/50x.html";
-    this->_default_error_page[502] = "/50x.html";
-    this->_default_error_page[503] = "/50x.html";
-    this->_default_error_page[504] = "/50x.html";
-    this->_listen_port = port;
-    this->_root = root;
-    this->_index.insert("index.html");
-    this->_index.insert("new.html");
-    this->_autoindex = false;
-    this->_stage = S_START;
-    std::cout << *this;
-}
+// Server::Server(std::string name, int port, std::string root) : CommonParameters(){
+//     this->_default_error_page[403] = "/errors/403.html";
+//     this->_default_error_page[404] = "/404.html";
+//     this->_default_error_page[500] = "/50x.html";
+//     this->_default_error_page[502] = "/50x.html";
+//     this->_default_error_page[503] = "/50x.html";
+//     this->_default_error_page[504] = "/50x.html";
+//     this->_listen_port = port;
+//     this->_root = root;
+//     this->_index.insert("index.html");
+//     this->_index.insert("new.html");
+//     this->_autoindex = false;
+//     this->_stage = S_START;
+//     std::cout << *this;
+// }
 
 Server::~Server(void) {
     if (this->result != NULL) {
@@ -274,11 +272,11 @@ Server::~Server(void) {
 
 // Geters
 std::set<std::string> Server::GetAllowMethods(void) {
-    return this->_default_allow_methods;        
+    return this->_allowMethods;        
 }
 
 std::map<HttpStatusCode::Code, std::string> Server::GetErrorPages(void) {
-    return this->_default_error_page;
+    return this->_errorPages;
 }
 
 int Server::GetBodyLimit(void) {
@@ -286,7 +284,10 @@ int Server::GetBodyLimit(void) {
 }
 
 std::string Server::GetRedirectPath(std::string path){
-    return this->_rewrites[path];
+    std::map<std::string, std::string>::iterator it = this->_redirectionPaths.find(path);
+    if (it != this->_redirectionPaths.end())
+        return it->second;
+    return "";
 }
 
 std::string Server::GetRootDirectory(void) {
@@ -309,8 +310,11 @@ std::string Server::GetPort(void) {
     return this->_port;
 }
 
-IRoute  Server::*GetRoute(std::string routeName) {
-    return this->_routes[routeName];
+IRoute  *Server::GetRoute(std::string routeName) {
+    std::map<std::string, IRoute *>::iterator it = this->_routes.find(routeName);
+    if (it != this->_routes.end())
+        return it->second;
+    return NULL;
 }
 
 // Seters
@@ -324,7 +328,7 @@ void    Server::SetAllowMethods(std::set<std::string> methods) {
 
 void    Server::SetErrorPage(std::set<HttpStatusCode::Code> statusCodes, std::string filePath) {
     this->_errorPages.clear();
-    std::set<HttpStatusCode:Code>::iterator it = statusCodes.begin();
+    std::set<HttpStatusCode::Code>::iterator it = statusCodes.begin();
     for ( ; it != statusCodes.end(); ++it) {
         this->_errorPages[*it] = filePath;
     }
@@ -334,8 +338,8 @@ void    Server::SetBodyLimit(int size) {
     this->_limit_client_body_size = size;
 }
 
-void    Server::SetRedirectPath(std::pair<std::string> pair) {
-    this->_redirectionPaths[pair.fisrt] = pair.second;
+void    Server::SetRedirectPath(std::pair<std::string, std::string> pair) {
+    this->_redirectionPaths[pair.first] = pair.second;
 }
 
 void    Server::SetRootDirectory(std::string root) {
@@ -365,6 +369,6 @@ void    Server::SetPort(std::string port) {
     this->_port = port;
 }
 
-void    Server::SetRoute(IRoute *route, std::string routeName) {
+void    Server::SetRoute(std::string routeName, IRoute *route) {
     this->_routes[routeName] = route;
 }

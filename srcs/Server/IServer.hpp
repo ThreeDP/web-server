@@ -1,7 +1,9 @@
 #ifndef __ISERVER_HPP__
 # define __ISERVER_HPP__
 
-# include "BuilderRoute.hpp" 
+# include "IBuilderRoute.hpp" 
+# include "EHttpStatusCode.hpp"
+# include "IRoute.hpp"
 
 class IServer {
     public:
@@ -25,13 +27,13 @@ class IServer {
         virtual void        SetAllowMethods(std::set<std::string> methods) = 0;
         virtual void        SetErrorPage(std::set<HttpStatusCode::Code> statusCodes, std::string filePath) = 0;
         virtual void        SetBodyLimit(int size) = 0;
-        virtual void        SetRedirectPath(std::pair<std::string> pair) = 0;
+        virtual void        SetRedirectPath(std::pair<std::string, std::string> pair) = 0;
         virtual void        SetRootDirectory(std::string root) = 0;
         virtual void        SetPagesIndexes(std::vector<std::string> indexes) = 0;
         virtual void        SetAutoIndex(bool flag) = 0;
         virtual void        SetHosts(std::vector<std::string> hosts) = 0;
         virtual void        SetPort(std::string port) = 0;
-        virtual void        SetRoute(IRoute *route, std::string routeName) = 0;
+        virtual void        SetRoute(std::string routeName, IRoute *route) = 0;
 
         // Methods
         virtual void        SetAddrInfo(void) = 0;
@@ -48,7 +50,7 @@ class IServer {
         virtual std::string             GetIP(void) const = 0;
         virtual std::string             GetIPVersion(void) const = 0;
         virtual std::string             GetListenPort(void) const = 0;
-        virtual ServerStages            GetStage(void) const = 0;
+        // virtual ServerStages            GetStage(void) const = 0;
         virtual int                     GetClientFD(void) const = 0;
 
         friend class IBuilderServer;

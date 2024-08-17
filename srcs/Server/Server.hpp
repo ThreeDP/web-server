@@ -17,7 +17,7 @@ enum ServerStages {
     S_END
 };
 
-class Server : public CommonParameters {
+class Server : public IServer {
     private:
         // Configs
         std::string                                     _listen_host;
@@ -28,9 +28,8 @@ class Server : public CommonParameters {
         int                                             _limit_client_body_size;
         std::map<std::string, std::string>              _redirectionPaths;
         std::string                                     _root;
-        std::set<std::string>                           _indexes;
-        bool                                            _autoindex;
-        std::map<std::string, IRoute *>                 _routes;
+        std::vector<std::string>                           _indexes;
+        bool                                            _autoIndex;
 
         std::vector<std::string>                        _hosts;
         std::string                                     _port;
@@ -43,6 +42,7 @@ class Server : public CommonParameters {
         int             _actualClientFD;
 
     public:
+        std::map<std::string, IRoute *>                 _routes;
         // Geters
         std::map<HttpStatusCode::Code, std::string>
                                     GetErrorPages(void);
@@ -60,13 +60,13 @@ class Server : public CommonParameters {
         void                        SetAllowMethods(std::set<std::string> methods);
         void                        SetErrorPage(std::set<HttpStatusCode::Code> statusCodes, std::string filePath);
         void                        SetBodyLimit(int size);
-        void                        SetRedirectPath(std::pair<std::string> pair);
+        void                        SetRedirectPath(std::pair<std::string, std::string> pair);
         void                        SetRootDirectory(std::string root);
         void                        SetPagesIndexes(std::vector<std::string> indexes);
         void                        SetAutoIndex(bool flag);
         void                        SetHosts(std::vector<std::string> hosts);
         void                        SetPort(std::string port);
-        void                        SetRoute(IRoute *route, std::string routeName);
+        void                        SetRoute(std::string routeName, IRoute *route);
 
         // socket config
         struct addrinfo                         hints;
@@ -111,12 +111,26 @@ class Server : public CommonParameters {
 
         // Base Methods
 
-        Server(void);
+        Server(IHandler *handler) :
+        _root("./"),
+        _autoIndex(false),
+        _limit_client_body_size(2048) {
+            _handler = handler;
+            memset(&hints, 0, sizeof(struct addrinfo));
+            this->hints.ai_family = AF_UNSPEC;
+            this->hints.ai_socktype = SOCK_STREAM;
+            this->hints.ai_flags = AI_CANONNAME;
+
+            this->result = NULL;
+            this->_stage = S_START;
+            // std::cout << *this;
+        }
+        // Server(void);
         ~Server(void);
-        Server(std::string name);
-        Server(std::string name, IHandler *handler);
-        Server(std::string name, int port, std::string root);
-        Server(std::vector<std::string> serv, unsigned short port);
+        // Server(std::string name);
+        // Server(std::string name, IHandler *handler);
+        // Server(std::string name, int port, std::string root);
+        // Server(std::vector<std::string> serv, unsigned short port);
         
         class Except: virtual public std::exception {
 			protected:
