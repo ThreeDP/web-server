@@ -38,23 +38,9 @@ class Server : public IServer {
         std::string     _ipVersion;
         ServerStages    _stage;
         IHandler        *_handler;
+        ILogger         *_logger;
 
         int             _actualClientFD;
-
-    public:
-        std::map<std::string, IRoute *>                 _routes;
-        // Geters
-        std::map<HttpStatusCode::Code, std::string>
-                                    GetErrorPages(void);
-        std::set<std::string>       GetAllowMethods(void);
-        int                         GetBodyLimit(void);
-        std::string                 GetRedirectPath(std::string path);
-        std::string                 GetRootDirectory(void);
-        std::vector<std::string>    GetPageIndexes(void);
-        bool                        GetAutoIndex(void);
-        std::vector<std::string>    GetHosts(void);
-        std::string                 GetPort(void);
-        IRoute                      *GetRoute(std::string routeName);
 
         // Seters
         void                        SetAllowMethods(std::set<std::string> methods);
@@ -68,6 +54,20 @@ class Server : public IServer {
         void                        SetPort(std::string port);
         void                        SetRoute(std::string routeName, IRoute *route);
 
+    public:
+        std::map<std::string, IRoute *>                 _routes;
+        // Geters
+        std::map<HttpStatusCode::Code, std::string>
+                                    GetErrorPages(void);
+        std::set<std::string>       GetAllowMethods(void);
+        int                         GetBodyLimit(void);
+        std::string                 GetRedirectPath(std::string path);
+        std::string                 GetRootDirectory(void);
+        std::vector<std::string>    GetPageIndexes(void);
+        bool                        GetAutoIndex(void);
+        std::vector<std::string>    GetHosts(void);
+        IRoute                      *GetRoute(std::string routeName);
+
         // socket config
         struct addrinfo                         hints;
         struct addrinfo                         *result;
@@ -79,6 +79,7 @@ class Server : public IServer {
 
     public:
 
+        std::string                 GetPort(void);
         // Server Methods
         void                    SetAddrInfo(void);
         void                    CreateSocketAndBind(void);
@@ -111,9 +112,11 @@ class Server : public IServer {
 
         // Base Methods
 
-        Server(IHandler *handler) :
+        Server(IHandler *handler, ILogger *logger) :
         _root("./"),
         _autoIndex(false),
+        _handler(handler),
+        _logger(logger),
         _limit_client_body_size(2048) {
             _handler = handler;
             memset(&hints, 0, sizeof(struct addrinfo));

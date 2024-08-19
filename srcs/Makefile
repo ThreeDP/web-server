@@ -15,22 +15,24 @@
 NAME										= 	webServer
 ######################## PATHS ###############################
 OBJS_PATH									= 	objs/
-HEADERS										=	Server/ \
+HEADERS										=	Http/ \
 												HandlerFileSystem/ \
 												Utils/  \
-												Server/Server \
-												Server/Response \
-												Server/Route
+												Logging \
+												Http/Server \
+												Http/Response \
+												Http/Request \
+												Http/Route
 # Parser/
 INCLUDE_FLAGS 								:= 	-g3 -O3 -MMD -MP $(addprefix -I, $(HEADERS))
-VPATH										=	Server/:Server/Server/:Utils/:Server/Response:HandlerFileSystem:Server/Route
+VPATH										=	Http/:Logging:Http/Server/:Utils/:Http/Response:HandlerFileSystem:Http/Route:Http/Request
 
 ######################## FLAGS ###############################
 FLAGS										= 	-Wall -Wextra -std=c++98
 ######################## SOURCES #############################
 SRC_RESPONSE								=	HttpResponse.cpp BuilderResponse.cpp
 SRC_ROUTE									=	Route.cpp BuilderRoute.cpp
-SRC_SERVER									=	Server.cpp
+SRC_SERVER									=	Server.cpp BuilderServer.cpp
 # SRC_PARSER									=	Parser.cpp Handler.cpp
 SRC_HTTP									=	Http.cpp HttpRequest.cpp # CommonParameters.cpp
 SRC_UTILS									=	Utils.cpp Handler.cpp

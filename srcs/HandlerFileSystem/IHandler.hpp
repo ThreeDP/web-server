@@ -10,6 +10,8 @@
 # include <set>
 # include <cstring>
 # include <sstream>
+# include <arpa/inet.h>
+# include <unistd.h>
 
 class IHandler {
     public:

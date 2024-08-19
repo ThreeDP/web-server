@@ -13,13 +13,13 @@ class IHttpResponse {
         virtual void _createBodyByDirectory(std::set<std::string> dirent, std::string path, IHandler &handler) = 0;
         virtual void _createBodyByFileDescriptor(std::ifstream *fd) = 0;
         virtual std::string             GetHttpVersion(void) const = 0;
-        virtual std::string             GetStatusCode(void) const = 0;
-        virtual std::string             GetStatusMessage(void) const = 0;
         virtual std::pair<std::string, std::string> GetHeader(std::string key) = 0;
         virtual std::map<std::string, std::string>  GetHeaders(void) const = 0;
         virtual std::string GetBody(void) const = 0;
 
     public:
+        virtual std::string             GetStatusMessage(void) const = 0;
+        virtual std::string             GetStatusCode(void) const = 0;
         virtual std::string CreateResponse(void) = 0;
         virtual std::string ToString(void) = 0;
 

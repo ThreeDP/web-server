@@ -13,6 +13,7 @@ enum HttpStages {
 
 class Http {
     HttpStages _stage;
+    ILogger *_logger;
 
     // Patterns HTTP
 
@@ -45,7 +46,7 @@ class Http {
         HttpStages                  GetStage(void) const;
 
         // Base Methods
-        Http(void);
+        Http(ILogger *logger);
         ~Http(void);
 
         class Except: virtual public std::exception {

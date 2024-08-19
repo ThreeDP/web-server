@@ -3,7 +3,6 @@
 
 # include "define.hpp"
 # include "Utils.hpp"
-# include "CommonParameters.hpp"
 # include "HttpResponse.hpp"
 # include "HttpRequest.hpp"
 # include "IHandler.hpp"

@@ -24,11 +24,13 @@ int main() {
     indexes.push_back("index.htm");
 
 
-	Http http;
     IHandler *handler = new Handler();
-    IBuilderServer *b = new BuilderServer(handler);
+    ILogger *logger = new Logger();
+	Http http(logger);
+    IBuilderServer *b = new BuilderServer(handler, logger);
     IServer *newServer = b->SetupServer()
                             .WithAllowMethods(methods)
+                            .WithAutoIndex(true)
                             .WithErrorPages(statusCode, "404.html")
                             .WithPort("8081")
                             .WithRootDirectory("../home")
@@ -39,14 +41,16 @@ int main() {
     //http.SetServer("localhost2", newServer2);
     IBuilderRoute   *builder = new BuilderRoute(newServer, handler);
     newServer->SetRoute("/", builder->SetupRoute("/")
+                                .WithPageIndexes(indexes)
                                     .GetResult());
     newServer->SetRoute("/app", builder->SetupRoute("/app")
                                     .GetResult());
-    // newServer->_routes["/static/imagens"] = builder->SetupRoute("/static/imagens")
-    //                                         .GetResult();
-    // newServer->_routes["/ranna-site"] = builder->SetupRoute("/ranna-site")
-    //                                     .GetResult();
-    // newServer2->routes["/static"] = new Route(newServer2, "/static");
+    newServer->SetRoute("/static/imagens", builder->SetupRoute("/static/imagens")
+                                            .WithPageIndexes(indexes)
+                                            .GetResult());
+    newServer->SetRoute("/ranna-site", builder->SetupRoute("/ranna-site")
+                                        .WithPageIndexes(indexes)
+                                        .GetResult());
     try {
         http.StartPollList();
         http.StartWatchSockets();

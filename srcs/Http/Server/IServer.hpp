@@ -4,6 +4,9 @@
 # include "IBuilderRoute.hpp" 
 # include "EHttpStatusCode.hpp"
 # include "IRoute.hpp"
+# include "Logger.hpp"
+
+class BuilderServer;
 
 class IServer {
     public:
@@ -23,6 +26,7 @@ class IServer {
         virtual std::string                 GetPort(void) = 0;
         virtual IRoute                      *GetRoute(std::string routeName) = 0;
 
+    protected:
         // Seters
         virtual void        SetAllowMethods(std::set<std::string> methods) = 0;
         virtual void        SetErrorPage(std::set<HttpStatusCode::Code> statusCodes, std::string filePath) = 0;
@@ -35,6 +39,7 @@ class IServer {
         virtual void        SetPort(std::string port) = 0;
         virtual void        SetRoute(std::string routeName, IRoute *route) = 0;
 
+    public:
         // Methods
         virtual void        SetAddrInfo(void) = 0;
         virtual void        CreateSocketAndBind(void) = 0;
@@ -53,6 +58,7 @@ class IServer {
         // virtual ServerStages            GetStage(void) const = 0;
         virtual int                     GetClientFD(void) const = 0;
 
+        friend class BuilderServer;
         friend class IBuilderServer;
 };
 

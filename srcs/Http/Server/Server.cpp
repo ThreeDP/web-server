@@ -96,18 +96,21 @@ std::string         Server::FindMatchRoute(HttpRequest &res) {
 }
 
 void                Server::ProcessRequest(HttpRequest &request, int client_fd) {
-    this->UpdateState(S_CLIENT_REQUEST, client_fd);
     BuilderResponse builder = BuilderResponse(new Handler());
     std::string keyPath = this->FindMatchRoute(request);
+    _logger->LogInformation(std::string("Request ") + " Route " + keyPath,  " " +  request.GetMethod() + " " + request.GetPath());
     this->_routes[keyPath]->ProcessRequest(request, builder);
     this->ResponsesMap[client_fd] = builder.GetResult();
     std::cout << this->ResponsesMap[client_fd]->ToString() << std::endl;
 }
 
 std::string         Server::ProcessResponse(int client_fd) {
-    std::string res = this->ResponsesMap[client_fd]->ToString();
+    IHttpResponse *response = this->ResponsesMap[client_fd];
+    std::string res = response->ToString();
+    _logger->LogInformation(std::string("Response ") + response->GetStatusCode(), response->GetStatusMessage());
     this->ResponsesMap.erase(client_fd);
-    this->UpdateState(S_SERVER_RESPONSE, client_fd);
+    delete response;
+    // this->UpdateState(S_SERVER_RESPONSE, client_fd);
     return res;
 }
 

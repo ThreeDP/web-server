@@ -68,9 +68,11 @@ void    Http::DisconnectClientToServer(int client_fd) {
     if (close(client_fd) == -1)
         throw Except("close");
     IServer *server = this->clientFD_Server[client_fd];
-    // server->UpdateState(S_CLIENT_DISCONNECT, client_fd);
     this->clientFD_Server.erase(client_fd);
-    // std::cout << *server; 
+
+    std::stringstream ss;
+    ss << "Disconnect Client " << client_fd << " from server " << server->GetIP() << " on port " << server->GetPort();
+    _logger->LogInformation(ss.str(), "");
 }
 
 bool    Http::ConnectClientToServer(int i) {
@@ -122,7 +124,10 @@ void    Http::ClientHandShake(IServer *server) {
         throw Except("Error on add client on epoll.");
     }
     this->clientFD_Server[client_fd] = server;
-    // std::cout << *server;
+    
+    std::stringstream ss;
+    ss << "Connect Client " << client_fd << " from server " << server->GetIP() << " on port " << server->GetPort();
+    _logger->LogInformation(ss.str(), "");
 }
 
 /* Geters
@@ -152,10 +157,11 @@ void Http::SetServer(std::string serverName, IServer *server) {
 
 /* Base Methods
 =================================================*/
-Http::Http(void) {
-    this->_stage = H_START;
+Http::Http(ILogger *logger) {
+    // this->_stage = H_START;
     HttpResponse::SetDefaultHTTPResponse();
-    std::cout << *this;
+    _logger = logger;
+    // std::cout << *this;
 }
 
 Http::~Http(void) {
