@@ -1,6 +1,9 @@
 #ifndef __PARSER_PARAMS_HPP__
 # define __PARSER_PARAMS_HPP__
 
+#include "EHttpStatusCode.hpp"
+#include <algorithm>
+
 namespace EnumParams {
 
 	enum Param {
@@ -54,6 +57,91 @@ class ParserParams {
 			}
 			pieces.push_back(std::string(1, c));
 			return pieces;
+		}
+
+		static std::vector<std::string> GetVectorParams(std::vector<std::string> vector) {
+			std::vector<std::string>::iterator start = vector.begin() + 1;
+			std::vector<std::string>::iterator end = vector.end() - 1;
+			return std::vector<std::string>(start, end);
+		}
+
+		static std::set<std::string> GetSetParams(std::vector<std::string> vector) {
+			std::vector<std::string>::iterator it = vector.begin() + 1;
+			std::set<std::string> newSet;
+			for ( ; it != vector.end() - 1; ++it) {
+				newSet.insert(*it);
+			}
+			return newSet;
+		}
+
+		static std::pair<std::string, std::string> GetPairParams(std::vector<std::string> vector) {
+			int size = vector.size() - 2;
+			std::stringstream ss;
+			ss << "Wrong number of params for {" << vector[0] << "}." << std::endl; 
+			if (size != 2)
+				throw std::invalid_argument(ss.str());
+			return std::pair<std::string, std::string>(vector[1], vector[2]);
+		}
+
+		static std::pair<std::set<HttpStatusCode::Code>, std::string> GetPairCodeParams(std::vector<std::string> vector) {
+			int size = vector.size() - 2;
+			std::stringstream ss;
+			ss << "Wrong number of params for {" << vector[0] << "}." << std::endl; 
+			if (size < 2)
+				throw std::invalid_argument(ss.str());
+			std::vector<std::string>::iterator it = vector.begin();
+			std::vector<std::string>::iterator it = vector.begin() + 1;
+			std::set<HttpStatusCode::Code> codes;
+			for (; it != vector.end() + 2; ++it) {
+				    int code;
+					std::stringstream str(*it);
+					str >> code;
+					if (str.fail()) {
+						throw std::invalid_argument("Invalid value on code.");
+					}
+					codes.insert((HttpStatusCode::Code)code);
+			}
+			return std::pair<std::set<HttpStatusCode::Code>, std::string>(codes, *it);
+		}
+
+		static std::string GetStringParam(std::vector<std::string> vector) {
+			int size = vector.size() - 2;
+			std::stringstream ss;
+			ss << "Wrong number of params for {" << vector[0] << "}." << std::endl; 
+			if (size != 1)
+				throw std::invalid_argument(ss.str());
+			return vector[1];
+		}
+
+		static int GetBodyLimitParam(std::vector<std::string> vector) {
+			int size = vector.size() - 2;
+			std::stringstream ss;
+			ss << "Wrong number of params for {" << vector[0] << "}." << std::endl; 
+			if (size != 1)
+				throw std::invalid_argument(ss.str());
+			return 2048;
+		}
+
+		static bool GetAutoIndexParam(std::vector<std::string> vector) {
+			int size = vector.size() - 2;
+			std::stringstream ss;
+			ss << "Wrong number of params for {" << vector[0] << "}." << std::endl; 
+			if (size == 1)
+				throw std::invalid_argument(ss.str());
+			if (vector[1] == "on")
+				return true;
+			else if (vector[1] == "off")
+				return false;
+			throw std::invalid_argument("Wrong Param on autoindex options:(on, off).");
+		}
+
+		static void SanitizeString(std::string str) {
+			int occurs = std::count(str.begin(), str.end(), ';');
+			occurs += std::count(str.begin(), str.end(), '{');
+			occurs += std::count(str.begin(), str.end(), '}');
+			if (occurs > 1) {
+				throw std::invalid_argument("Syntax Error.");
+			}
 		}
 };
 
