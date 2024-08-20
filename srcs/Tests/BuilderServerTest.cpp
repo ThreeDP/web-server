@@ -115,7 +115,6 @@ TEST_F(BuilderServerTest, BuilderWithHosts_Should_ConfigureWithPatternHosts_When
 
     // ASSERT
     EXPECT_EQ(result->GetHosts(), PatternHosts);
-    EXPECT_EQ(1, 2);
 }
 
 
@@ -146,16 +145,16 @@ TEST_F(BuilderServerTest, TestOne) {
     IServer *result = builder->GetResult();
 
     // ASSERT
-    EXPECT_EQ(result->GetBodyLimit(), 2048);
-    EXPECT_EQ(result->GetRedirectPath(Redirect.first), "rota2");
-    EXPECT_EQ(result->GetRootDirectory(), "/home");
-    EXPECT_EQ(result->GetAutoIndex(), false);
-    EXPECT_EQ(result->GetHosts(), Hosts);
-    EXPECT_EQ(result->GetPort(), "8081");
-    EXPECT_EQ(result->GetAllowMethods(), Methods);
+    EXPECT_EQ(2048, result->GetBodyLimit());
+    EXPECT_EQ("rota2", result->GetRedirectPath(Redirect.first));
+    EXPECT_EQ("/home", result->GetRootDirectory());
+    EXPECT_EQ(false, result->GetAutoIndex());
+    EXPECT_EQ(Hosts, result->GetHosts());
+    EXPECT_EQ("8081", result->GetPort());
+    EXPECT_EQ(Methods, result->GetAllowMethods());
     std::map<HttpStatusCode::Code, std::string> errorPages = result->GetErrorPages();
-    EXPECT_EQ(errorPages[HttpStatusCode::_INTERNAL_SERVER_ERROR], "50x.html");
-    EXPECT_EQ(errorPages[HttpStatusCode::_NOT_FOUND], "404.html");
+    EXPECT_EQ("404.html", errorPages[HttpStatusCode::_NOT_FOUND]);
+    EXPECT_EQ("50x.html", errorPages[HttpStatusCode::_INTERNAL_SERVER_ERROR]);
 }
 
 int main(int argc, char **argv) {
@@ -166,4 +165,5 @@ int main(int argc, char **argv) {
 	int num = RUN_ALL_TESTS();
 
     // Clean
+    return num;
 }

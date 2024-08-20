@@ -8,6 +8,7 @@ set(GTEST_INCLUDE_DIR "/workspace/web-server/srcs/googletest/googletest/include"
 
 set(Name WebServerTests)
 set(BuilderServer BuilderServerTest.cpp)
+set(ParserParams ParserParamsTest.cpp)
 project(${Name})
 
 enable_testing()
@@ -19,10 +20,22 @@ add_executable(
 	${BuilderServer}
 )
 
+add_executable(
+	ParserParamsTest
+	${ParserParams}
+)
+
 target_link_libraries(
 	BuilderServerTest
 	WebServer
   	GTest::gtest_main
 )
 
+target_link_libraries(
+	ParserParamsTest
+	WebServer
+  	GTest::gtest_main
+)
+
 gtest_discover_tests(BuilderServerTest)
+gtest_discover_tests(ParserParamsTest)

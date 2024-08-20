@@ -50,6 +50,7 @@ void    Http::StartWatchSockets(void) {
                     this->DisconnectClientToServer(this->clientEvents[i].data.fd);
                 } else if (numbytes > 0) {
                     this->HandleResponse(this->clientEvents[i].data.fd);
+                    this->DisconnectClientToServer(this->clientEvents[i].data.fd);
                     break;
                 }
             }

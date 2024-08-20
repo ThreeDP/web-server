@@ -6,7 +6,7 @@
 #    By: dapaulin <dapaulin@student.42sp.org.br>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/11/03 15:04:07 by dapaulin          #+#    #+#              #
-#    Updated: 2024/08/10 21:45:48 by dapaulin         ###   ########.fr        #
+#    Updated: 2024/08/19 20:20:24 by dapaulin         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -19,13 +19,14 @@ HEADERS										=	Http/ \
 												HandlerFileSystem/ \
 												Utils/  \
 												Logging \
+												Parser \
 												Http/Server \
 												Http/Response \
 												Http/Request \
 												Http/Route
 # Parser/
 INCLUDE_FLAGS 								:= 	-g3 -O3 -MMD -MP $(addprefix -I, $(HEADERS))
-VPATH										=	Http/:Logging:Http/Server/:Utils/:Http/Response:HandlerFileSystem:Http/Route:Http/Request
+VPATH										=	Http/:Parser:Logging:Http/Server/:Utils/:Http/Response:HandlerFileSystem:Http/Route:Http/Request
 
 ######################## FLAGS ###############################
 FLAGS										= 	-Wall -Wextra -std=c++98

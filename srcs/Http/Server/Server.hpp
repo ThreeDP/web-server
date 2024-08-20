@@ -118,6 +118,7 @@ class Server : public IServer {
         _handler(handler),
         _logger(logger),
         _limit_client_body_size(2048) {
+            _hosts.push_back("localhost");
             _handler = handler;
             memset(&hints, 0, sizeof(struct addrinfo));
             this->hints.ai_family = AF_UNSPEC;

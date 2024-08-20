@@ -23,6 +23,7 @@ set(HEADERS
     Utils/Utils.hpp
     HandlerFileSystem/IHandler.hpp
     HandlerFileSystem/Handler.hpp
+    Parser/ParserParams.hpp
     Logging/ILogger.hpp
     Logging/Logger.hpp
     Http/Server/IBuilderServer.hpp

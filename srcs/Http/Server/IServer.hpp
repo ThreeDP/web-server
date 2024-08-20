@@ -37,10 +37,10 @@ class IServer {
         virtual void        SetAutoIndex(bool flag) = 0;
         virtual void        SetHosts(std::vector<std::string> hosts) = 0;
         virtual void        SetPort(std::string port) = 0;
-        virtual void        SetRoute(std::string routeName, IRoute *route) = 0;
 
     public:
         // Methods
+        virtual void        SetRoute(std::string routeName, IRoute *route) = 0;
         virtual void        SetAddrInfo(void) = 0;
         virtual void        CreateSocketAndBind(void) = 0;
         virtual int         StartListen(void) = 0;
