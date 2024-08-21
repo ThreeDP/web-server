@@ -17,6 +17,7 @@ class IHandler {
     public:
         virtual DIR                             *OpenDirectory(std::string path) = 0;
         virtual std::ifstream                   *OpenFile(std::string path) = 0;
+        virtual std::ifstream                   OpenFile2(std::string path) = 0;
 
         virtual bool                            FileExist(std::string path) = 0;
         virtual bool                            FileIsDirectory(std::string path) = 0;
@@ -27,6 +28,7 @@ class IHandler {
 
         virtual std::set<std::string>           ReadDirectory(DIR *directory) = 0;
         virtual std::string                     ReadRegularFile(std::ifstream *file) = 0;
+        virtual std::pair<bool, std::string>    ReadLine(std::ifstream &file) = 0;
         virtual ~IHandler(void) {}
 };
 

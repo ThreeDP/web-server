@@ -89,7 +89,6 @@ class ParserParams {
 			ss << "Wrong number of params for {" << vector[0] << "}." << std::endl; 
 			if (size < 2)
 				throw std::invalid_argument(ss.str());
-			std::vector<std::string>::iterator it = vector.begin();
 			std::vector<std::string>::iterator it = vector.begin() + 1;
 			std::set<HttpStatusCode::Code> codes;
 			for (; it != vector.end() + 2; ++it) {
@@ -135,13 +134,27 @@ class ParserParams {
 			throw std::invalid_argument("Wrong Param on autoindex options:(on, off).");
 		}
 
-		static void SanitizeString(std::string str) {
-			int occurs = std::count(str.begin(), str.end(), ';');
-			occurs += std::count(str.begin(), str.end(), '{');
-			occurs += std::count(str.begin(), str.end(), '}');
-			if (occurs > 1) {
+		static char SanitizeString(std::string str) {
+			int semicolon = std::count(str.begin(), str.end(), ';');
+			int open_curly = std::count(str.begin(), str.end(), '{');
+			int close_curly = std::count(str.begin(), str.end(), '}');
+			if ((semicolon + open_curly + close_curly) > 1) {
 				throw std::invalid_argument("Syntax Error.");
+			} else if ((semicolon + open_curly + close_curly) == 0) {
+				int size = 0;
+				for (std::string::iterator it = str.begin(); it != str.end(); ++it) {
+					size++;
+				}
+				return (size == str.size()) ? '\0'
+					: throw std::invalid_argument("Syntax Error.");
 			}
+			if (semicolon)
+				return ';';
+			else if (open_curly)
+				return '{';
+			else if (close_curly)
+				return '}';
+			throw std::invalid_argument("Syntax Error.");
 		}
 };
 

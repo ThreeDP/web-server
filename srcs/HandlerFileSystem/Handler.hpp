@@ -10,6 +10,7 @@ class Handler : public IHandler {
 		~Handler(void) { }
 
 		std::ifstream					*OpenFile(std::string path);
+		std::ifstream					OpenFile2(std::string path);
 		DIR 							*OpenDirectory(std::string path);
 
 		bool							FileExist(std::string path);
@@ -23,6 +24,11 @@ class Handler : public IHandler {
 		std::string						ReadRegularFile(std::ifstream *file);
 
 		bool                            PathExist(std::string path);
+		std::pair<bool, std::string>    ReadLine(std::ifstream &file) {
+			std::string			line;
+			bool response = static_cast<bool>(std::getline(file, line));
+			return std::make_pair(response, line);
+		}
 };
 
 #endif

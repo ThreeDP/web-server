@@ -9,6 +9,7 @@ class BuilderServer : public IBuilderServer {
     ILogger         *_logger;
 
     public:
+    IBuilderRoute   *BuilderRoute;
     BuilderServer(IHandler *handler, ILogger *logger);
     ~BuilderServer(void) {}
 

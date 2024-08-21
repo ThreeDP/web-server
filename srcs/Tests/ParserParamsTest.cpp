@@ -169,6 +169,46 @@ TEST_F(ParserParamsTest, PassALine_ShouldBeAVector_WhenIsASectionPatternWithSpac
     EXPECT_EQ("{", result[2]);
 }
 
+TEST_F(ParserParamsTest, CallSanitizeString_ShouldBeThrow_WhenhasMoreThenOneSemicolon) {
+	// ARRANGE
+	std::string inputString = "         autoindex ;on;";
+
+    // ACT & ASSERT
+    EXPECT_THROW({
+		ParserParams::SanitizeString(inputString);
+    }, std::invalid_argument);
+}
+
+TEST_F(ParserParamsTest, CallSanitizeString_ShouldBeThrow_WhenhasOneCurlyBrakesAndOneSemicolon) {
+	// ARRANGE
+	std::string inputString = "         autoindex on; {";
+
+    // ACT & ASSERT
+    EXPECT_THROW({
+		ParserParams::SanitizeString(inputString);
+    }, std::invalid_argument);
+}
+
+TEST_F(ParserParamsTest, CallSanitizeString_ShouldBeThrow_WhenhasOneOpenCurlyBrakesAndOneCloseCurlyBrakes) {
+	// ARRANGE
+	std::string inputString = "         server {}";
+
+    // ACT & ASSERT
+    EXPECT_THROW({
+		ParserParams::SanitizeString(inputString);
+    }, std::invalid_argument);
+}
+
+TEST_F(ParserParamsTest, CallSanitizeString_ShouldBeNotThrow_WhenHasACorrectParam) {
+	// ARRANGE
+	std::string inputString = "         server {";
+
+    // ACT & ASSERT
+    EXPECT_NO_THROW({
+		ParserParams::SanitizeString(inputString);
+    });
+}
+
 
 int main(int argc, char **argv) {
     // Setup

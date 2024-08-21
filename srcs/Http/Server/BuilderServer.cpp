@@ -1,10 +1,19 @@
 # include "BuilderServer.hpp"
+# include "BuilderRoute.hpp"
+
+// BuilderServer::BuilderServer(IHandler *handler, ILogger *logger) {
+//     _handler = handler;
+//     _logger = logger;
+//     _server = NULL;
+// }
 
 BuilderServer::BuilderServer(IHandler *handler, ILogger *logger) {
     _handler = handler;
     _logger = logger;
+    BuilderRoute = NULL;
     _server = NULL;
 }
+
 
 IBuilderServer      &BuilderServer::SetupServer(void) {
     if (_server != NULL) {
@@ -15,6 +24,8 @@ IBuilderServer      &BuilderServer::SetupServer(void) {
 }
 
 IBuilderServer      &BuilderServer::WithRoute(IRoute *route) {
+    if (BuilderRoute == NULL)
+        BuilderRoute = new BuilderRoute(this, _handler);
     _server->SetRoute(route->GetRouteName(), route);
     return *this;
 }

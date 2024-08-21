@@ -13,6 +13,7 @@ class BuilderRoute : public IBuilderRoute {
         IRoute      *_route;
 
     public:
+        IBuilderRoute *BuilderRoute;
         BuilderRoute(IServer *server, IHandler *handler);
         ~BuilderRoute(void);
 
