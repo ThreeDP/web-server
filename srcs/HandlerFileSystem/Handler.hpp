@@ -10,7 +10,6 @@ class Handler : public IHandler {
 		~Handler(void) { }
 
 		std::ifstream					*OpenFile(std::string path);
-		std::ifstream					OpenFile2(std::string path);
 		DIR 							*OpenDirectory(std::string path);
 
 		bool							FileExist(std::string path);

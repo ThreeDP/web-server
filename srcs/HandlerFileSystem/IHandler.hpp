@@ -17,7 +17,6 @@ class IHandler {
     public:
         virtual DIR                             *OpenDirectory(std::string path) = 0;
         virtual std::ifstream                   *OpenFile(std::string path) = 0;
-        virtual std::ifstream                   OpenFile2(std::string path) = 0;
 
         virtual bool                            FileExist(std::string path) = 0;
         virtual bool                            FileIsDirectory(std::string path) = 0;

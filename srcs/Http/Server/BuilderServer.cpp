@@ -10,7 +10,7 @@
 BuilderServer::BuilderServer(IHandler *handler, ILogger *logger) {
     _handler = handler;
     _logger = logger;
-    BuilderRoute = NULL;
+    _builderRoute = NULL;
     _server = NULL;
 }
 
@@ -24,8 +24,8 @@ IBuilderServer      &BuilderServer::SetupServer(void) {
 }
 
 IBuilderServer      &BuilderServer::WithRoute(IRoute *route) {
-    if (BuilderRoute == NULL)
-        BuilderRoute = new BuilderRoute(this, _handler);
+    if (_builderRoute == NULL)
+        _builderRoute = new BuilderRoute(_server, _handler);
     _server->SetRoute(route->GetRouteName(), route);
     return *this;
 }

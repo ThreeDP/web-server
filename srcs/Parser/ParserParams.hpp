@@ -16,7 +16,8 @@ namespace EnumParams {
 		_ERROR_PAGE,
 		_ALLOW_METHODS,
 		_AUTOINDEX,
-		_INDEX
+		_INDEX,
+		_ROUTE
 	};
 }
 
@@ -35,6 +36,7 @@ class ParserParams {
 			map["allow_methods"] = EnumParams::_ALLOW_METHODS;
 			map["autoindex"] = EnumParams::_AUTOINDEX;
 			map["index"] = EnumParams::_INDEX;
+			map["location"] = EnumParams::_ROUTE;
 
 			std::map<std::string, EnumParams::Param>::iterator it = map.find(input);
 			if (it != map.end())

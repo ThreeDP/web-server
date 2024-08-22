@@ -9,6 +9,8 @@ class IBuilderServer {
     public:
     virtual ~IBuilderServer(void) {}
 
+    virtual IBuilderRoute       *GetBuilderRoute(void) = 0;
+
     virtual IBuilderServer      &SetupServer(void) = 0;
     virtual IBuilderServer      &WithRoute(IRoute *route) = 0;
     virtual IBuilderServer      &WithHosts(std::vector<std::string> hosts) = 0;

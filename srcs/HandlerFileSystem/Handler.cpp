@@ -8,13 +8,6 @@ std::ifstream *Handler::OpenFile(std::string path) {
     return NULL;
 }
 
-std::ifstream Handler::OpenFile2(std::string path) {
-    std::ifstream file = std::ifstream(path.c_str());
-    if (file.is_open())
-        return file;
-    throw std::runtime_error("Error on Open Config File.");
-}
-
 DIR *Handler::OpenDirectory(std::string path) {
     return opendir(path.c_str());
 }

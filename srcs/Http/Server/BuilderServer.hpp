@@ -2,16 +2,21 @@
 # define __BUILDER_SERVER_HPP__
 
 #include "IBuilderServer.hpp"
+#include "BuilderRoute.hpp"
 
 class BuilderServer : public IBuilderServer {
     IHandler        *_handler;
     IServer         *_server;
     ILogger         *_logger;
+    IBuilderRoute   *_builderRoute;
 
     public:
-    IBuilderRoute   *BuilderRoute;
     BuilderServer(IHandler *handler, ILogger *logger);
     ~BuilderServer(void) {}
+
+    IBuilderRoute       *GetBuilderRoute(void) {
+        return _builderRoute;
+    };
 
     IBuilderServer      &SetupServer(void);
     IBuilderServer      &WithRoute(IRoute *route);
