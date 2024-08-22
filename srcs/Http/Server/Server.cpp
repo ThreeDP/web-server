@@ -73,8 +73,6 @@ int Server::AcceptClientConnect(void) {
 /* Server Process
 =======================================*/
 
-
-
 std::string         Server::FindMatchRoute(HttpRequest &res) {
     std::string keyPath = "";
     std::map<std::string, IRoute *>::iterator it = this->_routes.begin();
@@ -330,7 +328,6 @@ void    Server::SetAllowMethods(std::set<std::string> methods) {
 }
 
 void    Server::SetErrorPage(std::set<HttpStatusCode::Code> statusCodes, std::string filePath) {
-    this->_errorPages.clear();
     std::set<HttpStatusCode::Code>::iterator it = statusCodes.begin();
     for ( ; it != statusCodes.end(); ++it) {
         this->_errorPages[*it] = filePath;

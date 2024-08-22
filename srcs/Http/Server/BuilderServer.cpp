@@ -37,6 +37,11 @@ IBuilderServer      &BuilderServer::WithHosts(std::vector<std::string> hosts) {
 }
 
 IBuilderServer      &BuilderServer::WithPort(std::string port) {
+    int num;
+    std::stringstream ss(port);
+    ss >> num;
+    if (num < 1 || num > USHRT_MAX)
+        throw std::invalid_argument("Out of band for port.");
     _server->SetPort(port);
     return *this;
 }

@@ -62,12 +62,16 @@ class ParserParams {
 		}
 
 		static std::vector<std::string> GetVectorParams(std::vector<std::string> vector) {
+			if (vector.empty() || vector.size() <= 2)
+				throw std::invalid_argument("Syntax Error.");
 			std::vector<std::string>::iterator start = vector.begin() + 1;
 			std::vector<std::string>::iterator end = vector.end() - 1;
 			return std::vector<std::string>(start, end);
 		}
 
 		static std::set<std::string> GetSetParams(std::vector<std::string> vector) {
+			if (vector.empty() || vector.size() <= 2)
+				throw std::invalid_argument("Syntax Error.");
 			std::vector<std::string>::iterator it = vector.begin() + 1;
 			std::set<std::string> newSet;
 			for ( ; it != vector.end() - 1; ++it) {
@@ -77,12 +81,13 @@ class ParserParams {
 		}
 
 		static std::pair<std::string, std::string> GetPairParams(std::vector<std::string> vector) {
-			int size = vector.size() - 2;
+			int size;
+			if (!vector.empty() && (size = vector.size() - 2) == 2) {
+				return std::pair<std::string, std::string>(vector[1], vector[2]);
+			}
 			std::stringstream ss;
-			ss << "Wrong number of params for {" << vector[0] << "}." << std::endl; 
-			if (size != 2)
-				throw std::invalid_argument(ss.str());
-			return std::pair<std::string, std::string>(vector[1], vector[2]);
+			ss << "Wrong number of params for {" << "command" << "}." << std::endl; 
+			throw std::invalid_argument(ss.str());
 		}
 
 		static std::pair<std::set<HttpStatusCode::Code>, std::string> GetPairCodeParams(std::vector<std::string> vector) {

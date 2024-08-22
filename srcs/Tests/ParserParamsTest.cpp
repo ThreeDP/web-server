@@ -209,6 +209,154 @@ TEST_F(ParserParamsTest, CallSanitizeString_ShouldBeNotThrow_WhenHasACorrectPara
     });
 }
 
+TEST_F(ParserParamsTest, GetVectorParams_ShouldReturnMiddleElements_WhenVectorHasMultipleElements) {
+	// ARRANGE
+	std::vector<std::string> inputVector = {"first", "middle1", "middle2", "last"};
+
+	// ACT
+	std::vector<std::string> result = ParserParams::GetVectorParams(inputVector);
+
+	// ASSERT
+	std::vector<std::string> expected = {"middle1", "middle2"};
+	EXPECT_EQ(result, expected);
+}
+
+TEST_F(ParserParamsTest, GetVectorParams_ShouldThrowInvalidArgument_WhenVectorHasTwoElements) {
+	// ARRANGE
+	std::vector<std::string> inputVector = {"first", "last"};
+
+	// ACT && ASSERT
+    EXPECT_THROW({
+	    ParserParams::GetVectorParams(inputVector);
+    }, std::invalid_argument);
+}
+
+TEST_F(ParserParamsTest, GetVectorParams_ShouldThrowInvalidArgument_WhenVectorHasOneElement) {
+	// ARRANGE
+	std::vector<std::string> inputVector = {"only"};
+
+	// ACT && ASSERT
+    EXPECT_THROW({
+	    ParserParams::GetVectorParams(inputVector);
+    }, std::invalid_argument);
+}
+
+TEST_F(ParserParamsTest, GetVectorParams_ShouldThrowInvalidArgument_WhenVectorIsEmpty) {
+	// ARRANGE
+	std::vector<std::string> inputVector = {};
+
+	// ACT && ASSERT
+    EXPECT_THROW({
+	    ParserParams::GetVectorParams(inputVector);
+    }, std::invalid_argument);
+}
+
+TEST_F(ParserParamsTest, GetSetParams_ShouldReturnMiddleElementsAsSet_WhenVectorHasMultipleElements) {
+	// ARRANGE
+	std::vector<std::string> inputVector = {"first", "middle1", "middle2", "middle3", "last"};
+
+	// ACT
+	std::set<std::string> result = ParserParams::GetSetParams(inputVector);
+
+	// ASSERT
+	std::set<std::string> expected = {"middle1", "middle2", "middle3"};
+	EXPECT_EQ(result, expected);
+}
+
+TEST_F(ParserParamsTest, GetSetParams_ShouldThrowInvalidArgument_WhenVectorHasTwoElements) {
+	// ARRANGE
+	std::vector<std::string> inputVector = {"first", "last"};
+
+	// ACT && ASSERT
+    EXPECT_THROW({
+	    ParserParams::GetSetParams(inputVector);
+    }, std::invalid_argument);
+}
+
+TEST_F(ParserParamsTest, GetSetParams_ShouldThrowInvalidArgument_WhenVectorHasOneElement) {
+	// ARRANGE
+	std::vector<std::string> inputVector = {"only"};
+
+	// ACT && ASSERT
+    EXPECT_THROW({
+	    ParserParams::GetSetParams(inputVector);
+    }, std::invalid_argument);
+}
+
+TEST_F(ParserParamsTest, GetSetParams_ShouldThrowInvalidArgument_WhenVectorIsEmpty) {
+	// ARRANGE
+	std::vector<std::string> inputVector = {};
+
+	// ACT && ASSERT
+    EXPECT_THROW({
+        ParserParams::GetSetParams(inputVector);
+    }, std::invalid_argument);
+}
+
+TEST_F(ParserParamsTest, GetSetParams_ShouldReturnUniqueMiddleElements_WhenVectorHasDuplicateMiddleElements) {
+	// ARRANGE
+	std::vector<std::string> inputVector = {"first", "middle1", "middle2", "middle1", "last"};
+
+	// ACT
+	std::set<std::string> result = ParserParams::GetSetParams(inputVector);
+
+	// ASSERT
+	std::set<std::string> expected = {"middle1", "middle2"};
+	EXPECT_EQ(result, expected);
+}
+
+TEST_F(ParserParamsTest, GetPairParams_ShouldReturnPair_WhenVectorHasCorrectNumberOfParams) {
+	// ARRANGE
+	std::vector<std::string> inputVector = {"rewrite", "param1", "param2", ";"};
+
+	// ACT
+	std::pair<std::string, std::string> result = ParserParams::GetPairParams(inputVector);
+
+	// ASSERT
+	EXPECT_EQ(result.first, "param1");
+	EXPECT_EQ(result.second, "param2");
+}
+
+TEST_F(ParserParamsTest, GetPairParams_ShouldThrowInvalidArgument_WhenVectorHasLessThanFourElements) {
+	// ARRANGE
+	std::vector<std::string> inputVector = {"command", "param1", ";"};
+
+	// ACT & ASSERT
+	EXPECT_THROW({
+		ParserParams::GetPairParams(inputVector);
+	}, std::invalid_argument);
+}
+
+TEST_F(ParserParamsTest, GetPairParams_ShouldThrowInvalidArgument_WhenVectorHasMoreThanFourElements) {
+	// ARRANGE
+	std::vector<std::string> inputVector = {"command", "param1", "param2", ";", "extraParam"};
+
+	// ACT & ASSERT
+	EXPECT_THROW({
+		ParserParams::GetPairParams(inputVector);
+	}, std::invalid_argument);
+}
+
+TEST_F(ParserParamsTest, GetPairParams_ShouldThrowInvalidArgument_WhenVectorIsEmpty) {
+	// ARRANGE
+	std::vector<std::string> inputVector = {};
+
+	// ACT & ASSERT
+	EXPECT_THROW({
+		ParserParams::GetPairParams(inputVector);
+	}, std::invalid_argument);
+}
+
+TEST_F(ParserParamsTest, GetPairParams_ShouldThrowInvalidArgument_WhenVectorHasOnlyOneElement) {
+	// ARRANGE
+	std::vector<std::string> inputVector = {"command"};
+
+	// ACT & ASSERT
+	EXPECT_THROW({
+		ParserParams::GetPairParams(inputVector);
+	}, std::invalid_argument);
+}
+
 
 int main(int argc, char **argv) {
     // Setup

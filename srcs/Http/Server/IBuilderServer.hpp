@@ -4,6 +4,7 @@
 # include "Route.hpp"
 # include "Logger.hpp"
 # include "Server.hpp"
+# include <climits>
 
 class IBuilderServer {
     public:

@@ -90,13 +90,21 @@ TEST_F(BuilderServerTest, BuilderWithRedict_Should_ConfigureEmptyRedirectPath_Wh
 TEST_F(BuilderServerTest, builderWithPort_Should_ThrowException_WhenInvalidPortProvided) {
     // Arrange
     std::vector<std::string> Hosts = {"localhost"};
-    std::string InvalidPort = "99999";  // Porta fora do intervalo válido
+    std::string InvalidMaxPort = "99999";  // Porta fora do intervalo válido
+    std::string InvalidMinPort = "-1";  // Porta fora do intervalo válido
 
     // ACT & ASSERT
     EXPECT_THROW({
         builder->SetupServer()
             .WithHosts(Hosts)
-            .WithPort(InvalidPort);
+            .WithPort(InvalidMaxPort);
+        builder->GetResult();
+    }, std::invalid_argument);
+
+    EXPECT_THROW({
+        builder->SetupServer()
+            .WithHosts(Hosts)
+            .WithPort(InvalidMinPort);
         builder->GetResult();
     }, std::invalid_argument);
 }
