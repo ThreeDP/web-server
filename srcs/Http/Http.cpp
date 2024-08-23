@@ -155,6 +155,14 @@ void Http::SetServer(std::string serverName, IServer *server) {
     this->servers[serverName] = server;
 }
 
+void Http::SetServer(IServer *server) {
+    std::vector<std::string>::iterator it = server->GetHosts().begin();
+    for ( ; it != server->GetHosts().end(); ++it) {
+        this->servers[*it] = server;
+    }
+    serversPointer.push_back(server);
+}
+
 /* Base Methods
 =================================================*/
 Http::Http(ILogger *logger) {

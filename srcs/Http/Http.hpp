@@ -20,6 +20,7 @@ class Http {
     // Parser Response
     std::map<std::string, IServer *>  servers;
     std::map<int, IServer *> clientFD_Server;
+    std::vector<IServer *>          serversPointer;
 
     const static int eventsLimit = 10;
     
@@ -60,6 +61,7 @@ class Http {
 
         // Seters
         void SetServer(std::string serverName, IServer *server);
+        void SetServer(IServer *server);
 
     private:
 
