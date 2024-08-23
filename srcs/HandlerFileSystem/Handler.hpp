@@ -20,9 +20,14 @@ class Handler : public IHandler {
 		bool							IsAllowToRunScript(std::string path);
 
 		std::set<std::string> 			ReadDirectory(DIR *directory);
-		std::string						ReadRegularFile(std::ifstream *file);
+		std::vector<char> 				ReadRegularFile(std::ifstream *file);
 
 		bool                            PathExist(std::string path);
+		std::pair<bool, std::string>    ReadLine(std::ifstream &file) {
+			std::string			line;
+			bool response = static_cast<bool>(std::getline(file, line));
+			return std::make_pair(response, line);
+		}
 };
 
 #endif

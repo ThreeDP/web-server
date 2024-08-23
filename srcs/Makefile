@@ -6,7 +6,7 @@
 #    By: dapaulin <dapaulin@student.42sp.org.br>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/11/03 15:04:07 by dapaulin          #+#    #+#              #
-#    Updated: 2024/08/10 21:45:48 by dapaulin         ###   ########.fr        #
+#    Updated: 2024/08/19 20:20:24 by dapaulin         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -15,24 +15,31 @@
 NAME										= 	webServer
 ######################## PATHS ###############################
 OBJS_PATH									= 	objs/
-HEADERS										=	Server/ \
+HEADERS										=	Http/ \
 												HandlerFileSystem/ \
 												Utils/  \
-												Parser/ \
-												Server/Response
+												Logging \
+												Parser \
+												Http/Server \
+												Http/Response \
+												Http/Request \
+												Http/Route
+# Parser/
 INCLUDE_FLAGS 								:= 	-g3 -O3 -MMD -MP $(addprefix -I, $(HEADERS))
-VPATH										=	Server/:Utils/:Parser/:Server/Response:HandlerFileSystem
+VPATH										=	Http/:Parser:Logging:Http/Server/:Utils/:Http/Response:HandlerFileSystem:Http/Route:Http/Request
 
 ######################## FLAGS ###############################
 FLAGS										= 	-Wall -Wextra -std=c++98
 ######################## SOURCES #############################
-SRC_SERVER									=	Route.cpp Server.cpp
-SRC_PARSER									=	Parser.cpp Handler.cpp
 SRC_RESPONSE								=	HttpResponse.cpp BuilderResponse.cpp
-SRC_HTTP									=	Http.cpp HttpRequest.cpp CommonParameters.cpp
-SRC_UTILS									=	Utils.cpp
+SRC_ROUTE									=	Route.cpp BuilderRoute.cpp
+SRC_SERVER									=	Server.cpp BuilderServer.cpp
+# SRC_PARSER									=	Parser.cpp Handler.cpp
+SRC_HTTP									=	Http.cpp HttpRequest.cpp # CommonParameters.cpp
+SRC_UTILS									=	Utils.cpp Handler.cpp
 SRC											= 	$(SRC_UTILS)				\
 												$(SRC_RESPONSE)				\
+												$(SRC_ROUTE)				\
 												$(SRC_SERVER)				\
 												$(SRC_HTTP)					\
 												$(SRC_PARSER)				\

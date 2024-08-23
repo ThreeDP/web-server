@@ -61,6 +61,11 @@ IBuilderResponse &BuilderResponse::WithContentType(std::string extension) {
     return *this; 
 };
 
+IBuilderResponse &BuilderResponse::WithLastModified(std::string path) {
+    _response->SetHeader("Content-Type:", _response->GetTextContent(Utils::getLastModifiedOfFile(path)));
+    return *this; 
+};
+
 IBuilderResponse &BuilderResponse::WithLocation(std::string location) {
     _response->SetHeader("Location:", location);
     return *this;

@@ -9,41 +9,53 @@ enable_testing()
 
 set(INCLUDE_DIR 
     "${CMAKE_CURRENT_SOURCE_DIR}/Parser"
-    "${CMAKE_CURRENT_SOURCE_DIR}/Server"
-    "${CMAKE_CURRENT_SOURCE_DIR}/Server/Response"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Http"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Http/Request"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Http/Response"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Http/Route"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Http/Server"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Logging"
     "${CMAKE_CURRENT_SOURCE_DIR}/Utils"
     "${CMAKE_CURRENT_SOURCE_DIR}/HandlerFileSystem"
 )
 
 set(HEADERS
-    Parser/Parser.hpp
-    Server/Server.hpp
-    Server/IServer.hpp
-    Server/CommonParameters.hpp
-    Server/Route.hpp
-    Server/Http.hpp
-    Server/HttpRequest.hpp
-    Server/Response/EHttpStatusCode.hpp
-    Server/Response/IHttpResponse.hpp
-    Server/Response/HttpResponse.hpp
-    Server/IBuilderResponse.hpp
-    Server/BuilderResponse.hpp
     Utils/Utils.hpp
     HandlerFileSystem/IHandler.hpp
     HandlerFileSystem/Handler.hpp
+    Parser/ParserParams.hpp
+    Logging/ILogger.hpp
+    Logging/Logger.hpp
+    Http/Server/IBuilderServer.hpp
+    Http/Server/BuilderServer.hpp
+    Http/Server/IServer.hpp
+    Http/Server/Server.hpp
+    Http/Route/IBuilderRoute.hpp
+    Http/Route/BuilderRoute.hpp
+    Http/Route/IRoute.hpp
+    Http/Route/Route.hpp
+    Http/Response/IBuilderResponse.hpp
+    Http/Response/BuilderResponse.hpp
+    Http/Response/IHttpResponse.hpp
+    Http/Response/HttpResponse.hpp
+    Http/Request/HttpRequest.hpp
+    Http/EHttpStatusCode.hpp
+    Http/define.hpp
+    Http/Http.hpp
 )
 
 # Source files
 set(SOURCE_FILES
-    Parser/Parser.cpp
-    Server/Server.cpp
-    Server/CommonParameters.cpp
-    Server/Route.cpp
-    Server/Http.cpp
-    Server/HttpRequest.cpp
-    Server/Response/HttpResponse.cpp
     Utils/Utils.cpp
     HandlerFileSystem/Handler.cpp
+    Http/Server/BuilderServer.cpp
+    Http/Server/Server.cpp
+    Http/Route/BuilderRoute.cpp
+    Http/Route/Route.cpp
+    Http/Response/BuilderResponse.cpp
+    Http/Response/HttpResponse.cpp
+    Http/Request/HttpRequest.cpp
+    Http/Http.cpp
 )
 
 add_library(${PROJECT_NAME} STATIC ${SOURCE_FILES})

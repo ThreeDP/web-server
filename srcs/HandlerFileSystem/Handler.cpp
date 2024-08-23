@@ -104,12 +104,16 @@ std::set<std::string> Handler::ReadDirectory(DIR *directory) {
     return dirnames;
 }
 
-std::string Handler::ReadRegularFile(std::ifstream *file) {
-    std::stringstream payload;
-    std::string line;
-    while (std::getline(*file, line, '\n')) {
-        payload << line;
-    }
-    file->close();
-    return payload.str();
+std::vector<char> Handler::ReadRegularFile(std::ifstream *file) {
+    int size = 100;
+    char buff[size];
+    std::vector<char> vector;
+
+    do {
+        memset(buff, '\0', sizeof(char) * size);
+        file->read(reinterpret_cast<char*>(&buff), sizeof(buff));
+        std::streamsize bytesRead = file->gcount();
+        vector.insert(vector.end(), buff, buff + bytesRead);
+    } while (file->good());
+    return vector;
 }

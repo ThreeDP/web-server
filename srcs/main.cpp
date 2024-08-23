@@ -11,21 +11,46 @@
 /* ************************************************************************** */
 
 # include "Http.hpp"
-# include "Handler.hpp"
+# include "BuilderServer.hpp"
 
 int main() {
-	Http http;
+    std::set<std::string> methods;
+    methods.insert("GET");
+    methods.insert("INFO");
+    std::set<HttpStatusCode::Code> statusCode;
+    statusCode.insert(HttpStatusCode::_NOT_FOUND);
+    std::vector<std::string> indexes;
+    indexes.push_back("index.html");
+    indexes.push_back("index.htm");
+
+
     IHandler *handler = new Handler();
-    Server *newServer = new Server("localhost", handler);
+    ILogger *logger = new Logger();
+	Http http(logger);
+    IBuilderServer *b = new BuilderServer(handler, logger);
+    IServer *newServer = b->SetupServer()
+                            .WithAllowMethods(methods)
+                            .WithAutoIndex(true)
+                            .WithErrorPages(statusCode, "404.html")
+                            .WithPort("8081")
+                            .WithRootDirectory("../home")
+                            // .WithPageIndexes(indexes)
+                            .GetResult();
     //Server *newServer2 = new Server("localhost2", 8082, ".");
     http.SetServer("localhost", newServer);
     //http.SetServer("localhost2", newServer2);
-    newServer->routes["/"] = new Route(newServer, "/", handler);
-    newServer->routes["/app"] = new Route(newServer, "/app", handler);
-    newServer->routes["/static/imagens"] = new Route(newServer, "/static/imagens", handler);
-    newServer->routes["/ranna-site"] = new Route(newServer, "/ranna-site", handler);
-    // newServer2->routes["/static"] = new Route(newServer2, "/static");
-
+    IBuilderRoute   *builder = new BuilderRoute(newServer, handler);
+    newServer->SetRoute("/", builder->SetupRoute("/")
+                                .WithPageIndexes(indexes)
+                                    .GetResult());
+    newServer->SetRoute("/app", builder->SetupRoute("/app")
+                                    .GetResult());
+    newServer->SetRoute("/static/imagens", builder->SetupRoute("/static/imagens")
+                                            .WithPageIndexes(indexes)
+                                            .GetResult());
+    newServer->SetRoute("/ranna-site", builder->SetupRoute("/ranna-site")
+                                        .WithPageIndexes(indexes)
+                                        .GetResult());
     try {
         http.StartPollList();
         http.StartWatchSockets();

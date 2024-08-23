@@ -10,6 +10,8 @@
 # include <set>
 # include <cstring>
 # include <sstream>
+# include <arpa/inet.h>
+# include <unistd.h>
 
 class IHandler {
     public:
@@ -24,7 +26,8 @@ class IHandler {
         virtual bool                            PathExist(std::string path) = 0;
 
         virtual std::set<std::string>           ReadDirectory(DIR *directory) = 0;
-        virtual std::string                     ReadRegularFile(std::ifstream *file) = 0;
+        virtual std::vector<char>               ReadRegularFile(std::ifstream *file) = 0;
+        virtual std::pair<bool, std::string>    ReadLine(std::ifstream &file) = 0;
         virtual ~IHandler(void) {}
 };
 
