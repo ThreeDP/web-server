@@ -20,12 +20,16 @@ IBuilderServer      &BuilderServer::SetupServer(void) {
         _server = NULL;
     }
     _server = new Server(_handler, _logger);
+        _builderRoute = new BuilderRoute(_server, _handler);;
     return *this;
 }
 
-IBuilderServer      &BuilderServer::WithRoute(IRoute *route) {
+IBuilderServer      &BuilderServer::StartBRoute(void) {
     if (_builderRoute == NULL)
-        _builderRoute = new BuilderRoute(_server, _handler);
+        _builderRoute = new BuilderRoute(_server, _handler);;
+}
+
+IBuilderServer      &BuilderServer::WithRoute(IRoute *route) {
     _server->SetRoute(route->GetRouteName(), route);
     return *this;
 }

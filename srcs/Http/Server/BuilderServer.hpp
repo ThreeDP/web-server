@@ -17,6 +17,7 @@ class BuilderServer : public IBuilderServer {
     IBuilderRoute       *GetBuilderRoute(void) {
         return _builderRoute;
     };
+    IBuilderServer      &StartBRoute(void);
 
     IBuilderServer      &SetupServer(void);
     IBuilderServer      &WithRoute(IRoute *route);

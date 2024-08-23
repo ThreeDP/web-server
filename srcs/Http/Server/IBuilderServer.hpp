@@ -9,6 +9,7 @@
 class IBuilderServer {
     public:
     virtual ~IBuilderServer(void) {}
+    virtual IBuilderServer      &StartBRoute(void) = 0;
 
     virtual IBuilderRoute       *GetBuilderRoute(void) = 0;
 
