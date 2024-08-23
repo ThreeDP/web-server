@@ -99,17 +99,17 @@ void                Server::ProcessRequest(HttpRequest &request, int client_fd) 
     _logger->LogInformation(std::string("Request ") + " Route " + keyPath,  " " +  request.GetMethod() + " " + request.GetPath());
     this->_routes[keyPath]->ProcessRequest(request, builder);
     this->ResponsesMap[client_fd] = builder.GetResult();
-    std::cout << this->ResponsesMap[client_fd]->ToString() << std::endl;
+    // For Test
+    std::cout << this->ResponsesMap[client_fd]->GetBody() << std::endl;
 }
 
-std::string         Server::ProcessResponse(int client_fd) {
+IHttpResponse         *Server::ProcessResponse(int client_fd) {
     IHttpResponse *response = this->ResponsesMap[client_fd];
-    std::string res = response->ToString();
     _logger->LogInformation(std::string("Response ") + response->GetStatusCode(), response->GetStatusMessage());
     this->ResponsesMap.erase(client_fd);
-    delete response;
+    // delete response;
     // this->UpdateState(S_SERVER_RESPONSE, client_fd);
-    return res;
+    return response;
 }
 
 /* Geters

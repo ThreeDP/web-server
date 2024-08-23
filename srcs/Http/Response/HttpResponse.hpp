@@ -18,24 +18,24 @@ class HttpResponse : public IHttpResponse {
         std::string                         _statusCode;
         std::string                         _statusMessage;
         std::map<std::string, std::string>  _headers;
-        std::string                         _body;
+        std::vector<char>                   _body;
 
         // Create Body Methods
         void                    _defaultErrorPage(void);
         void                    _createBodyByDirectory(std::set<std::string> dirent, std::string path, IHandler &handler);
-        void                    _createBodyByFileDescriptor(std::ifstream *fd);
         std::string             GetHttpVersion(void) const;
         std::pair<std::string, std::string> GetHeader(std::string key);
         std::map<std::string, std::string>  GetHeaders(void) const;
         std::string             GetBody(void) const;
 
 	public:
+        void                    SetBody(std::vector<char> body);
         std::string             GetStatusMessage(void) const;
         std::string             GetStatusCode(void) const;
 
         // Create Response
-        std::string             CreateResponse(void);
-        std::string             ToString(void);
+        std::vector<char>       CreateResponse(void);
+        // std::string             ToString(void);
 
         // Geters
         std::string             GetStatusName(HttpStatusCode::Code statusCode);

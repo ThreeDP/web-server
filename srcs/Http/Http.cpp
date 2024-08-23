@@ -11,7 +11,6 @@ void    Http::StartPollList(void) {
         throw Except("Error on create Epoll");
     }
     std::cout << *this;
-    std::cout << "TA AQUI!" << std::endl;
     std::map<std::string, IServer*>::iterator it = this->servers.begin();
     for (; it != this->servers.end(); ++it) {
         memset(&event, 0, sizeof(struct epoll_event));
@@ -22,7 +21,6 @@ void    Http::StartPollList(void) {
         if (epoll_ctl(epollFD, EPOLL_CTL_ADD, it->second->GetListener(), &event) == -1)
             throw Except("Error on add server: <name> port: <port>");
     }
-    std::cout << "E AQUI?I!" << std::endl;
 }
 
 void    Http::StartWatchSockets(void) {
@@ -103,14 +101,15 @@ ssize_t    Http::HandleRequest(int client_fd) {
 }
 
 void    Http::HandleResponse(int client_fd) {
-    // Envia pra o server processar a resposta.
     IServer *server = this->clientFD_Server[client_fd];
-    std::string message = server->ProcessResponse(client_fd);
-    // Realiza o envio para o client.
-    if (send(client_fd, message.c_str(), message.size(), 0) == -1) {
+    IHttpResponse *message = server->ProcessResponse(client_fd);
+
+    std::vector<char> test = message->CreateResponse();
+    if (send(client_fd, &test[0], test.size(), 0) == -1) {
+        delete message;
         throw Except("Error on send Response");
     }
-    // std::cout << *server;
+    delete message;
 }
 
 void    Http::ClientHandShake(IServer *server) {

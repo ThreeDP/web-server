@@ -46,7 +46,7 @@ class IServer {
         virtual int         StartListen(void) = 0;
         virtual int         AcceptClientConnect(void) = 0;
 
-        virtual std::string             ProcessResponse(int client_fd) = 0;
+        virtual IHttpResponse*             ProcessResponse(int client_fd) = 0;
         virtual void                    ProcessRequest(HttpRequest &request, int client_fd) = 0;
         virtual std::string             FindMatchRoute(HttpRequest &res) = 0;
 

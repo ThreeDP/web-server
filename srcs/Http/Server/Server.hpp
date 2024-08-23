@@ -88,7 +88,7 @@ class Server : public IServer {
 
         // Server Process
 
-        std::string             ProcessResponse(int client_fd);
+        IHttpResponse*             ProcessResponse(int client_fd);
         void                    ProcessRequest(HttpRequest &request, int client_fd);
         std::string             FindMatchRoute(HttpRequest &res);
 

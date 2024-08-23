@@ -17,6 +17,7 @@ HttpStatusCode::Code Route::_handlerErrorResponse(
                 .SetupResponse()
                 .WithStatusCode(statusCode)
                 .WithFileDescriptor(fd)
+                .WithLastModified(path)
                 .WithContentType(Utils::GetFileExtension(path));
             return (statusCode);
         }
@@ -94,6 +95,7 @@ HttpStatusCode::Code Route::ProcessRequest(
             builder
                 .SetupResponse()
                 .WithStatusCode(HttpStatusCode::_OK)
+                .WithLastModified(absolutePath)
                 .WithContentType(Utils::GetFileExtension(absolutePath))
                 .WithFileDescriptor(fd);
             return (HttpStatusCode::_OK);
@@ -103,7 +105,6 @@ HttpStatusCode::Code Route::ProcessRequest(
     }
     return this->_handlerErrorResponse(fd, HttpStatusCode::_NOT_FOUND, builder);
 }
-
 
 // Set Methods
 void        Route::SetRouteName(std::string routeName) {

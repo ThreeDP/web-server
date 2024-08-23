@@ -4,36 +4,26 @@ std::map<HttpStatusCode::Code, std::string> HttpResponse::_mapStatusCode;
 std::map<std::string, std::string> HttpResponse::_mapTextContent;
 std::set<std::string> HttpResponse::_CGIExtensions;
 
-std::string HttpResponse::CreateResponse(void) {
-    std::stringstream response;
+std::vector<char> HttpResponse::CreateResponse(void) {
+    std::stringstream ss;
     std::stringstream bodySize;
 
     bodySize << this->_body.size() + 2;
     this->_headers["Content-Length:"] = bodySize.str();
     this->_headers["Date:"] = Utils::getCurrentTimeInGMT();
-    response << this->_HTTPVersion << " " << this->_statusCode << " " << this->_statusMessage << "\r\n";
+    ss << this->_HTTPVersion << " " << this->_statusCode << " " << this->_statusMessage << "\r\n";
     std::map<std::string, std::string>::iterator it = this->_headers.begin();
     for (; it != this->_headers.end(); ++it) {
-        response << it->first << " " << it->second << "\r\n";
+        ss << it->first << " " << it->second << "\r\n";
     }
-    response << "\r\n" << this->_body << "\r\n";
-    return response.str();
-}
+    ss << "\r\n";
 
-std::string HttpResponse::ToString(void) {
-    std::stringstream os;
-    std::stringstream bodySize;
-
-    bodySize << this->_body.size() + 2;
-    this->_headers["Content-Length:"] = bodySize.str();
-    this->_headers["Date:"] = Utils::getCurrentTimeInGMT();
-    os << this->_HTTPVersion << " " << this->_statusCode << " " << this->_statusMessage << "\r\n";
-    std::map<std::string, std::string>::iterator it = this->_headers.begin();
-    for ( ; it != this->_headers.end(); ++it) {
-        os << it->first << " " << it->second << "\r\n";
-    }
-    os << "\r\n" << this->_body << "\r\n";
-    return os.str();
+    std::string headers = ss.str();
+    std::vector<char> payload(headers.begin(), headers.end());
+    payload.insert(payload.end(), this->_body.begin(), this->_body.end());
+    std::string endend = "\r\n";
+    payload.insert(payload.end(), endend.begin(), endend.end());
+    return payload;
 }
 
 void HttpResponse::_defaultErrorPage(void) {
@@ -50,7 +40,8 @@ void HttpResponse::_defaultErrorPage(void) {
 	sb << "<hr><center>";
 	sb << _server << "</center>";
 	sb << "</body></html>";
-	this->_body = sb.str();
+    std::string page = sb.str();
+    this->_body.insert(this->_body.end(), page.begin(), page.end());
 }
 
 void    HttpResponse::_createBodyByDirectory(
@@ -83,14 +74,9 @@ void    HttpResponse::_createBodyByDirectory(
     body << "\t<hr>\r\n";
     body << "</body>\r\n";
     body << "</html>";
-    _body = body.str();
+    std::string page = body.str();
+    this->_body.insert(this->_body.end(), page.begin(), page.end());
 }
-
-void    HttpResponse::_createBodyByFileDescriptor(std::ifstream *fd) {
-    _body = "Test file";
-    (void)fd;
-}
-
 
 // Geters
 std::string HttpResponse::GetStatusName(HttpStatusCode::Code statusCode) {
@@ -126,7 +112,7 @@ std::map<std::string, std::string> HttpResponse::GetHeaders(void) const {
 }
 
 std::string HttpResponse::GetBody(void) const {
-    return this->_body;
+    return std::string(this->_body.begin(), this->_body.end());
 }
 
 
@@ -143,6 +129,12 @@ void    HttpResponse::SetHeader(std::string key, std::string value) {
 }
 
 void    HttpResponse::SetBody(std::string body) {
+    this->_body.insert(this->_body.end(), body.begin(), body.end());
+}
+
+void    HttpResponse::SetBody(std::vector<char> body) {
+    std::string str(body.begin(), body.end());
+    std::cout << str << std::endl;
     this->_body = body;
 }
 
