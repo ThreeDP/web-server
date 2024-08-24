@@ -3,30 +3,20 @@
 
 # include "Server.hpp"
 
-enum HttpStages {
-    H_START,
-    H_CONFIG,
-    H_ADD_SERVERS,
-    H_STAND_BY,
-    H_END
-};
-
 class Http {
-    HttpStages _stage;
-    ILogger *_logger;
-
     // Patterns HTTP
+    ILogger                             *_logger;
 
     // Parser Response
-    std::map<std::string, IServer *>  servers;
-    std::map<int, IServer *> clientFD_Server;
-    std::vector<IServer *>          serversPointer;
+    std::map<std::string, IServer *>    servers;
+    std::map<int, IServer *>            clientFD_Server;
+    std::vector<IServer *>              _serversPointer;
 
-    const static int eventsLimit = 10;
+    const static int                    eventsLimit = 10;
     
     // epoll config
-    int                     _epollFD;
-    struct epoll_event      clientEvents[eventsLimit];
+    int                                 _epollFD;
+    struct epoll_event                  clientEvents[eventsLimit];
 
     public:
 
@@ -44,7 +34,6 @@ class Http {
         // Geters
         IServer                      *GetServer(std::string server);
         int                         &GetEPollFD(void);
-        HttpStages                  GetStage(void) const;
 
         // Base Methods
         Http(ILogger *logger);

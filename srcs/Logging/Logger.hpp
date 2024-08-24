@@ -3,13 +3,30 @@
 
 # include "ILogger.hpp"
 
+void printToStream(std::ostream& os) {
+    // Caso base, não faz nada
+}
+
+// Função sobrecarregada que aceita o primeiro argumento e depois chama recursivamente
+template<typename T>
+void printToStream(std::ostream& os, const T& first) {
+    os << first;
+}
+
+// Função recursiva que aceita o primeiro argumento e a lista de argumentos restantes
+template<typename T, typename... Args>
+void printToStream(std::ostream& os, const T& first, const Args&... args) {
+    os << first << " "; // Imprime o primeiro argumento
+    printToStream(os, args...); // Chama recursivamente para os próximos argumentos
+}
+
 class Logger : public ILogger {
     public:
     Logger(void) {}
     ~Logger(void) {}
 
     void    LogInformation(std::string title, std::string message) {
-        std::cout << BLUB" [ " << Utils::getCurrentTimeInGMT() << " ]: " << title << " " << message << reset << std::endl;
+        // std::cout << BLUB" [ " << Utils::getCurrentTimeInGMT() << " ]: " << title << " " << message << reset << std::endl;
     }
 
     void    LogWarning(std::stringstream title, std::stringstream message) {

@@ -76,7 +76,8 @@ HttpStatusCode::Code Route::ProcessRequest(
                     builder
                         .SetupResponse()
                         .WithStatusCode(HttpStatusCode::_FOUND)
-                        .WithLocation(Utils::SanitizePath("http://localhost:8081", Utils::SanitizePath(request.GetPath(), *it)))
+                        .WithLocation(Utils::SanitizePath("http://localhost:8081",
+                            Utils::SanitizePath(request.GetPath(), *it)))
                         .WithDefaultPage();
                     return (HttpStatusCode::_FOUND);
                 }
