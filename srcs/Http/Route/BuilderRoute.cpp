@@ -1,5 +1,6 @@
 # include "BuilderRoute.hpp"
 
+// Constructors
 BuilderRoute::BuilderRoute(ILogger *logger, IServer *server, IHandler *handler) {
     _logger = logger;
     _handler = handler;
@@ -14,6 +15,7 @@ BuilderRoute::~BuilderRoute(void) {
     }
 }
 
+// Setup Route
 IBuilderRoute &BuilderRoute::SetupRoute(std::string route_name) {
     if (_route != NULL) {
         delete _route;

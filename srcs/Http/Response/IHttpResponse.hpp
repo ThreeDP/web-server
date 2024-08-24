@@ -2,9 +2,8 @@
 # define __IHTTP_RESPONSE_HPP__
 
 # include "EHttpStatusCode.hpp"
-# include "IHandler.hpp"
+# include "Handler.hpp"
 # include "Logger.hpp"
-# include <vector>
 
 class IBuilderResponse;
 

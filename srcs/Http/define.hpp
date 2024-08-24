@@ -116,9 +116,12 @@
 # include <unistd.h>
 
 // Containers
-# include <vector>
 # include <map>
 # include <vector>
 # include <set>
+
+// Strings
+# include <cstring>
+# include <sstream>
 
 #endif

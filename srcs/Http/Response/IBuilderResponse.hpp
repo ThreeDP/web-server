@@ -1,8 +1,7 @@
 #ifndef __IBUILDER_RESPONSE_HPP__
 # define __IBUILDER_RESPONSE_HPP__
+
 # include "HttpResponse.hpp"
-# include "IHttpResponse.hpp"
-# include "Handler.hpp"
 
 class IBuilderResponse {
     public:

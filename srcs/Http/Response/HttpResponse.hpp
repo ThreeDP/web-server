@@ -2,10 +2,6 @@
 # define __HTTP_RESPONSE_HPP__
 
 # include "ILogger.hpp"
-# include <iostream>
-# include <sstream>
-# include <map>
-# include <set>
 # include "Utils.hpp"
 # include "IHttpResponse.hpp"
 # include "IBuilderResponse.hpp"
