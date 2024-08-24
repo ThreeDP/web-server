@@ -1,5 +1,6 @@
-#include "BuilderResponse.hpp"
+# include "BuilderResponse.hpp"
 
+// Contructors
 BuilderResponse::BuilderResponse(ILogger *logger, IHandler *handler) : 
     _logger(logger),
     _handler(handler) {
@@ -14,6 +15,7 @@ BuilderResponse::~BuilderResponse(void) {
     }
 }
 
+// Setup Response
 IBuilderResponse &BuilderResponse::SetupResponse(void) {
     if (_response != NULL) {
         delete _response;
@@ -45,6 +47,9 @@ IBuilderResponse &BuilderResponse::WithDirectoryFile(DIR *directory, std::string
 IBuilderResponse &BuilderResponse::WithFileDescriptor(std::ifstream *fd) {
     if (fd != NULL && _response->GetBody() == "") {
         _response->SetBody(_handler->ReadRegularFile(fd));
+
+        std::cerr << _logger->Log(&Logger::LogDebug, "Create A Body File Descriptor: ") << std::endl;
+        std::cerr << _logger->Log(&Logger::LogTrace, "Payload File Descriptor {\n", _response->_toString(), "\n}") << std::endl;
     }
     fd->close();
     delete fd;

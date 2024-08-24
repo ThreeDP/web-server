@@ -22,8 +22,8 @@ class BuilderResponse : public IBuilderResponse {
         IBuilderResponse &WithContentType(std::string extension);
         IBuilderResponse &WithLastModified(std::string path);
         IBuilderResponse &WithLocation(std::string location);
+    
         IHttpResponse *GetResult(void);
-
         bool CompareResponses(IHttpResponse &left, IHttpResponse &right);
 };
 
