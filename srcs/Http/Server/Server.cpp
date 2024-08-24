@@ -94,9 +94,16 @@ std::string         Server::FindMatchRoute(HttpRequest &res) {
 }
 
 void                Server::ProcessRequest(HttpRequest &request, int client_fd) {
-    BuilderResponse builder = BuilderResponse(new Handler());
+    BuilderResponse builder = BuilderResponse(_logger, new Handler());
     std::string keyPath = this->FindMatchRoute(request);
-    _logger->LogInformation(std::string("Request ") + " Route " + keyPath,  " " +  request.GetMethod() + " " + request.GetPath());
+    std::cout << _logger->Log(
+        &ILogger::LogInformation,
+        "Request",
+        "Route",
+        keyPath,
+        request.GetMethod(),
+        request.GetPath()
+    ) << std::endl;
     this->_routes[keyPath]->ProcessRequest(request, builder);
     this->ResponsesMap[client_fd] = builder.GetResult();
     // For Test
@@ -105,7 +112,12 @@ void                Server::ProcessRequest(HttpRequest &request, int client_fd) 
 
 IHttpResponse         *Server::ProcessResponse(int client_fd) {
     IHttpResponse *response = this->ResponsesMap[client_fd];
-    _logger->LogInformation(std::string("Response ") + response->GetStatusCode(), response->GetStatusMessage());
+    std::cout << _logger->Log(
+        &ILogger::LogInformation,
+        "Response",
+        response->GetStatusCode(),
+        response->GetStatusMessage()
+    ) << std::endl;
     this->ResponsesMap.erase(client_fd);
     // delete response;
     // this->UpdateState(S_SERVER_RESPONSE, client_fd);

@@ -19,6 +19,7 @@ class BuilderRoute;
 
 class Route : public IRoute {
     private:
+        ILogger                                     *_logger;
         IHandler                                    *_handler;
         std::string                                 _route_name;
         std::set<std::string>                       _allow_methods;
@@ -43,7 +44,7 @@ class Route : public IRoute {
 
         Route(void) {}
 
-        Route(IServer *server, IHandler *handler, std::string route_name);
+        Route(ILogger *logger, IServer *server, IHandler *handler, std::string route_name);
         ~Route(void);
 
         // Route Process

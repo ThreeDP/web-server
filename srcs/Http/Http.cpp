@@ -9,7 +9,7 @@ void    Http::StartPollList(void) {
     if (epollFD == -1) {
         throw Except("Error on create Epoll");
     }
-    std::cout << *this;
+    // std::cout << *this;
     std::map<std::string, IServer*>::iterator it = this->servers.begin();
     for (; it != this->servers.end(); ++it) {
         memset(&event, 0, sizeof(struct epoll_event));
@@ -23,7 +23,7 @@ void    Http::StartPollList(void) {
 }
 
 void    Http::StartWatchSockets(void) {
-    std::cout << *this;
+    // std::cout << *this;
     while (true) {
         int number_of_ready_fds = epoll_wait(
             this->GetEPollFD(),
@@ -67,9 +67,15 @@ void    Http::DisconnectClientToServer(int client_fd) {
     IServer *server = this->clientFD_Server[client_fd];
     this->clientFD_Server.erase(client_fd);
 
-    std::stringstream ss;
-    ss << "Disconnect Client " << client_fd << " from server " << server->GetIP() << " on port " << server->GetPort();
-    _logger->LogInformation(ss.str(), "");
+    std::cout << _logger->Log(
+        &ILogger::LogInformation,
+        "Disconnect Client",
+        client_fd,
+        "from server",
+        server->GetIP(),
+        "on port",
+        server->GetPort()
+    ) << std::endl;
 }
 
 bool    Http::ConnectClientToServer(int i) {
@@ -122,10 +128,16 @@ void    Http::ClientHandShake(IServer *server) {
         throw Except("Error on add client on epoll.");
     }
     this->clientFD_Server[client_fd] = server;
-    
-    std::stringstream ss;
-    ss << "Connect Client " << client_fd << " from server " << server->GetIP() << " on port " << server->GetPort();
-    _logger->LogInformation(ss.str(), "");
+
+    std::cout << _logger->Log(
+        &ILogger::LogInformation,
+        "Connect Client",
+        client_fd,
+        "from server",
+        server->GetIP(),
+        "on port",
+        server->GetPort()
+    ) << std::endl;
 }
 
 /* Geters

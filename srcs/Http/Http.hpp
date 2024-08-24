@@ -56,7 +56,6 @@ class Http {
 
 };
 
-std::ostream &operator<<(std::ostream &os, Http const &http);
 
 
 

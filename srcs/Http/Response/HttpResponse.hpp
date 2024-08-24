@@ -1,7 +1,7 @@
 #ifndef __HTTP_RESPONSE_HPP__
 # define __HTTP_RESPONSE_HPP__
 
-# include "define.hpp"
+# include "ILogger.hpp"
 # include <iostream>
 # include <sstream>
 # include <map>
@@ -13,7 +13,7 @@
 class HttpResponse : public IHttpResponse {
 
 	protected:
-
+        ILogger                             *_logger;
 		std::string                         _HTTPVersion;
         std::string                         _statusCode;
         std::string                         _statusMessage;
@@ -47,7 +47,7 @@ class HttpResponse : public IHttpResponse {
         }
         
         // Base Methods
-        HttpResponse(void);
+        HttpResponse(ILogger *logger);
         ~HttpResponse(void) {}
     
     private:

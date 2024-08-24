@@ -40,7 +40,7 @@ int main(int ac, char *av[]) {
     //Server *newServer2 = new Server("localhost2", 8082, ".");
     http.SetServer("localhost", newServer);
     //http.SetServer("localhost2", newServer2);
-    IBuilderRoute   *builder = new BuilderRoute(newServer, handler);
+    IBuilderRoute   *builder = new BuilderRoute(logger, newServer, handler);
     newServer->SetRoute("/", builder->SetupRoute("/")
                                 .WithPageIndexes(indexes)
                                     .GetResult());

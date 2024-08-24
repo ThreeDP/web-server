@@ -29,7 +29,7 @@ INCLUDE_FLAGS 								:= 	-g3 -O3 -MMD -MP $(addprefix -I, $(HEADERS))
 VPATH										=	Http/:Parser:Logging:Http/Server/:Utils/:Http/Response:HandlerFileSystem:Http/Route:Http/Request
 
 ######################## FLAGS ###############################
-FLAGS										= 	-Wall -Wextra -std=c++98
+FLAGS										= 	-Wall -Wextra #-std=c++98
 ######################## SOURCES #############################
 SRC_RESPONSE								=	HttpResponse.cpp BuilderResponse.cpp
 SRC_ROUTE									=	Route.cpp BuilderRoute.cpp

@@ -1,6 +1,7 @@
 # include "BuilderRoute.hpp"
 
-BuilderRoute::BuilderRoute(IServer *server, IHandler *handler) {
+BuilderRoute::BuilderRoute(ILogger *logger, IServer *server, IHandler *handler) {
+    _logger = logger;
     _handler = handler;
     _server = server;
     _route = NULL;
@@ -18,7 +19,7 @@ IBuilderRoute &BuilderRoute::SetupRoute(std::string route_name) {
         delete _route;
         _route = NULL;
     }
-    _route = new Route(_server, _handler, route_name);
+    _route = new Route(_logger, _server, _handler, route_name);
     return *this;
 }
 

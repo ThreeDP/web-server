@@ -1,6 +1,8 @@
 #include "BuilderResponse.hpp"
 
-BuilderResponse::BuilderResponse(IHandler *handler) : _handler(handler) {
+BuilderResponse::BuilderResponse(ILogger *logger, IHandler *handler) : 
+    _logger(logger),
+    _handler(handler) {
     _handler = handler;
     _response = NULL;
 }
@@ -17,7 +19,7 @@ IBuilderResponse &BuilderResponse::SetupResponse(void) {
         delete _response;
         _response = NULL;
     }
-    _response = new HttpResponse();
+    _response = new HttpResponse(_logger);
     return *this;
 }
 

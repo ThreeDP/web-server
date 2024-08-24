@@ -145,8 +145,9 @@ HttpResponse::HttpResponse(int num) {
     _setCGIExtensions();
 };
 
-HttpResponse::HttpResponse(void) :
-    _HTTPVersion("HTTP/1.1")
+HttpResponse::HttpResponse(ILogger *logger) :
+    _HTTPVersion("HTTP/1.1"),
+    _logger(logger)
 {
     this->_headers["Content-Type:"] = this->_mapTextContent["text"];
     this->_headers["Server:"] = this->_server;

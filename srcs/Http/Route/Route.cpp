@@ -193,7 +193,7 @@ bool Route::GetAutoIndex(void) {
     return this->_autoIndex;
 }
 
-Route::Route(IServer *server, IHandler *handler, std::string route_name)  : 
+Route::Route(ILogger *logger, IServer *server, IHandler *handler, std::string route_name)  : 
     _allow_methods(server->GetAllowMethods()),
     _error_page(server->GetErrorPages()),
     _limit_client_body_size(server->GetBodyLimit()),
@@ -202,7 +202,8 @@ Route::Route(IServer *server, IHandler *handler, std::string route_name)  :
     _indexes(server->GetPageIndexes()),
     _stage(R_START),
     _redirectPath(server->GetRedirectPath(route_name)),
-    _handler(handler)
+    _handler(handler),
+    _logger(logger)
 {
     // std::map<std::string, std::string>::iterator it = server->GetReWrites().find(route_name);
     // if (it != server->GetReWrites().end())
