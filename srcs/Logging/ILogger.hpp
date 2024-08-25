@@ -7,8 +7,8 @@
 
 class ILogger {
     public:
-        virtual ~ILogger() = default;
-         typedef std::string (ILogger::*LogMethod)(const std::string) const;
+        virtual ~ILogger() {};
+        typedef std::string (ILogger::*LogMethod)(const std::string) const;
 
         template<typename T1>
         std::string Log(LogMethod logMethod,

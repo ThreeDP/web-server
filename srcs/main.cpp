@@ -53,7 +53,6 @@ int main(int ac, char *av[]) {
     //                                     .WithPageIndexes(indexes)
     //                                     .GetResult());
 
-
     ILogger         *logger = new Logger();
     IHandler        *handler = new Handler();
     Http            http(logger);
