@@ -155,8 +155,6 @@ IHttpResponse         *Server::ProcessResponse(int client_fd) {
         response->GetStatusMessage()
     ) << std::endl;
     this->ResponsesMap.erase(client_fd);
-    // delete response;
-    // this->UpdateState(S_SERVER_RESPONSE, client_fd);
     return response;
 }
 

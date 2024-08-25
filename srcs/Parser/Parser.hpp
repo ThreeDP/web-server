@@ -53,7 +53,7 @@ class Parser {
 					} else {
 						throw std::invalid_argument("1 Syntax Error.");
 					}
-					return 0;
+					continue;
 				} else if (ch == ';') {
 					pieces = ParserParams::BreakLineIntoPieces(line.second, ';');
 					if (pieces.size() > 1) {
@@ -146,9 +146,7 @@ class Parser {
 						break;
 					case EnumParams::_ROUTE:
 						this->_routeOpen = true;
-						//_builder->StartBRoute();
-						_builder->GetBuilderRoute()->SetupRoute("localhost");
-						std::cout << "TA SIM!" << std::endl;
+						_builder->GetBuilderRoute()->SetupRoute(ParserParams::GetStringParam(params));
 						break;
 					case EnumParams::_SERVER_NAME:
 						break;	
