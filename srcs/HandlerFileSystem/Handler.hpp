@@ -25,7 +25,8 @@ class Handler : public IHandler {
 		bool                            PathExist(std::string path);
 		std::pair<bool, std::string>    ReadLine(std::ifstream &file) {
 			std::string			line;
-			bool response = static_cast<bool>(std::getline(file, line));
+			bool response = (std::getline(file, line)) ? true : false;
+			std::cout << "==" << line << "==" << std::endl;
 			return std::make_pair(response, line);
 		}
 };

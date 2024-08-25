@@ -1,9 +1,13 @@
 # include "BuilderRoute.hpp"
 
-BuilderRoute::BuilderRoute(IServer *server, IHandler *handler) {
-    _handler = handler;
-    _server = server;
+// Constructors
+BuilderRoute::BuilderRoute(ILogger *logger, IServer *server, IHandler *handler) :
+    _handler(handler),
+    _logger(logger),
+    _server(server)
+{
     _route = NULL;
+    std::cerr << _logger->Log(&Logger::LogDebug, "Created BuilderRoute Class.") << std::endl;
 }
 
 BuilderRoute::~BuilderRoute(void) {
@@ -11,14 +15,16 @@ BuilderRoute::~BuilderRoute(void) {
         delete _route;
         _route = NULL;
     }
+    std::cerr << _logger->Log(&Logger::LogDebug, "Deleted BuilderRoute Class.") << std::endl;
 }
 
+// Setup Route
 IBuilderRoute &BuilderRoute::SetupRoute(std::string route_name) {
     if (_route != NULL) {
         delete _route;
         _route = NULL;
     }
-    _route = new Route(_server, _handler, route_name);
+    _route = new Route(_logger, _server, _handler, route_name);
     return *this;
 }
 
@@ -61,6 +67,9 @@ IRoute        *BuilderRoute::GetResult(void) {
     IRoute *res = _route;
     if (_route != NULL) {
         _route = NULL;
+    }
+    if (_logger->Env()) {
+        std::cerr << _logger->Log(&Logger::LogTrace, "GetResult Route: {\n", res->_toString(), "\n}") << std::endl;
     }
     return res;
 }

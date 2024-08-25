@@ -5,11 +5,12 @@
 
 class BuilderResponse : public IBuilderResponse {
     private:
-        IHandler       *_handler;
-        IHttpResponse  *_response;
+        ILogger         *_logger;
+        IHandler        *_handler;
+        IHttpResponse   *_response;
     
     public:
-        BuilderResponse(IHandler *handler);
+        BuilderResponse(ILogger *logger, IHandler *handler);
         ~BuilderResponse(void);
 
         IBuilderResponse &SetupResponse(void);
@@ -21,8 +22,8 @@ class BuilderResponse : public IBuilderResponse {
         IBuilderResponse &WithContentType(std::string extension);
         IBuilderResponse &WithLastModified(std::string path);
         IBuilderResponse &WithLocation(std::string location);
+    
         IHttpResponse *GetResult(void);
-
         bool CompareResponses(IHttpResponse &left, IHttpResponse &right);
 };
 

@@ -16,9 +16,10 @@ HttpStatusCode::Code Route::_handlerErrorResponse(
             builder
                 .SetupResponse()
                 .WithStatusCode(statusCode)
-                .WithFileDescriptor(fd)
                 .WithLastModified(path)
-                .WithContentType(Utils::GetFileExtension(path));
+                .WithContentType(Utils::GetFileExtension(path))
+                .WithFileDescriptor(fd);
+            std::cout << _logger->Log(&Logger::LogInformation, "Response By Setup Erro Pages: ", statusCode) << std::endl;
             return (statusCode);
         }
     }
@@ -27,6 +28,7 @@ HttpStatusCode::Code Route::_handlerErrorResponse(
         .WithStatusCode(statusCode)
         .WithContentType(".html")
         .WithDefaultPage();
+    std::cout << _logger->Log(&Logger::LogInformation, "Response By Default Error: ", statusCode) << std::endl;
     return (statusCode);
 }
 
@@ -56,6 +58,7 @@ HttpStatusCode::Code Route::ProcessRequest(
             .WithStatusCode(HttpStatusCode::_PERMANENT_REDIRECT)
             .WithLocation("/" + this->GetRedirectPath())
             .WithDefaultPage();
+        std::cout << _logger->Log(&Logger::LogInformation, "Permanent Redirect: ", HttpStatusCode::_PERMANENT_REDIRECT) << std::endl;
         return (HttpStatusCode::_PERMANENT_REDIRECT);
     }
     if (this->_handler->PathExist(absolutePath))
@@ -76,8 +79,10 @@ HttpStatusCode::Code Route::ProcessRequest(
                     builder
                         .SetupResponse()
                         .WithStatusCode(HttpStatusCode::_FOUND)
-                        .WithLocation(Utils::SanitizePath("http://localhost:8081", Utils::SanitizePath(request.GetPath(), *it)))
+                        .WithLocation(Utils::SanitizePath("http://localhost:8081",
+                            Utils::SanitizePath(request.GetPath(), *it)))
                         .WithDefaultPage();
+                    std::cout << _logger->Log(&Logger::LogInformation, "Redirect by index: ", HttpStatusCode::_FOUND) << std::endl;
                     return (HttpStatusCode::_FOUND);
                 }
             }
@@ -86,8 +91,9 @@ HttpStatusCode::Code Route::ProcessRequest(
                 builder
                     .SetupResponse()
                     .WithStatusCode(HttpStatusCode::_OK)
-                    .WithDirectoryFile(dir, absolutePath)
-                    .WithContentType(".html");
+                    .WithContentType(".html")
+                    .WithDirectoryFile(dir, absolutePath);
+                std::cout << _logger->Log(&Logger::LogInformation, "Response By Directories: ", HttpStatusCode::_OK) << std::endl;
                 return (HttpStatusCode::_OK);
             }
         } else if (allow) {
@@ -98,6 +104,7 @@ HttpStatusCode::Code Route::ProcessRequest(
                 .WithLastModified(absolutePath)
                 .WithContentType(Utils::GetFileExtension(absolutePath))
                 .WithFileDescriptor(fd);
+            std::cout << _logger->Log(&Logger::LogInformation, "Response By File Descriptor: ", HttpStatusCode::_OK) << std::endl;
             return (HttpStatusCode::_OK);
         } else if (!allow) {
             return this->_handlerErrorResponse(fd, HttpStatusCode::_FORBIDDEN, builder);
@@ -192,25 +199,47 @@ bool Route::GetAutoIndex(void) {
     return this->_autoIndex;
 }
 
-Route::Route(IServer *server, IHandler *handler, std::string route_name)  : 
+Route::Route(ILogger *logger, IServer *server, IHandler *handler, std::string route_name) : 
+    _route_name(route_name),
     _allow_methods(server->GetAllowMethods()),
     _error_page(server->GetErrorPages()),
     _limit_client_body_size(server->GetBodyLimit()),
+    _redirectPath(server->GetRedirectPath(route_name)),
     _root(server->GetRootDirectory()),
     _autoIndex(server->GetAutoIndex()),
     _indexes(server->GetPageIndexes()),
-    _stage(R_START),
-    _redirectPath(server->GetRedirectPath(route_name)),
+    _logger(logger),
     _handler(handler)
 {
-    // std::map<std::string, std::string>::iterator it = server->GetReWrites().find(route_name);
-    // if (it != server->GetReWrites().end())
-    //     this->_redirectPath = server->GetReWrites()[route_name];  
-    // _indexes.push_back("index.html");
-    // _error_page[HttpStatusCode::_NOT_FOUND] = "404.html";
-    // _allow_methods.insert("GET");
+    if (_logger->Env()) {
+        std::cerr << _logger->Log(&Logger::LogDebug, "Created Route Class: ") << std::endl;
+        std::cerr << _logger->Log(&Logger::LogTrace, "Route Standard Content {\n", this->_toString(), "\n}") << std::endl;
+    }
 }
 
 Route::~Route(void) {
-    
+    std::cerr << _logger->Log(&Logger::LogDebug, "Deleted Route Class.") << std::endl;
+}
+
+std::string Route::_toString(void) {
+    std::stringstream ss;
+    ss << "\t\tRoute Name: " << _route_name << std::endl;
+    ss << "\t\tAllow Methods: ";
+    for (std::set<std::string>::iterator it = _allow_methods.begin() ; it != _allow_methods.end(); ++it) {
+        ss << *it << " ";
+    }
+    ss << std::endl << "\t\tError Pages: " << std::endl;
+    for (std::map<HttpStatusCode::Code, std::string>::iterator it = _error_page.begin(); it != _error_page.end(); ++it) {
+        ss << "\t\t\t" << static_cast<int>(it->first) << " " << it->second << std::endl;
+    }
+    ss << "\t\tBody Limit: " << _limit_client_body_size << std::endl;
+    ss << "\t\tRedirect Path: " << _redirectPath << std::endl;
+    ss << "\t\tRoot Directory: " << _root  << std::endl;
+    ss << "\t\tAuto index: " << std::string((_autoIndex) ? "on" : "off") << std::endl;
+    ss << "\t\tindexes: ";
+    for (std::vector<std::string>::iterator it = _indexes.begin(); it != _indexes.end(); ++it) {
+        ss << *it << " ";
+    }
+    ss << std::endl;
+    return ss.str();
 }

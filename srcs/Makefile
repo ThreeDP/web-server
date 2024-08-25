@@ -13,6 +13,8 @@
 
 ######################## CONFIG ##############################
 NAME										= 	webServer
+TAR_FILE									=	services.tar
+WEB_DIR										=	../app
 ######################## PATHS ###############################
 OBJS_PATH									= 	objs/
 HEADERS										=	Http/ \
@@ -59,6 +61,14 @@ TEST_BUILD									=	Tests/build
 
 all: $(NAME)
 
+CONFIG_HOST:
+	@echo "Configure Hosts"	
+	sudo chmod a+w /etc/hosts
+	sudo cat /etc/hosts | grep dapaulin.42.fr || echo "127.0.0.1 dapaulin.42.fr" >> /etc/hosts
+	sudo cat /etc/hosts | grep rleslie.42.fr || echo "127.0.0.1 rleslie.42.fr" >> /etc/hosts
+	sudo mkdir -p $(WEB_DIR)
+	sudo tar -xpf $(TAR_FILE) -C $(WEB_DIR)
+
 $(OBJS_PATH)%.o: %.cpp $(HEADER)
 
 #	@			echo $(INCLUDE_FLAGS)
@@ -68,7 +78,7 @@ $(OBJS_PATH)%.o: %.cpp $(HEADER)
 $(OBJS_PATH):
 	@			mkdir $@
 
-$(NAME): $(OBJS_PATH) $(OBJ)
+$(NAME): CONFIG_HOST $(OBJS_PATH) $(OBJ)
 	@			printf "\n$(YELLOW)Creating Project '$(OBJ)'$(RC)\n" 
 	@			c++ $(FLAGS) $(OBJ) $(INCLUDE_FLAGS) -o $(NAME)
 	@			printf "$(GREEN)$(NAME) created$(RC)\n"
@@ -80,6 +90,7 @@ clean:
 	@			@printf "$(RED)$(NAME) objects removed$(RC)\n"
 
 fclean: clean
+	@			rm -rf $(WEB_DIR)
 	@			rm -rf $(NAME)
 	@			printf "$(RED)$(NAME) removed$(RC)\n"
 
@@ -112,3 +123,6 @@ t_clean:
 
 t_fclean: t_clean
 	@			rm -rf $(GOOGLE_TEST)
+
+backup:
+	sudo tar -cpf $(TAR_FILE) -C ../home .

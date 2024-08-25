@@ -8,12 +8,13 @@
 
 class BuilderRoute : public IBuilderRoute {
     private:
+        ILogger     *_logger;
         IHandler    *_handler;
         IServer     *_server;
         IRoute      *_route;
 
     public:
-        BuilderRoute(IServer *server, IHandler *handler);
+        BuilderRoute(ILogger *logger, IServer *server, IHandler *handler);
         ~BuilderRoute(void);
 
         IBuilderRoute &SetupRoute(std::string route_name);

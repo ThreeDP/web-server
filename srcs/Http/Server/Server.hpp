@@ -22,17 +22,17 @@ class Server : public IServer {
         // Configs
         std::string                                     _listen_host;
         unsigned short                                  _listen_port;
-        std::vector<std::string>                        _server_names;
+
+        std::vector<std::string>                        _hosts;
+        std::string                                     _port;
         std::set<std::string>                           _allowMethods;
         std::map<HttpStatusCode::Code, std::string>     _errorPages;
         int                                             _limit_client_body_size;
         std::map<std::string, std::string>              _redirectionPaths;
         std::string                                     _root;
-        std::vector<std::string>                           _indexes;
         bool                                            _autoIndex;
+        std::vector<std::string>                        _indexes;
 
-        std::vector<std::string>                        _hosts;
-        std::string                                     _port;
 
         std::string     _ip;
         std::string     _ipVersion;
@@ -53,6 +53,8 @@ class Server : public IServer {
         void                        SetHosts(std::vector<std::string> hosts);
         void                        SetPort(std::string port);
         void                        SetRoute(std::string routeName, IRoute *route);
+
+        std::string                 _toString(void);
 
     public:
         std::map<std::string, IRoute *>                 _routes;
@@ -112,29 +114,8 @@ class Server : public IServer {
 
         // Base Methods
 
-        Server(IHandler *handler, ILogger *logger) :
-        _root("./"),
-        _autoIndex(false),
-        _handler(handler),
-        _logger(logger),
-        _limit_client_body_size(2048) {
-            _hosts.push_back("localhost");
-            _handler = handler;
-            memset(&hints, 0, sizeof(struct addrinfo));
-            this->hints.ai_family = AF_UNSPEC;
-            this->hints.ai_socktype = SOCK_STREAM;
-            this->hints.ai_flags = AI_CANONNAME;
-
-            this->result = NULL;
-            this->_stage = S_START;
-            // std::cout << *this;
-        }
-        // Server(void);
+        Server(IHandler *handler, ILogger *logger);
         ~Server(void);
-        // Server(std::string name);
-        // Server(std::string name, IHandler *handler);
-        // Server(std::string name, int port, std::string root);
-        // Server(std::vector<std::string> serv, unsigned short port);
         
         class Except: virtual public std::exception {
 			protected:

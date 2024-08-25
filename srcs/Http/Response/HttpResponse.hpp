@@ -1,11 +1,7 @@
 #ifndef __HTTP_RESPONSE_HPP__
 # define __HTTP_RESPONSE_HPP__
 
-# include "define.hpp"
-# include <iostream>
-# include <sstream>
-# include <map>
-# include <set>
+# include "ILogger.hpp"
 # include "Utils.hpp"
 # include "IHttpResponse.hpp"
 # include "IBuilderResponse.hpp"
@@ -13,56 +9,49 @@
 class HttpResponse : public IHttpResponse {
 
 	protected:
-
+        ILogger                             *_logger;
 		std::string                         _HTTPVersion;
         std::string                         _statusCode;
         std::string                         _statusMessage;
         std::map<std::string, std::string>  _headers;
         std::vector<char>                   _body;
 
-        // Create Body Methods
-        void                    _defaultErrorPage(void);
-        void                    _createBodyByDirectory(std::set<std::string> dirent, std::string path, IHandler &handler);
-        std::string             GetHttpVersion(void) const;
+        // Geters
+        std::string                         GetHttpVersion(void) const;
         std::pair<std::string, std::string> GetHeader(std::string key);
         std::map<std::string, std::string>  GetHeaders(void) const;
-        std::string             GetBody(void) const;
+        std::string                         GetBody(void) const;
+        std::string                         GetTextContent(std::string extension);
+        std::string                         GetStatusMessage(void) const;
+        std::string                         GetStatusCode(void) const;
 
 	public:
-        void                    SetBody(std::vector<char> body);
-        std::string             GetStatusMessage(void) const;
-        std::string             GetStatusCode(void) const;
 
         // Create Response
         std::vector<char>       CreateResponse(void);
-        // std::string             ToString(void);
 
-        // Geters
-        std::string             GetStatusName(HttpStatusCode::Code statusCode);
-        std::string             GetTextContent(std::string extension);
-
-        // Seters
-        static void SetDefaultHTTPResponse(void) {
-            static  HttpResponse base = HttpResponse(0);
-        }
-        
-        // Base Methods
-        HttpResponse(void);
-        ~HttpResponse(void) {}
+        // Constructors
+        HttpResponse(ILogger *logger);
+        static void SetDefaultHTTPResponse(void) { static HttpResponse base = HttpResponse(0); }
+        ~HttpResponse(void);
     
     private:
-
-        void            SetStatusCode(HttpStatusCode::Code statusCode);
-        void            SetHeader(std::string key, std::string value);
-        void            SetBody(std::string body);
-
         HttpResponse(int num);
-        const std::string                    _server = "Ravy 1.0.0";
-        static std::map<HttpStatusCode::Code, std::string> _mapStatusCode;
-        static std::set<std::string>                _CGIExtensions;
-        static std::map<std::string, std::string>   _mapTextContent;
-        
+        std::string             _toString(void);
+        void                    _defaultErrorPage(void);
+        void                    _createBodyByDirectory(std::set<std::string> dirent, std::string path, IHandler &handler);
 
+        // Seters
+        void                    SetBody(std::vector<char> body);
+        void                    SetStatusCode(HttpStatusCode::Code statusCode);
+        void                    SetHeader(std::string key, std::string value);
+        void                    SetBody(std::string body);
+
+        const std::string                                   _server = "Ravy 1.0.0";
+        static std::map<HttpStatusCode::Code, std::string>  _mapStatusCode;
+        static std::set<std::string>                        _CGIExtensions;
+        static std::map<std::string, std::string>           _mapTextContent;
+        
         static void    _setMapTextContent(void) {
             _mapTextContent["text"] = "text/plain";
             _mapTextContent[".txt"] = "text/plain; charset=utf-8";
@@ -106,42 +95,7 @@ class HttpResponse : public IHttpResponse {
             _CGIExtensions.insert(".py");
         }
 
-    // friend class IBuilderResponse;
+    friend class IBuilderResponse;
 };
-
-// Response::mimetypes_map Response::mimetypes = Response::init_mimetypes();
-// Response::mimetypes_map Response::init_mimetypes(void) {
-//   mimetypes_map _map;
-
-//   _map["text"] = "Content-Type: text/plain\n";
-//   _map[".txt"] = "Content-Type: text/plain; charset=utf-8\n";
-//   _map[".html"] = "Content-Type: text/html; charset=utf-8\n";
-//   _map[".css"] = "Content-Type: text/css; charset=utf-8\n";
-//   _map[".jpg"] = "Content-type: image/jpg\n";
-//   _map[".jpeg"] = "Content-type: image/jpeg\n";
-//   _map[".png"] = "Content-type: image/png\n";
-//   _map[".mp4"] = "Content-type: video/mp4\n";
-//   _map[".ico"] = "Content-type: image/vnd.microsoft.icon\n";
-//   _map[".php"] = "Content-Type: text/plain; charset=utf-8\n";
-//   _map[".js"] = "Content-Type: application/javascript\n";
-//   _map[".gif"] = "Content-Type: image/gif\n";
-//   return _map;
-// }
-
-// Response::meth_map Response::method_map = Response::init_map();
-// Response::meth_map Response::init_map(void) {
-//   meth_map _map;
-
-//   _map["GET"] = &Response::_get;
-//   _map["POST"] = &Response::_post;
-//   _map["DELETE"] = &Response::_delete;
-//   _map["PUT"] = &Response::_put;
-//   _map["HEAD"] = &Response::_head;
-//   _map["CONNECT"] = &Response::_connect;
-//   _map["OPTIONS"] = &Response::_options;
-//   _map["TRACE"] = &Response::_trace;
-//   _map["PATCH"] = &Response::_patch;
-//   return _map;
-// }
 
 #endif

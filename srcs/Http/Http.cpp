@@ -5,12 +5,11 @@
 void    Http::StartPollList(void) {
     struct epoll_event  event;
 
-    this->_stage = H_ADD_SERVERS;
     int &epollFD = this->GetEPollFD();
     if (epollFD == -1) {
         throw Except("Error on create Epoll");
     }
-    std::cout << *this;
+    // std::cout << *this;
     std::map<std::string, IServer*>::iterator it = this->servers.begin();
     for (; it != this->servers.end(); ++it) {
         memset(&event, 0, sizeof(struct epoll_event));
@@ -24,8 +23,7 @@ void    Http::StartPollList(void) {
 }
 
 void    Http::StartWatchSockets(void) {
-    this->_stage = H_STAND_BY;
-    std::cout << *this;
+    // std::cout << *this;
     while (true) {
         int number_of_ready_fds = epoll_wait(
             this->GetEPollFD(),
@@ -69,9 +67,15 @@ void    Http::DisconnectClientToServer(int client_fd) {
     IServer *server = this->clientFD_Server[client_fd];
     this->clientFD_Server.erase(client_fd);
 
-    std::stringstream ss;
-    ss << "Disconnect Client " << client_fd << " from server " << server->GetIP() << " on port " << server->GetPort();
-    _logger->LogInformation(ss.str(), "");
+    std::cout << _logger->Log(
+        &ILogger::LogInformation,
+        "Disconnect Client",
+        client_fd,
+        "from server",
+        server->GetIP(),
+        "on port",
+        server->GetPort()
+    ) << std::endl;
 }
 
 bool    Http::ConnectClientToServer(int i) {
@@ -124,10 +128,16 @@ void    Http::ClientHandShake(IServer *server) {
         throw Except("Error on add client on epoll.");
     }
     this->clientFD_Server[client_fd] = server;
-    
-    std::stringstream ss;
-    ss << "Connect Client " << client_fd << " from server " << server->GetIP() << " on port " << server->GetPort();
-    _logger->LogInformation(ss.str(), "");
+
+    std::cout << _logger->Log(
+        &ILogger::LogInformation,
+        "Connect Client",
+        client_fd,
+        "from server",
+        server->GetIP(),
+        "on port",
+        server->GetPort()
+    ) << std::endl;
 }
 
 /* Geters
@@ -145,45 +155,31 @@ int &Http::GetEPollFD(void) {
     return epollFD;
 }
 
-HttpStages  Http::GetStage(void) const {
-    return this->_stage;
-}
-
 /* Seters
 =================================================*/
 void Http::SetServer(std::string serverName, IServer *server) {
     this->servers[serverName] = server;
 }
 
+void Http::SetServer(IServer *server) {
+    std::vector<std::string> hosts = server->GetHosts();
+    std::vector<std::string>::iterator it = hosts.begin();
+    for ( ; it != hosts.end(); ++it) {
+        this->servers[*it] = server;
+    }
+    _serversPointer.push_back(server);
+}
+
 /* Base Methods
 =================================================*/
 Http::Http(ILogger *logger) {
-    // this->_stage = H_START;
     HttpResponse::SetDefaultHTTPResponse();
     _logger = logger;
-    // std::cout << *this;
 }
 
 Http::~Http(void) {
-
-}
-
-std::ostream &operator<<(std::ostream &os, Http const &http) {
-    switch (http.GetStage()) {
-    case H_START:
-        os << HGRN "[ Starting service... ]" reset << std::endl;
-        break;
-    case H_CONFIG:
-        os << HGRN "[ Reading configuration file and creating server configuration rules. ]" reset << std::endl;
-        break;
-    case H_ADD_SERVERS:
-        os << HGRN "[ Adding services in listening mode... ]" reset << std::endl;
-        break;
-    case H_STAND_BY:
-        os << HGRN "[ Observing changes to file descriptors... ]" reset << std::endl;
-        break;
-    default:
-        os << "Error";
+    std::vector<IServer *>::iterator it = _serversPointer.begin();
+    for ( ; it != _serversPointer.end(); ++it) {
+        delete *it;
     }
-	return (os);
 }

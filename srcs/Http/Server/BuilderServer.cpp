@@ -7,25 +7,38 @@
 //     _server = NULL;
 // }
 
-BuilderServer::BuilderServer(IHandler *handler, ILogger *logger) {
-    _handler = handler;
-    _logger = logger;
+BuilderServer::BuilderServer(IHandler *handler, ILogger *logger) :
+    _handler(handler),
+    _logger(logger)
+{
     _builderRoute = NULL;
     _server = NULL;
+    std::cerr << _logger->Log(&Logger::LogDebug, "Created BuilderServer Class.") << std::endl;
 }
 
+BuilderServer::~BuilderServer(void) {
+    std::cerr << _logger->Log(&Logger::LogDebug, "Deleted BuilderServer Class.") << std::endl;
+}
 
 IBuilderServer      &BuilderServer::SetupServer(void) {
     if (_server != NULL) {
         _server = NULL;
     }
     _server = new Server(_handler, _logger);
+    _builderRoute = new BuilderRoute(_logger, _server, _handler);;
     return *this;
 }
 
-IBuilderServer      &BuilderServer::WithRoute(IRoute *route) {
+IBuilderRoute       *BuilderServer::GetBuilderRoute(void) {
+    return _builderRoute;
+};
+
+IBuilderServer      &BuilderServer::StartBRoute(void) {
     if (_builderRoute == NULL)
-        _builderRoute = new BuilderRoute(_server, _handler);
+        _builderRoute = new BuilderRoute(_logger, _server, _handler);
+}
+
+IBuilderServer      &BuilderServer::WithRoute(IRoute *route) {
     _server->SetRoute(route->GetRouteName(), route);
     return *this;
 }
@@ -48,6 +61,11 @@ IBuilderServer      &BuilderServer::WithPort(std::string port) {
 
 IBuilderServer      &BuilderServer::WithAllowMethods(std::set<std::string> methods) {
     _server->SetAllowMethods(methods);
+    return *this;
+}
+
+IBuilderServer      &BuilderServer::WithIndexes(std::vector<std::string> indexes) {
+    _server->SetPagesIndexes(indexes);
     return *this;
 }
 
@@ -81,5 +99,7 @@ IServer             *BuilderServer::GetResult(void) {
     if (_server != NULL) {
         _server = NULL;
     }
+    if (_logger->Env())
+        std::cerr << _logger->Log(&Logger::LogTrace, "GetResult Server: {\n", res->_toString(), "\n}") << std::endl;
     return res;
 }

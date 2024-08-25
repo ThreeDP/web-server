@@ -63,7 +63,7 @@ class ParserParams {
 
 		static std::vector<std::string> GetVectorParams(std::vector<std::string> vector) {
 			if (vector.empty() || vector.size() <= 2)
-				throw std::invalid_argument("Syntax Error.");
+				throw std::invalid_argument("8 Syntax Error.");
 			std::vector<std::string>::iterator start = vector.begin() + 1;
 			std::vector<std::string>::iterator end = vector.end() - 1;
 			return std::vector<std::string>(start, end);
@@ -71,7 +71,7 @@ class ParserParams {
 
 		static std::set<std::string> GetSetParams(std::vector<std::string> vector) {
 			if (vector.empty() || vector.size() <= 2)
-				throw std::invalid_argument("Syntax Error.");
+				throw std::invalid_argument("9 Syntax Error.");
 			std::vector<std::string>::iterator it = vector.begin() + 1;
 			std::set<std::string> newSet;
 			for ( ; it != vector.end() - 1; ++it) {
@@ -98,7 +98,7 @@ class ParserParams {
 				throw std::invalid_argument(ss.str());
 			std::vector<std::string>::iterator it = vector.begin() + 1;
 			std::set<HttpStatusCode::Code> codes;
-			for (; it != vector.end() + 2; ++it) {
+			for (; it != vector.end() - 2; ++it) {
 				    int code;
 					std::stringstream str(*it);
 					str >> code;
@@ -111,12 +111,14 @@ class ParserParams {
 		}
 
 		static std::string GetStringParam(std::vector<std::string> vector) {
+			std::cout << "TA AQUI?" << std::endl;
 			int size = vector.size() - 2;
 			std::stringstream ss;
 			ss << "Wrong number of params for {" << vector[0] << "}." << std::endl; 
 			if (size != 1)
 				throw std::invalid_argument(ss.str());
-			return vector[1];
+
+			return std::string(vector[1]);
 		}
 
 		static int GetBodyLimitParam(std::vector<std::string> vector) {
@@ -132,7 +134,7 @@ class ParserParams {
 			int size = vector.size() - 2;
 			std::stringstream ss;
 			ss << "Wrong number of params for {" << vector[0] << "}." << std::endl; 
-			if (size == 1)
+			if (size != 1)
 				throw std::invalid_argument(ss.str());
 			if (vector[1] == "on")
 				return true;
@@ -142,18 +144,21 @@ class ParserParams {
 		}
 
 		static char SanitizeString(std::string str) {
+			// if (str.) {
+			// 	return 'T';
+			// }
 			int semicolon = std::count(str.begin(), str.end(), ';');
 			int open_curly = std::count(str.begin(), str.end(), '{');
 			int close_curly = std::count(str.begin(), str.end(), '}');
 			if ((semicolon + open_curly + close_curly) > 1) {
-				throw std::invalid_argument("Syntax Error.");
+				throw std::invalid_argument("10 Syntax Error.");
 			} else if ((semicolon + open_curly + close_curly) == 0) {
 				int size = 0;
 				for (std::string::iterator it = str.begin(); it != str.end(); ++it) {
 					size++;
 				}
-				return (size == str.size()) ? '\0'
-					: throw std::invalid_argument("Syntax Error.");
+				return (size == str.size()) ? 'T'
+					: throw std::invalid_argument("11 Syntax Error.");
 			}
 			if (semicolon)
 				return ';';
@@ -161,7 +166,7 @@ class ParserParams {
 				return '{';
 			else if (close_curly)
 				return '}';
-			throw std::invalid_argument("Syntax Error.");
+			throw std::invalid_argument("12 Syntax Error.");
 		}
 };
 

@@ -13,6 +13,8 @@
 #ifndef __DEFINE_HPP__
 # define __DEFINE_HPP__
 
+# define __DEVELOPMENT__ "dev"
+
 //Regular text
 #define BLK "\e[0;30m"
 #define RED "\e[0;31m"
@@ -84,7 +86,8 @@
 #define BHWHT "\e[1;97m"
 
 //Reset
-#define reset "\e[0m"
+// #define reset "\e[0m"
+#define __CODE_RESET__ "\e[0m"
 #define CRESET "\e[0m"
 #define COLOR_RESET "\e[0m"
 
@@ -113,9 +116,12 @@
 # include <unistd.h>
 
 // Containers
-# include <vector>
 # include <map>
 # include <vector>
 # include <set>
+
+// Strings
+# include <cstring>
+# include <sstream>
 
 #endif

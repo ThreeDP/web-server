@@ -4,6 +4,47 @@ std::map<HttpStatusCode::Code, std::string> HttpResponse::_mapStatusCode;
 std::map<std::string, std::string> HttpResponse::_mapTextContent;
 std::set<std::string> HttpResponse::_CGIExtensions;
 
+// Constructors
+HttpResponse::HttpResponse(int num) {
+    _setMapStatusCode();
+    _setMapTextContent();
+    _setCGIExtensions();
+
+    (void)num;
+};
+
+HttpResponse::HttpResponse(ILogger *logger) :
+    _HTTPVersion("HTTP/1.1"),
+    _logger(logger)
+{
+    this->_headers["Content-Type:"] = this->_mapTextContent["text"];
+    this->_headers["Server:"] = this->_server;
+    
+    if (_logger->Env()) {
+        std::cerr << _logger->Log(&Logger::LogDebug, "Create HttpResponse Class: ") << std::endl;
+        std::cerr << _logger->Log(&Logger::LogTrace, "Initial Content {\n", this->_toString(), "\n}") << std::endl;
+    }
+}
+
+HttpResponse::~HttpResponse(void) {
+   std::cerr << _logger->Log(&Logger::LogDebug, "Deleted HttpResponse Class.") << std::endl; 
+}
+
+// Generate Response
+std::string HttpResponse::_toString(void) {
+    std::stringstream ss;
+
+    ss << _HTTPVersion << " ";
+    ss << _statusCode << " ";
+    ss << _statusMessage << std::endl;
+    std::map<std::string, std::string>::iterator it = _headers.begin();
+    for ( ; it != _headers.end(); ++it) {
+        ss << it->first << " " << it->second << std::endl;
+    }
+    ss << std::string(_body.begin(), _body.end()) << std::endl;
+    return ss.str();
+}
+
 std::vector<char> HttpResponse::CreateResponse(void) {
     std::stringstream ss;
     std::stringstream bodySize;
@@ -17,13 +58,17 @@ std::vector<char> HttpResponse::CreateResponse(void) {
         ss << it->first << " " << it->second << "\r\n";
     }
     ss << "\r\n";
-
     std::string headers = ss.str();
     std::vector<char> payload(headers.begin(), headers.end());
     payload.insert(payload.end(), this->_body.begin(), this->_body.end());
     std::string endend = "\r\n";
     payload.insert(payload.end(), endend.begin(), endend.end());
     return payload;
+
+    if (_logger->Env()) {
+        std::cerr << _logger->Log(&Logger::LogDebug, "Create Response Payload: ") << std::endl;
+        std::cerr << _logger->Log(&Logger::LogTrace, "Response Payload {\n", this->_toString() , "\n}") << std::endl;
+    }
 }
 
 void HttpResponse::_defaultErrorPage(void) {
@@ -42,6 +87,11 @@ void HttpResponse::_defaultErrorPage(void) {
 	sb << "</body></html>";
     std::string page = sb.str();
     this->_body.insert(this->_body.end(), page.begin(), page.end());
+    
+    if (_logger->Env()) {
+        std::cerr << _logger->Log(&Logger::LogDebug, "Create A Default Error Page: ") << std::endl;
+        std::cerr << _logger->Log(&Logger::LogTrace, "Default Page {\n", this->_toString(), "\n}") << std::endl;
+    }
 }
 
 void    HttpResponse::_createBodyByDirectory(
@@ -76,13 +126,14 @@ void    HttpResponse::_createBodyByDirectory(
     body << "</html>";
     std::string page = body.str();
     this->_body.insert(this->_body.end(), page.begin(), page.end());
+
+    if (_logger->Env()) {
+        std::cerr << _logger->Log(&Logger::LogDebug, "Create A Directory Listing: ") << std::endl;
+        std::cerr << _logger->Log(&Logger::LogTrace, "Directory Listing {\n", this->_toString(), "\n}") << std::endl;
+    }
 }
 
 // Geters
-std::string HttpResponse::GetStatusName(HttpStatusCode::Code statusCode) {
-    return _mapStatusCode[statusCode];
-}
-
 std::string HttpResponse::GetTextContent(std::string extension) {
     return _mapTextContent[extension];
 }
@@ -115,7 +166,7 @@ std::string HttpResponse::GetBody(void) const {
     return std::string(this->_body.begin(), this->_body.end());
 }
 
-
+// Seters
 void    HttpResponse::SetStatusCode(HttpStatusCode::Code statusCode) {
     std::stringstream code;
 
@@ -133,21 +184,5 @@ void    HttpResponse::SetBody(std::string body) {
 }
 
 void    HttpResponse::SetBody(std::vector<char> body) {
-    std::string str(body.begin(), body.end());
-    std::cout << str << std::endl;
     this->_body = body;
-}
-
-// Base Methods
-HttpResponse::HttpResponse(int num) {
-    _setMapStatusCode();
-    _setMapTextContent();
-    _setCGIExtensions();
-};
-
-HttpResponse::HttpResponse(void) :
-    _HTTPVersion("HTTP/1.1")
-{
-    this->_headers["Content-Type:"] = this->_mapTextContent["text"];
-    this->_headers["Server:"] = this->_server;
 }
