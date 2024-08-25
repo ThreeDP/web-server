@@ -162,8 +162,9 @@ void Http::SetServer(std::string serverName, IServer *server) {
 }
 
 void Http::SetServer(IServer *server) {
-    std::vector<std::string>::iterator it = server->GetHosts().begin();
-    for ( ; it != server->GetHosts().end(); ++it) {
+    std::vector<std::string> hosts = server->GetHosts();
+    std::vector<std::string>::iterator it = hosts.begin();
+    for ( ; it != hosts.end(); ++it) {
         this->servers[*it] = server;
     }
     _serversPointer.push_back(server);

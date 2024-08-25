@@ -20,8 +20,14 @@ HttpResponse::HttpResponse(ILogger *logger) :
     this->_headers["Content-Type:"] = this->_mapTextContent["text"];
     this->_headers["Server:"] = this->_server;
     
-    std::cerr << _logger->Log(&Logger::LogDebug, "Create HttpResponse Class: ") << std::endl;
-    std::cerr << _logger->Log(&Logger::LogTrace, "Initial Content {\n", _toString(), "\n}") << std::endl;
+    if (_logger->Env()) {
+        std::cerr << _logger->Log(&Logger::LogDebug, "Create HttpResponse Class: ") << std::endl;
+        std::cerr << _logger->Log(&Logger::LogTrace, "Initial Content {\n", this->_toString(), "\n}") << std::endl;
+    }
+}
+
+HttpResponse::~HttpResponse(void) {
+   std::cerr << _logger->Log(&Logger::LogDebug, "Deleted HttpResponse Class.") << std::endl; 
 }
 
 // Generate Response
@@ -59,8 +65,10 @@ std::vector<char> HttpResponse::CreateResponse(void) {
     payload.insert(payload.end(), endend.begin(), endend.end());
     return payload;
 
-    std::cerr << _logger->Log(&Logger::LogDebug, "Create Response Payload: ") << std::endl;
-    std::cerr << _logger->Log(&Logger::LogTrace, "Response Payload {\n", this->_toString() , "\n}") << std::endl;
+    if (_logger->Env()) {
+        std::cerr << _logger->Log(&Logger::LogDebug, "Create Response Payload: ") << std::endl;
+        std::cerr << _logger->Log(&Logger::LogTrace, "Response Payload {\n", this->_toString() , "\n}") << std::endl;
+    }
 }
 
 void HttpResponse::_defaultErrorPage(void) {
@@ -79,9 +87,11 @@ void HttpResponse::_defaultErrorPage(void) {
 	sb << "</body></html>";
     std::string page = sb.str();
     this->_body.insert(this->_body.end(), page.begin(), page.end());
-
-    std::cerr << _logger->Log(&Logger::LogDebug, "Create A Default Error Page: ") << std::endl;
-    std::cerr << _logger->Log(&Logger::LogTrace, "Default Page {\n", page, "\n}") << std::endl;
+    
+    if (_logger->Env()) {
+        std::cerr << _logger->Log(&Logger::LogDebug, "Create A Default Error Page: ") << std::endl;
+        std::cerr << _logger->Log(&Logger::LogTrace, "Default Page {\n", this->_toString(), "\n}") << std::endl;
+    }
 }
 
 void    HttpResponse::_createBodyByDirectory(
@@ -117,8 +127,10 @@ void    HttpResponse::_createBodyByDirectory(
     std::string page = body.str();
     this->_body.insert(this->_body.end(), page.begin(), page.end());
 
-    std::cerr << _logger->Log(&Logger::LogDebug, "Create A Directory Listing: ") << std::endl;
-    std::cerr << _logger->Log(&Logger::LogTrace, "Directory Listing {\n", page, "\n}") << std::endl;
+    if (_logger->Env()) {
+        std::cerr << _logger->Log(&Logger::LogDebug, "Create A Directory Listing: ") << std::endl;
+        std::cerr << _logger->Log(&Logger::LogTrace, "Directory Listing {\n", this->_toString(), "\n}") << std::endl;
+    }
 }
 
 // Geters
@@ -172,7 +184,5 @@ void    HttpResponse::SetBody(std::string body) {
 }
 
 void    HttpResponse::SetBody(std::vector<char> body) {
-    std::string str(body.begin(), body.end());
-    std::cout << str << std::endl;
     this->_body = body;
 }

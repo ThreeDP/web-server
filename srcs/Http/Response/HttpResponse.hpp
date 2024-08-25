@@ -33,7 +33,7 @@ class HttpResponse : public IHttpResponse {
         // Constructors
         HttpResponse(ILogger *logger);
         static void SetDefaultHTTPResponse(void) { static HttpResponse base = HttpResponse(0); }
-        ~HttpResponse(void) {}
+        ~HttpResponse(void);
     
     private:
         HttpResponse(int num);

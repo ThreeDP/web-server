@@ -4,7 +4,11 @@
 # include "IBuilderResponse.hpp"
 # include "HttpRequest.hpp"
 
+class BuilderRoute;
+
 class IRoute {
+    private:
+        virtual std::string         _toString(void) = 0;
     public:
         virtual ~IRoute(void) { }
 
@@ -40,7 +44,8 @@ class IRoute {
         virtual const std::vector<std::string>    GetRouteIndexes(void) = 0;
         virtual bool                GetAutoIndex(void) = 0;
 
-        friend class IBuilderResponse;
+        friend class BuilderRoute;
+        friend class IBuilderRoute;
 };
 
 #endif

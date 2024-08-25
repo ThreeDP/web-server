@@ -90,6 +90,13 @@ class ILogger {
             return (this->*logMethod)(_sformat(args));
         }
 
+        bool Env(void) {
+            const char *value = std::getenv("__ENVIRONMENT__");
+            if (value != NULL && std::string(value) == "dev")
+                return true;
+            return false;
+        }
+
         std::string LogDebug(const std::string args) const {
             const char *value = std::getenv("__ENVIRONMENT__");
             if (value != NULL && std::string(value) == "dev")

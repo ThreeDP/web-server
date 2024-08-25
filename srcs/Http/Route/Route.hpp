@@ -9,7 +9,6 @@
 # include "IRoute.hpp"
 # include "IServer.hpp"
 
-
 enum RouteStages {
     R_START,
     R_REQUEST
@@ -38,6 +37,8 @@ class Route : public IRoute {
         void        SetRootDirectory(std::string root);
         void        SetRouteIndexes(std::vector<std::string> indexes);
         void        SetAutoIndex(bool flag);
+
+        std::string _toString(void);
 
     public:
         RouteStages                                 _stage;
@@ -81,6 +82,7 @@ class Route : public IRoute {
 		};
 
         friend class IBuilderResponse;
+        friend class BuilderResponse;
 };
 
 #endif
