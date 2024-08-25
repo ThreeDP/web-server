@@ -28,16 +28,13 @@ class Parser {
 			if (file == NULL)
 				throw std::runtime_error("Error on Open Config File.");
 			std::vector<std::string> pieces;
-			int i = 0;
 			while ((line = _handler->ReadLine(*file)).first) {
-				std::cout << line.first << " ";
-				i++;
-				char ch = ParserParams::SanitizeString(line.second);
-				std::cout << std::string(1, ch) << " ";
+				EnumParams::Param p = EnumParams::_NOPARAM;
+				if (line.second.empty())
+					return 0;
 				pieces.clear();
-				EnumParams::Param p;
+				char ch = ParserParams::SanitizeString(line.second);
 				if (ch == 'T') {
-					std::cout << std::endl;
 					continue;
 				}
 				else if (ch == '}') {
@@ -53,7 +50,7 @@ class Parser {
 					} else {
 						throw std::invalid_argument("1 Syntax Error.");
 					}
-					return 0;
+					continue;
 				} else if (ch == ';') {
 					pieces = ParserParams::BreakLineIntoPieces(line.second, ';');
 					if (pieces.size() > 1) {
@@ -65,19 +62,15 @@ class Parser {
 						p = ParserParams::IdentifiesParameter(pieces[0]);
 					}
 				}
-				std::cout << "[";
 				for (std::vector<std::string>::iterator it = pieces.begin();
 					it != pieces.end(); ++it) {
-					std::cout << " " << *it;
 				}
-				std::cout << " ]";
 				this->SetParamsIntoService(http, p, pieces);
 			}
 			return 0;
 		}
 
 		void	SetParamsIntoService(Http &http, EnumParams::Param p, std::vector<std::string> params) {
-			std::cout << " <" << std::endl;
 			if (this->_serverOpen) {
 				std::pair<std::set<HttpStatusCode::Code>, std::string> code;
 				if (this->_routeOpen) {
@@ -146,9 +139,7 @@ class Parser {
 						break;
 					case EnumParams::_ROUTE:
 						this->_routeOpen = true;
-						//_builder->StartBRoute();
-						_builder->GetBuilderRoute()->SetupRoute("localhost");
-						std::cout << "TA SIM!" << std::endl;
+						_builder->GetBuilderRoute()->SetupRoute(ParserParams::GetStringParam(params));
 						break;
 					case EnumParams::_SERVER_NAME:
 						break;	

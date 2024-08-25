@@ -9,7 +9,6 @@ void    Http::StartPollList(void) {
     if (epollFD == -1) {
         throw Except("Error on create Epoll");
     }
-    // std::cout << *this;
     std::map<std::string, IServer*>::iterator it = this->servers.begin();
     for (; it != this->servers.end(); ++it) {
         memset(&event, 0, sizeof(struct epoll_event));
@@ -23,7 +22,6 @@ void    Http::StartPollList(void) {
 }
 
 void    Http::StartWatchSockets(void) {
-    // std::cout << *this;
     while (true) {
         int number_of_ready_fds = epoll_wait(
             this->GetEPollFD(),
@@ -162,10 +160,11 @@ void Http::SetServer(std::string serverName, IServer *server) {
 }
 
 void Http::SetServer(IServer *server) {
-    std::vector<std::string>::iterator it = server->GetHosts().begin();
-    for ( ; it != server->GetHosts().end(); ++it) {
-        this->servers[*it] = server;
-    }
+    // std::vector<std::string>::iterator it = server->GetHosts().begin();
+    // for ( ; it != server->GetHosts().end(); ++it) {
+    //     this->servers[*it] = server;
+    // }
+    this->servers["localhost"] = server;
     _serversPointer.push_back(server);
 }
 

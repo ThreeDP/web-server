@@ -19,6 +19,7 @@ class IBuilderRoute {
         virtual IBuilderRoute &WithRootDirectory(std::string root) = 0;
         virtual IBuilderRoute &WithPageIndexes(std::vector<std::string> indexes) = 0;
         virtual IBuilderRoute &WithAutoIndex(bool flag) = 0;
+        
         virtual IRoute        *GetResult(void) = 0;
         // virtual bool          CompareRoutes(IRoute &left, IRoute &right) = 0;
 };

@@ -119,7 +119,6 @@ class Server : public IServer {
         _logger(logger),
         _limit_client_body_size(2048) {
             _hosts.push_back("localhost");
-            _handler = handler;
             memset(&hints, 0, sizeof(struct addrinfo));
             this->hints.ai_family = AF_UNSPEC;
             this->hints.ai_socktype = SOCK_STREAM;
@@ -127,10 +126,9 @@ class Server : public IServer {
 
             this->result = NULL;
             this->_stage = S_START;
-            // std::cout << *this;
         }
-        // Server(void);
         ~Server(void);
+        // Server(void);
         // Server(std::string name);
         // Server(std::string name, IHandler *handler);
         // Server(std::string name, int port, std::string root);

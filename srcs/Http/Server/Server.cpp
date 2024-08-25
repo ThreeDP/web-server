@@ -49,7 +49,6 @@ int    Server::StartListen(void) {
     if ((listen(this->listener, this->backlog)) == -1) {
         throw Except("Error on listen server: <name> port: <port>");
     }
-    // std::cout << *this;
     return this->listener;
 }
 
@@ -106,8 +105,6 @@ void                Server::ProcessRequest(HttpRequest &request, int client_fd) 
     ) << std::endl;
     this->_routes[keyPath]->ProcessRequest(request, builder);
     this->ResponsesMap[client_fd] = builder.GetResult();
-    // For Test
-    std::cout << this->ResponsesMap[client_fd]->GetBody() << std::endl;
 }
 
 IHttpResponse         *Server::ProcessResponse(int client_fd) {
@@ -188,94 +185,6 @@ void    Server::UpdateState(ServerStages st, int client_fd) {
     this->_stage = st;
     this->_actualClientFD = client_fd;
 }
-
-/* Base Methods
-=======================================*/
-// Server::Server(void) {
-//     memset(&hints, 0, sizeof(struct addrinfo));
-//     this->hints.ai_family = AF_UNSPEC;
-//     this->hints.ai_socktype = SOCK_STREAM;
-//     this->hints.ai_flags = AI_CANONNAME;
-
-//     this->result = NULL;
-//     this->_stage = S_START;
-//     std::cout << *this;
-// }
-
-// Server::Server(std::vector<std::string> serv, unsigned short port) : CommonParameters(serv, port) {
-//     memset(&hints, 0, sizeof(struct addrinfo));
-//     this->hints.ai_family = AF_UNSPEC;
-//     this->hints.ai_socktype = SOCK_STREAM;
-//     this->hints.ai_flags = AI_PASSIVE;
-
-//     this->result = NULL;
-//     this->_stage = S_START;
-//     std::cout << *this;
-// }
-
-// Server::Server(std::string name) : CommonParameters(){
-//     this->_default_error_page[403] = "/errors/403.html";
-//     this->_default_error_page[404] = "/404.html";
-//     this->_default_error_page[500] = "/50x.html";
-//     this->_default_error_page[502] = "/50x.html";
-//     this->_default_error_page[503] = "/50x.html";
-//     this->_default_error_page[504] = "/50x.html";
-//     this->_root = "../home";
-//     this->_index.insert("index.html");
-//     this->_index.insert("new.html");
-//     this->_autoindex = false;
-//     this->_stage = S_START;
-//     std::cout << *this;
-// }
-
-// Server::Server(std::string name, IHandler *handler) : CommonParameters(){
-//     this->_default_error_page[403] = "/errors/403.html";
-//     this->_default_error_page[404] = "/404.html";
-//     this->_default_error_page[500] = "/50x.html";
-//     this->_default_error_page[502] = "/50x.html";
-//     this->_default_error_page[503] = "/50x.html";
-//     this->_default_error_page[504] = "/50x.html";
-//     this->_root = "../home";
-//     this->_index.insert("index.html");
-//     this->_index.insert("new.html");
-//     this->_autoindex = false;
-//     this->_stage = S_START;
-//     this->_handler = handler;
-//     std::cout << *this;
-// }
-
-// Server(std::string name){
-//     this->_listen_host = "127.0.0.1";
-//     this->_listen_port = 8081;
-//     this->_server_names.push_back(name);
-//     // this->_default_error_page[404] = "/404.html";
-//     // this->_default_error_page[500] = "/50x.html";
-//     // this->_default_error_page[502] = "/50x.html";
-//     // this->_default_error_page[503] = "/50x.html";
-//     // this->_default_error_page[504] = "/50x.html";
-//     this->_limit_client_body_size = 2 * 1024;
-//     this->_root = "../home";
-//     this->_index.insert("index.html");
-//     this->_index.insert("new.html");
-//     this->_autoindex = false;
-// }
-    
-
-// Server::Server(std::string name, int port, std::string root) : CommonParameters(){
-//     this->_default_error_page[403] = "/errors/403.html";
-//     this->_default_error_page[404] = "/404.html";
-//     this->_default_error_page[500] = "/50x.html";
-//     this->_default_error_page[502] = "/50x.html";
-//     this->_default_error_page[503] = "/50x.html";
-//     this->_default_error_page[504] = "/50x.html";
-//     this->_listen_port = port;
-//     this->_root = root;
-//     this->_index.insert("index.html");
-//     this->_index.insert("new.html");
-//     this->_autoindex = false;
-//     this->_stage = S_START;
-//     std::cout << *this;
-// }
 
 Server::~Server(void) {
     if (this->result != NULL) {

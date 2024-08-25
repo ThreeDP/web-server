@@ -1,14 +1,8 @@
 #ifndef __ROUTE_HPP__
 # define __ROUTE_HPP__
 
-# include "define.hpp"
-# include "Utils.hpp"
-# include "HttpResponse.hpp"
-# include "HttpRequest.hpp"
-# include "IHandler.hpp"
 # include "IRoute.hpp"
 # include "IServer.hpp"
-
 
 enum RouteStages {
     R_START,
@@ -21,6 +15,7 @@ class Route : public IRoute {
     private:
         ILogger                                     *_logger;
         IHandler                                    *_handler;
+
         std::string                                 _route_name;
         std::set<std::string>                       _allow_methods;
         std::map<HttpStatusCode::Code, std::string> _error_page;
@@ -29,7 +24,7 @@ class Route : public IRoute {
         std::string                                 _root;
         bool                                        _autoIndex;
         std::vector<std::string>                    _indexes;
-
+    public:
         void        SetRouteName(std::string routeName);
         void        SetBodyLimit(int size);
         void        SetAllowMethods(std::set<std::string> methods);
@@ -38,11 +33,13 @@ class Route : public IRoute {
         void        SetRootDirectory(std::string root);
         void        SetRouteIndexes(std::vector<std::string> indexes);
         void        SetAutoIndex(bool flag);
+    private:
+        Route(void) {}
+
+        std::string         _toString(void);
 
     public:
-        RouteStages                                 _stage;
 
-        Route(void) {}
 
         Route(ILogger *logger, IServer *server, IHandler *handler, std::string route_name);
         ~Route(void);
@@ -68,8 +65,6 @@ class Route : public IRoute {
         std::string                         GetRootDirectory(void);
         const std::vector<std::string>      GetRouteIndexes(void);
         bool                                GetAutoIndex(void);
-
-        // Base methods
 
         class Except: virtual public std::exception {
 			protected:

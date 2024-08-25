@@ -28,7 +28,7 @@ int main(int ac, char *av[]) {
     IHandler *handler = new Handler();
     ILogger *logger = new Logger();
 	Http http(logger);
-    IBuilderServer *b = new BuilderServer(handler, logger);
+    IBuilderServer *b = new BuilderServer(logger, handler);
     IServer *newServer = b->SetupServer()
                             .WithAllowMethods(methods)
                             .WithAutoIndex(true)
@@ -37,32 +37,36 @@ int main(int ac, char *av[]) {
                             .WithRootDirectory("../home")
                             // .WithPageIndexes(indexes)
                             .GetResult();
-    //Server *newServer2 = new Server("localhost2", 8082, ".");
     http.SetServer("localhost", newServer);
+    //Server *newServer2 = new Server("localhost2", 8082, ".");
     //http.SetServer("localhost2", newServer2);
     IBuilderRoute   *builder = new BuilderRoute(logger, newServer, handler);
     newServer->SetRoute("/", builder->SetupRoute("/")
+    // newServer->SetRoute("/", b->GetBuilderRoute()->SetupRoute("/")
                                 .WithPageIndexes(indexes)
                                     .GetResult());
-    newServer->SetRoute("/app", builder->SetupRoute("/app")
-                                    .GetResult());
-    newServer->SetRoute("/static/imagens", builder->SetupRoute("/static/imagens")
-                                            .WithPageIndexes(indexes)
-                                            .GetResult());
-    newServer->SetRoute("/ranna-site", builder->SetupRoute("/ranna-site")
-                                        .WithPageIndexes(indexes)
-                                        .GetResult());
+    newServer->SetRoute("/app", builder->SetupRoute("/")
+    // newServer->SetRoute("/app", b->GetBuilderRoute()->SetupRoute("/app")
+                                     .GetResult());
+    // newServer->SetRoute("/static/imagens", b->GetBuilderRoute()->SetupRoute("/static/imagens")
+    //                                         .WithPageIndexes(indexes)
+    //                                         .GetResult());
+    // newServer->SetRoute("/ranna-site", b->GetBuilderRoute()->SetupRoute("/ranna-site")
+    //                                     .WithPageIndexes(indexes)
+    //                                     .GetResult());
     // ILogger         *logger = new Logger();
     // IHandler        *handler = new Handler();
     // Http            http(logger);
-    // IBuilderServer  *builder = new BuilderServer(handler, logger);
+    // IBuilderServer  *builder = new BuilderServer(logger, handler);
     // Parser          parser(handler, builder);
     // std::string     fileName = "./config/ravy.conf";
     // if (ac > 1) {
     //     fileName = av[1];
     // }
     try {
+        std::cout << logger->Log(&Logger::LogInformation, "Starting Parser.") << std::endl;
         // parser.ConfigHttp(http, fileName);
+        std::cout << logger->Log(&Logger::LogInformation, "Finished Parser.") << std::endl;
         http.StartPollList();
         http.StartWatchSockets();
     } catch (const std::exception &e) {

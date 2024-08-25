@@ -7,6 +7,7 @@
 namespace EnumParams {
 
 	enum Param {
+		_NOPARAM,
 		_ROOT,
 		_REWRITE,
 		_SERVER_NAME,
@@ -111,7 +112,6 @@ class ParserParams {
 		}
 
 		static std::string GetStringParam(std::vector<std::string> vector) {
-			std::cout << "TA AQUI?" << std::endl;
 			int size = vector.size() - 2;
 			std::stringstream ss;
 			ss << "Wrong number of params for {" << vector[0] << "}." << std::endl; 

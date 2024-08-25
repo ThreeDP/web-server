@@ -1,33 +1,31 @@
 # include "BuilderServer.hpp"
 # include "BuilderRoute.hpp"
 
-// BuilderServer::BuilderServer(IHandler *handler, ILogger *logger) {
-//     _handler = handler;
-//     _logger = logger;
-//     _server = NULL;
-// }
-
-BuilderServer::BuilderServer(IHandler *handler, ILogger *logger) {
-    _handler = handler;
-    _logger = logger;
+BuilderServer::BuilderServer(ILogger *logger, IHandler *handler) :
+    _handler(handler),
+    _logger(logger)
+{
     _builderRoute = NULL;
     _server = NULL;
+    std::cerr << _logger->Log(&Logger::LogDebug, "Created BuilderServer Class.") << std::endl;
 }
 
+BuilderServer::~BuilderServer(void) {
+    std::cerr << _logger->Log(&Logger::LogDebug, "Deleted BuilderServer Class.") << std::endl;
+}
 
 IBuilderServer      &BuilderServer::SetupServer(void) {
     if (_server != NULL) {
         _server = NULL;
     }
     _server = new Server(_handler, _logger);
-        _builderRoute = new BuilderRoute(_logger, _server, _handler);;
+    _builderRoute = new BuilderRoute(_logger, _server, _handler);
     return *this;
 }
 
-IBuilderServer      &BuilderServer::StartBRoute(void) {
-    if (_builderRoute == NULL)
-        _builderRoute = new BuilderRoute(_logger, _server, _handler);
-}
+ IBuilderRoute       *BuilderServer::GetBuilderRoute(void) {
+    return this->_builderRoute;
+ }
 
 IBuilderServer      &BuilderServer::WithRoute(IRoute *route) {
     _server->SetRoute(route->GetRouteName(), route);
@@ -85,5 +83,8 @@ IServer             *BuilderServer::GetResult(void) {
     if (_server != NULL) {
         _server = NULL;
     }
+    std::cout << _logger->Log(&Logger::LogInformation, "Get Server") << std::endl;
+    if (_logger->Env())
+        // std::cout << _logger->Log(&Logger::LogTrace, "GetResult Server: {\n", res->_toString(), "\n}") << std::endl;
     return res;
 }

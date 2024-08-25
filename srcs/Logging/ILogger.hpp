@@ -8,7 +8,7 @@
 class ILogger {
     public:
         virtual ~ILogger() = default;
-         typedef std::string (ILogger::*LogMethod)(const std::string) const;
+        typedef std::string (ILogger::*LogMethod)(const std::string) const;
 
         template<typename T1>
         std::string Log(LogMethod logMethod,
@@ -88,6 +88,13 @@ class ILogger {
             args.push_back(ToString(arg6));
             args.push_back(ToString(arg7));
             return (this->*logMethod)(_sformat(args));
+        }
+
+        bool Env(void) {
+            const char *value = std::getenv("__ENVIRONMENT__");
+            if (value != NULL && std::string(value) == "dev")
+                return true;
+            return false;
         }
 
         std::string LogDebug(const std::string args) const {

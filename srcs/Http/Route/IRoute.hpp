@@ -1,13 +1,16 @@
 #ifndef __IROUTE_HPP__
 # define __IROUTE_HPP__
 
-# include "IBuilderResponse.hpp"
 # include "HttpRequest.hpp"
+# include "BuilderResponse.hpp"
+
+class IBuilderRoute;
+class BuilderRoute;
 
 class IRoute {
-    public:
-        virtual ~IRoute(void) { }
-
+    private:
+        virtual std::string         _toString(void) = 0;
+    public:  
         // Seters
         virtual void        SetRouteName(std::string routeName) = 0;
         virtual void        SetBodyLimit(int size) = 0;
@@ -17,13 +20,16 @@ class IRoute {
         virtual void        SetRootDirectory(std::string root) = 0;
         virtual void        SetRouteIndexes(std::vector<std::string> indexes) = 0;
         virtual void        SetAutoIndex(bool flag) = 0;
-
+    private:
         // Route Process
         virtual HttpStatusCode::Code _handlerErrorResponse(
             std::ifstream *fd,
             HttpStatusCode::Code statusCode,
             IBuilderResponse &builder
         ) = 0;
+
+    public:
+        virtual ~IRoute(void) { }
 
         virtual HttpStatusCode::Code ProcessRequest(
             HttpRequest &request,
@@ -40,7 +46,8 @@ class IRoute {
         virtual const std::vector<std::string>    GetRouteIndexes(void) = 0;
         virtual bool                GetAutoIndex(void) = 0;
 
-        friend class IBuilderResponse;
+        friend class IBuilderRoute;
+        friend class BuilderRoute;
 };
 
 #endif

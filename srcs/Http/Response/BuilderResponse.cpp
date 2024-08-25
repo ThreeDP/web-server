@@ -6,6 +6,7 @@ BuilderResponse::BuilderResponse(ILogger *logger, IHandler *handler) :
     _handler(handler) {
     _handler = handler;
     _response = NULL;
+    std::cerr << _logger->Log(&Logger::LogDebug, "Created BuilderResponse Class.") << std::endl;
 }
 
 BuilderResponse::~BuilderResponse(void) {
@@ -13,6 +14,7 @@ BuilderResponse::~BuilderResponse(void) {
         delete _response;
         _response = NULL;
     }
+    std::cerr << _logger->Log(&Logger::LogDebug, "Deleted BuilderResponse Class.") << std::endl;
 }
 
 // Setup Response
@@ -48,8 +50,10 @@ IBuilderResponse &BuilderResponse::WithFileDescriptor(std::ifstream *fd) {
     if (fd != NULL && _response->GetBody() == "") {
         _response->SetBody(_handler->ReadRegularFile(fd));
 
-        std::cerr << _logger->Log(&Logger::LogDebug, "Create A Body File Descriptor: ") << std::endl;
-        std::cerr << _logger->Log(&Logger::LogTrace, "Payload File Descriptor {\n", _response->_toString(), "\n}") << std::endl;
+        if (_logger->Env()) {
+            std::cerr << _logger->Log(&Logger::LogDebug, "Create A Body File Descriptor: ") << std::endl;
+            std::cerr << _logger->Log(&Logger::LogTrace, "Payload File Descriptor {\n", _response->_toString(), "\n}") << std::endl;
+        }
     }
     fd->close();
     delete fd;
