@@ -19,6 +19,7 @@ class IBuilderServer {
     virtual IBuilderServer      &WithPort(std::string port) = 0;
 
     virtual IBuilderServer      &WithAllowMethods(std::set<std::string> methods) = 0;
+    virtual IBuilderServer      &WithIndexes(std::vector<std::string> indexes) = 0;
     virtual IBuilderServer      &WithErrorPages(std::set<HttpStatusCode::Code> statusCode, std::string filePath) = 0;
     virtual IBuilderServer      &WithBodyLimit(int size) = 0;
     virtual IBuilderServer      &WithRedirectPath(std::pair<std::string, std::string> pair) = 0;

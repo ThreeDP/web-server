@@ -64,6 +64,11 @@ IBuilderServer      &BuilderServer::WithAllowMethods(std::set<std::string> metho
     return *this;
 }
 
+IBuilderServer      &BuilderServer::WithIndexes(std::vector<std::string> indexes) {
+    _server->SetPagesIndexes(indexes);
+    return *this;
+}
+
 IBuilderServer      &BuilderServer::WithErrorPages(std::set<HttpStatusCode::Code> statusCodes, std::string filePath) {
     _server->SetErrorPage(statusCodes, filePath);
     return *this;

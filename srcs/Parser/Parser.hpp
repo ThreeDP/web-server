@@ -141,6 +141,9 @@ class Parser {
 					case EnumParams::_ALLOW_METHODS:
 						_builder->WithAllowMethods(ParserParams::GetSetParams(params));
 						break;
+					case EnumParams::_INDEX:
+						_builder->WithIndexes(ParserParams::GetVectorParams(params));
+						break;
 					case EnumParams::_AUTOINDEX:
 						_builder->WithAutoIndex(ParserParams::GetAutoIndexParam(params));
 						break;

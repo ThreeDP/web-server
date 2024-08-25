@@ -142,8 +142,19 @@ void                Server::ProcessRequest(HttpRequest &request, int client_fd) 
         request.GetMethod(),
         request.GetPath()
     ) << std::endl;
-    this->_routes[keyPath]->ProcessRequest(request, builder);
-    this->ResponsesMap[client_fd] = builder.GetResult();
+    std::map<std::string, IRoute *>::iterator it = this->_routes.find(keyPath);
+    if (it != this->_routes.end()) {
+        this->_routes[keyPath]->ProcessRequest(request, builder);
+        this->ResponsesMap[client_fd] = builder.GetResult();
+    } else {
+        this->ResponsesMap[client_fd] = builder
+            .SetupResponse()
+            .WithStatusCode(HttpStatusCode::_INTERNAL_SERVER_ERROR)
+            .WithContentType(".html")
+            .WithDefaultPage()
+            .GetResult();
+        std::cout << _logger->Log(&Logger::LogInformation, "Route Not Found or Configurated", HttpStatusCode::_INTERNAL_SERVER_ERROR) << std::endl;
+    }
 }
 
 IHttpResponse         *Server::ProcessResponse(int client_fd) {

@@ -22,6 +22,7 @@ class BuilderServer : public IBuilderServer {
     IBuilderServer      &WithHosts(std::vector<std::string> hosts);
     IBuilderServer      &WithPort(std::string port);
     IBuilderServer      &WithAllowMethods(std::set<std::string> methods);
+    IBuilderServer      &WithIndexes(std::vector<std::string> indexes);
     IBuilderServer      &WithErrorPages(std::set<HttpStatusCode::Code> statusCodes, std::string filePath);
     IBuilderServer      &WithBodyLimit(int size);
     IBuilderServer      &WithRedirectPath(std::pair<std::string, std::string> pair);
