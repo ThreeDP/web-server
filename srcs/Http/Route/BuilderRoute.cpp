@@ -69,7 +69,7 @@ IRoute        *BuilderRoute::GetResult(void) {
         _route = NULL;
     }
     if (_logger->Env()) {
-        std::cout << _logger->Log(&Logger::LogTrace, "GetResult Route: {\n", res->_toString(), "\n}") << std::endl;
+        std::cerr << _logger->Log(&Logger::LogTrace, "GetResult Route: {\n", res->_toString(), "\n}") << std::endl;
     }
     return res;
 }

@@ -1,5 +1,35 @@
 # include "Server.hpp"
 
+Server::Server(IHandler *handler, ILogger *logger) :
+_root("./"),
+_autoIndex(false),
+_handler(handler),
+_logger(logger),
+_limit_client_body_size(2048),
+_actualClientFD(-1)
+{
+    _hosts.push_back("localhost");
+    _handler = handler;
+    memset(&hints, 0, sizeof(struct addrinfo));
+    this->hints.ai_family = AF_UNSPEC;
+    this->hints.ai_socktype = SOCK_STREAM;
+    this->hints.ai_flags = AI_CANONNAME;
+
+    this->result = NULL;
+    this->_stage = S_START;
+    if (_logger->Env()) {
+        std::cerr << _logger->Log(&Logger::LogDebug, "Created Server Class: ") << std::endl;
+        std::cerr << _logger->Log(&Logger::LogTrace, "Server Standard Content {\n", this->_toString(), "\n}") << std::endl;
+    }
+}
+
+Server::~Server(void) {
+    if (this->result != NULL) {
+        freeaddrinfo(this->result);
+    }
+    std::cerr << _logger->Log(&Logger::LogDebug, "Deleted Server Class.") << std::endl;
+}
+
 /* Server Methods
 =======================================*/
 
@@ -46,10 +76,18 @@ void    Server::CreateSocketAndBind(void) {
 }
 
 int    Server::StartListen(void) {
+    std::cout << _logger->Log(&Logger::LogInformation, "Try Starting Listen...") << std::endl;
     if ((listen(this->listener, this->backlog)) == -1) {
-        throw Except("Error on listen server: <name> port: <port>");
+        throw Except(_logger->Log(
+            &Logger::LogCaution, 
+            "Error on listen server: <",
+            _hosts[0],
+            "> port:  <",
+            _port , 
+            ">\n")
+        );
     }
-    // std::cout << *this;
+    std::cout << _logger->Log(&Logger::LogInformation, "Listening on:", _hosts[0], _port) << std::endl;
     return this->listener;
 }
 
@@ -106,8 +144,6 @@ void                Server::ProcessRequest(HttpRequest &request, int client_fd) 
     ) << std::endl;
     this->_routes[keyPath]->ProcessRequest(request, builder);
     this->ResponsesMap[client_fd] = builder.GetResult();
-    // For Test
-    std::cout << this->ResponsesMap[client_fd]->GetBody() << std::endl;
 }
 
 IHttpResponse         *Server::ProcessResponse(int client_fd) {
@@ -132,10 +168,10 @@ int   Server::GetListener(void) const {
 
 std::string Server::GetHosts(void) const {
     std::stringstream   hosts;
-    int                 size = this->_server_names.size();
+    int                 size = this->_hosts.size();
 
     for (int i = 0; i < size; i++) {
-        hosts << this->_server_names[i] << " ";
+        hosts << this->_hosts[i] << " ";
     }
     return hosts.str();
 }
@@ -187,100 +223,6 @@ void    Server::_setServerIpInfos(struct addrinfo *result) {
 void    Server::UpdateState(ServerStages st, int client_fd) {
     this->_stage = st;
     this->_actualClientFD = client_fd;
-}
-
-/* Base Methods
-=======================================*/
-// Server::Server(void) {
-//     memset(&hints, 0, sizeof(struct addrinfo));
-//     this->hints.ai_family = AF_UNSPEC;
-//     this->hints.ai_socktype = SOCK_STREAM;
-//     this->hints.ai_flags = AI_CANONNAME;
-
-//     this->result = NULL;
-//     this->_stage = S_START;
-//     std::cout << *this;
-// }
-
-// Server::Server(std::vector<std::string> serv, unsigned short port) : CommonParameters(serv, port) {
-//     memset(&hints, 0, sizeof(struct addrinfo));
-//     this->hints.ai_family = AF_UNSPEC;
-//     this->hints.ai_socktype = SOCK_STREAM;
-//     this->hints.ai_flags = AI_PASSIVE;
-
-//     this->result = NULL;
-//     this->_stage = S_START;
-//     std::cout << *this;
-// }
-
-// Server::Server(std::string name) : CommonParameters(){
-//     this->_default_error_page[403] = "/errors/403.html";
-//     this->_default_error_page[404] = "/404.html";
-//     this->_default_error_page[500] = "/50x.html";
-//     this->_default_error_page[502] = "/50x.html";
-//     this->_default_error_page[503] = "/50x.html";
-//     this->_default_error_page[504] = "/50x.html";
-//     this->_root = "../home";
-//     this->_index.insert("index.html");
-//     this->_index.insert("new.html");
-//     this->_autoindex = false;
-//     this->_stage = S_START;
-//     std::cout << *this;
-// }
-
-// Server::Server(std::string name, IHandler *handler) : CommonParameters(){
-//     this->_default_error_page[403] = "/errors/403.html";
-//     this->_default_error_page[404] = "/404.html";
-//     this->_default_error_page[500] = "/50x.html";
-//     this->_default_error_page[502] = "/50x.html";
-//     this->_default_error_page[503] = "/50x.html";
-//     this->_default_error_page[504] = "/50x.html";
-//     this->_root = "../home";
-//     this->_index.insert("index.html");
-//     this->_index.insert("new.html");
-//     this->_autoindex = false;
-//     this->_stage = S_START;
-//     this->_handler = handler;
-//     std::cout << *this;
-// }
-
-// Server(std::string name){
-//     this->_listen_host = "127.0.0.1";
-//     this->_listen_port = 8081;
-//     this->_server_names.push_back(name);
-//     // this->_default_error_page[404] = "/404.html";
-//     // this->_default_error_page[500] = "/50x.html";
-//     // this->_default_error_page[502] = "/50x.html";
-//     // this->_default_error_page[503] = "/50x.html";
-//     // this->_default_error_page[504] = "/50x.html";
-//     this->_limit_client_body_size = 2 * 1024;
-//     this->_root = "../home";
-//     this->_index.insert("index.html");
-//     this->_index.insert("new.html");
-//     this->_autoindex = false;
-// }
-    
-
-// Server::Server(std::string name, int port, std::string root) : CommonParameters(){
-//     this->_default_error_page[403] = "/errors/403.html";
-//     this->_default_error_page[404] = "/404.html";
-//     this->_default_error_page[500] = "/50x.html";
-//     this->_default_error_page[502] = "/50x.html";
-//     this->_default_error_page[503] = "/50x.html";
-//     this->_default_error_page[504] = "/50x.html";
-//     this->_listen_port = port;
-//     this->_root = root;
-//     this->_index.insert("index.html");
-//     this->_index.insert("new.html");
-//     this->_autoindex = false;
-//     this->_stage = S_START;
-//     std::cout << *this;
-// }
-
-Server::~Server(void) {
-    if (this->result != NULL) {
-        freeaddrinfo(this->result);
-    }
 }
 
 // Geters
@@ -383,4 +325,41 @@ void    Server::SetPort(std::string port) {
 
 void    Server::SetRoute(std::string routeName, IRoute *route) {
     this->_routes[routeName] = route;
+}
+
+std::string Server::_toString(void) {
+    std::stringstream ss;
+
+    ss << "\t\tClient Connected: " << _actualClientFD << std::endl;
+    ss << "\t\tServer Names: ";
+    for (std::vector<std::string>::iterator it = _hosts.begin(); it != _hosts.end(); ++it) {
+        ss << *it << " ";
+    }
+    ss << std::endl;
+    ss << "\t\tListening on: " << _port << std::endl;
+    ss << "\t\tAllow Methods: ";
+    for (std::set<std::string>::iterator it = _allowMethods.begin() ; it != _allowMethods.end(); ++it) {
+        ss << *it << " ";
+    }
+    ss << std::endl << "\t\tError Pages: " << std::endl;
+    for (std::map<HttpStatusCode::Code, std::string>::iterator it = _errorPages.begin(); it != _errorPages.end(); ++it) {
+        ss << "\t\t\t" << static_cast<int>(it->first) << " " << it->second << std::endl;
+    }
+    ss << "\t\tBody Limit: " << _limit_client_body_size << std::endl;
+    ss << "\t\tRedirect Path: " << std::endl;
+    for (std::map<std::string, std::string>::iterator it = _redirectionPaths.begin(); it != _redirectionPaths.end(); ++it) {
+        ss << "\t\t\t" << it->first << " " << it->second << std::endl;
+    }
+    ss << "\t\tRoot Directory: " << _root  << std::endl;
+    ss << "\t\tAuto index: " << std::string((_autoIndex) ? "on" : "off") << std::endl;
+    ss << "\t\tindexes: ";
+    for (std::vector<std::string>::iterator it = _indexes.begin(); it != _indexes.end(); ++it) {
+        ss << *it << " ";
+    }
+    ss << std::endl;
+    ss << "\t\tRoutes: " << std::endl;
+    for (std::map<std::string, IRoute *>::iterator it = _routes.begin(); it != _routes.end(); ++it) {
+        ss << "\t\t\t" << it->first << " " << std::string(it->second != NULL ? "has" : "empty")  << std::endl;
+    }
+    return ss.str();
 }

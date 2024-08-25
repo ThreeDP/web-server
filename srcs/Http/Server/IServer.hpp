@@ -9,6 +9,8 @@
 class BuilderServer;
 
 class IServer {
+    private:
+        virtual std::string                 _toString(void) = 0;
     public:
         ~IServer(void) {}
 

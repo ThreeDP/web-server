@@ -12,11 +12,9 @@ class BuilderServer : public IBuilderServer {
 
     public:
     BuilderServer(IHandler *handler, ILogger *logger);
-    ~BuilderServer(void) {}
+    ~BuilderServer(void);
 
-    IBuilderRoute       *GetBuilderRoute(void) {
-        return _builderRoute;
-    };
+    IBuilderRoute       *GetBuilderRoute(void);
     IBuilderServer      &StartBRoute(void);
 
     IBuilderServer      &SetupServer(void);

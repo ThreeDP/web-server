@@ -16,9 +16,10 @@ HttpStatusCode::Code Route::_handlerErrorResponse(
             builder
                 .SetupResponse()
                 .WithStatusCode(statusCode)
-                .WithFileDescriptor(fd)
                 .WithLastModified(path)
-                .WithContentType(Utils::GetFileExtension(path));
+                .WithContentType(Utils::GetFileExtension(path))
+                .WithFileDescriptor(fd);
+            std::cout << _logger->Log(&Logger::LogInformation, "Response By Setup Erro Pages: ", statusCode) << std::endl;
             return (statusCode);
         }
     }
@@ -27,6 +28,7 @@ HttpStatusCode::Code Route::_handlerErrorResponse(
         .WithStatusCode(statusCode)
         .WithContentType(".html")
         .WithDefaultPage();
+    std::cout << _logger->Log(&Logger::LogInformation, "Response By Default Error: ", statusCode) << std::endl;
     return (statusCode);
 }
 
@@ -56,6 +58,7 @@ HttpStatusCode::Code Route::ProcessRequest(
             .WithStatusCode(HttpStatusCode::_PERMANENT_REDIRECT)
             .WithLocation("/" + this->GetRedirectPath())
             .WithDefaultPage();
+        std::cout << _logger->Log(&Logger::LogInformation, "Permanent Redirect: ", HttpStatusCode::_PERMANENT_REDIRECT) << std::endl;
         return (HttpStatusCode::_PERMANENT_REDIRECT);
     }
     if (this->_handler->PathExist(absolutePath))
@@ -79,6 +82,7 @@ HttpStatusCode::Code Route::ProcessRequest(
                         .WithLocation(Utils::SanitizePath("http://localhost:8081",
                             Utils::SanitizePath(request.GetPath(), *it)))
                         .WithDefaultPage();
+                    std::cout << _logger->Log(&Logger::LogInformation, "Redirect by index: ", HttpStatusCode::_FOUND) << std::endl;
                     return (HttpStatusCode::_FOUND);
                 }
             }
@@ -87,8 +91,9 @@ HttpStatusCode::Code Route::ProcessRequest(
                 builder
                     .SetupResponse()
                     .WithStatusCode(HttpStatusCode::_OK)
-                    .WithDirectoryFile(dir, absolutePath)
-                    .WithContentType(".html");
+                    .WithContentType(".html")
+                    .WithDirectoryFile(dir, absolutePath);
+                std::cout << _logger->Log(&Logger::LogInformation, "Response By Directories: ", HttpStatusCode::_OK) << std::endl;
                 return (HttpStatusCode::_OK);
             }
         } else if (allow) {
@@ -99,6 +104,7 @@ HttpStatusCode::Code Route::ProcessRequest(
                 .WithLastModified(absolutePath)
                 .WithContentType(Utils::GetFileExtension(absolutePath))
                 .WithFileDescriptor(fd);
+            std::cout << _logger->Log(&Logger::LogInformation, "Response By File Descriptor: ", HttpStatusCode::_OK) << std::endl;
             return (HttpStatusCode::_OK);
         } else if (!allow) {
             return this->_handlerErrorResponse(fd, HttpStatusCode::_FORBIDDEN, builder);
@@ -212,7 +218,7 @@ Route::Route(ILogger *logger, IServer *server, IHandler *handler, std::string ro
 }
 
 Route::~Route(void) {
-    
+    std::cerr << _logger->Log(&Logger::LogDebug, "Deleted Route Class.") << std::endl;
 }
 
 std::string Route::_toString(void) {
