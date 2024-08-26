@@ -2,6 +2,7 @@
 # define __PARSER_PARAMS_HPP__
 
 #include "EHttpStatusCode.hpp"
+# include "Logger.hpp"
 #include <algorithm>
 
 namespace EnumParams {
@@ -62,7 +63,7 @@ class ParserParams {
 		}
 
 		static std::vector<std::string> GetVectorParams(std::vector<std::string> vector) {
-			if (vector.empty() || vector.size() <= 2)
+			if (vector.empty() || vector.size() <= 2 || vector.back() == ";")
 				throw std::invalid_argument("8 Syntax Error.");
 			std::vector<std::string>::iterator start = vector.begin() + 1;
 			std::vector<std::string>::iterator end = vector.end() - 1;
@@ -144,9 +145,6 @@ class ParserParams {
 		}
 
 		static char SanitizeString(std::string str) {
-			// if (str.) {
-			// 	return 'T';
-			// }
 			int semicolon = std::count(str.begin(), str.end(), ';');
 			int open_curly = std::count(str.begin(), str.end(), '{');
 			int close_curly = std::count(str.begin(), str.end(), '}');
@@ -157,8 +155,7 @@ class ParserParams {
 				for (std::string::iterator it = str.begin(); it != str.end(); ++it) {
 					size++;
 				}
-				return (size == str.size()) ? 'T'
-					: throw std::invalid_argument("11 Syntax Error.");
+				return (size == str.size()) ? '\0' : throw std::invalid_argument("11 Syntax Error.");
 			}
 			if (semicolon)
 				return ';';

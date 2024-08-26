@@ -57,7 +57,7 @@ int main(int ac, char *av[]) {
     IHandler        *handler = new Handler();
     Http            http(logger);
     IBuilderServer  *builder = new BuilderServer(handler, logger);
-    Parser          parser(handler, builder);
+    Parser          parser(logger, handler, builder);
     std::string     fileName = "./config/ravy.conf";
     if (ac > 1) {
         fileName = av[1];

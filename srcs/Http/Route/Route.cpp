@@ -67,11 +67,12 @@ HttpStatusCode::Code Route::ProcessRequest(
         bool allow = this->_handler->IsAllowToGetFile(absolutePath);
         if (allow && isDirectory)
         {
-            std::string pathAutoindex = absolutePath;
             std::vector<std::string>::iterator it = this->_indexes.begin();
             for ( ; it != this->_indexes.end(); ++it)
             {
+                std::string pathAutoindex = absolutePath;
                 pathAutoindex = Utils::SanitizePath(pathAutoindex, *it);
+                std::cout << pathAutoindex << std::endl;
                 if (this->_handler->PathExist(pathAutoindex)
                 && this->_handler->IsAllowToGetFile(pathAutoindex)
                 && !this->_handler->FileIsDirectory(pathAutoindex))

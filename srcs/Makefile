@@ -28,7 +28,7 @@ HEADERS										=	Http/ \
 												Http/Route
 # Parser/
 INCLUDE_FLAGS 								:= 	-g3 -O3 -MMD -MP $(addprefix -I, $(HEADERS))
-VPATH										=	Http/:Parser:Logging:Http/Server/:Utils/:Http/Response:HandlerFileSystem:Http/Route:Http/Request
+VPATH										=	Http:Parser:Logging:Http/Server/:Utils/:Http/Response:HandlerFileSystem:Http/Route:Http/Request
 
 ######################## FLAGS ###############################
 FLAGS										= 	-Wall -Wextra -std=c++98
@@ -36,7 +36,7 @@ FLAGS										= 	-Wall -Wextra -std=c++98
 SRC_RESPONSE								=	HttpResponse.cpp BuilderResponse.cpp
 SRC_ROUTE									=	Route.cpp BuilderRoute.cpp
 SRC_SERVER									=	Server.cpp BuilderServer.cpp
-# SRC_PARSER									=	Parser.cpp Handler.cpp
+SRC_PARSER									=	Parser.cpp
 SRC_HTTP									=	Http.cpp HttpRequest.cpp # CommonParameters.cpp
 SRC_UTILS									=	Utils.cpp Handler.cpp
 SRC											= 	$(SRC_UTILS)				\
