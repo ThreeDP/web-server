@@ -63,11 +63,11 @@ all: $(NAME)
 
 CONFIG_HOST:
 	@echo "Configure Hosts"	
-#	@ chmod a+w /etc/hosts
-#	@ cat /etc/hosts | grep dapaulin.42.fr || echo "127.0.0.1 dapaulin.42.fr" >> /etc/hosts
-#	@ cat /etc/hosts | grep rleslie.42.fr || echo "127.0.0.1 rleslie.42.fr" >> /etc/hosts
-	@ mkdir -p $(WEB_DIR)
-	@ tar -xpf $(TAR_FILE) -C $(WEB_DIR)
+	@sudo chmod a+w /etc/hosts
+	@sudo cat /etc/hosts | grep dapaulin.42.fr || echo "127.0.0.1 dapaulin.42.fr" >> /etc/hosts
+	@sudo cat /etc/hosts | grep rleslie.42.fr || echo "127.0.0.1 rleslie.42.fr" >> /etc/hosts
+	@sudo mkdir -p $(WEB_DIR)
+	@sudo tar -xpf $(TAR_FILE) -C $(WEB_DIR)
 
 $(OBJS_PATH)%.o: %.cpp $(HEADER)
 

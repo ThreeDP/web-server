@@ -90,6 +90,41 @@ class ILogger {
             return (this->*logMethod)(_sformat(args));
         }
 
+        template<typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8>
+        std::string Log(LogMethod logMethod,
+            const T1& arg1, const T2& arg2, const T3& arg3,
+            const T4& arg4, const T5& arg5, const T6& arg6,
+            const T7& arg7, const T8& arg8) {
+            std::vector<std::string> args;
+            args.push_back(ToString(arg1));
+            args.push_back(ToString(arg2));
+            args.push_back(ToString(arg3));
+            args.push_back(ToString(arg4));
+            args.push_back(ToString(arg5));
+            args.push_back(ToString(arg6));
+            args.push_back(ToString(arg7));
+            args.push_back(ToString(arg8));
+            return (this->*logMethod)(_sformat(args));
+        }
+
+        template<typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9>
+        std::string Log(LogMethod logMethod,
+            const T1& arg1, const T2& arg2, const T3& arg3,
+            const T4& arg4, const T5& arg5, const T6& arg6,
+            const T7& arg7, const T8& arg8, const T9& arg9) {
+            std::vector<std::string> args;
+            args.push_back(ToString(arg1));
+            args.push_back(ToString(arg2));
+            args.push_back(ToString(arg3));
+            args.push_back(ToString(arg4));
+            args.push_back(ToString(arg5));
+            args.push_back(ToString(arg6));
+            args.push_back(ToString(arg7));
+            args.push_back(ToString(arg8));
+            args.push_back(ToString(arg9));
+            return (this->*logMethod)(_sformat(args));
+        }
+
         bool Env(void) {
             const char *value = std::getenv("__ENVIRONMENT__");
             if (value != NULL && std::string(value) == "dev")

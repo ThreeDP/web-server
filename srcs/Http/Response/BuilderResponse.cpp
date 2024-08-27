@@ -3,17 +3,18 @@
 // Contructors
 BuilderResponse::BuilderResponse(ILogger *logger, IHandler *handler) : 
     _logger(logger),
-    _handler(handler) {
-    _response = NULL;
+    _handler(handler)
+{
     std::cerr << _logger->Log(&Logger::LogDebug, "Created BuilderResponse Class.") << std::endl;
+    _response = NULL;
 }
 
 BuilderResponse::~BuilderResponse(void) {
+    std::cerr << _logger->Log(&Logger::LogDebug, "Deleted BuilderResponse Class.") << std::endl;
     if (_response != NULL) {
         delete _response;
         _response = NULL;
     }
-    std::cerr << _logger->Log(&Logger::LogDebug, "Deleted BuilderResponse Class.") << std::endl;
 }
 
 // Setup Response
@@ -42,6 +43,7 @@ IBuilderResponse &BuilderResponse::WithDirectoryFile(DIR *directory, std::string
         _response->_createBodyByDirectory(directories, path, *_handler);
     }
     closedir(directory);
+    DIR = NULL;
     return *this;
 }
 

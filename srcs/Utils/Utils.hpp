@@ -29,6 +29,7 @@ class Utils {
         static std::string          getCurrentTimeInGMT(void);
         static void                 checkPathEnd(std::string &path, std::string append);
         static std::string          GetFileExtension(std::string path);
+        static std::string          VectorToString(std::vector<std::string> words);
 };
 
 template<typename T>
