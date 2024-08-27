@@ -17,6 +17,14 @@ BuilderServer::BuilderServer(IHandler *handler, ILogger *logger) :
 }
 
 BuilderServer::~BuilderServer(void) {
+    if (_builderRoute != NULL) {
+        delete _builderRoute;
+        _builderRoute = NULL;
+    }
+    if (_server != NULL) {
+        delete _server;
+        _server = NULL;
+    }
     std::cerr << _logger->Log(&Logger::LogDebug, "Deleted BuilderServer Class.") << std::endl;
 }
 

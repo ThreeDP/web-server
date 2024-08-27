@@ -5,8 +5,11 @@
 class ParserParamsTest : public ::testing::Test {
 protected:
     void SetUp() override {
+		logger = new Logger();
     }
 };
+
+ILogger		*logger;
 
 TEST_F(ParserParamsTest, PassALine_ShouldBeRootParam_WhenLineContentHsARootLine) {
 	// ARRANGE
@@ -357,6 +360,17 @@ TEST_F(ParserParamsTest, GetPairParams_ShouldThrowInvalidArgument_WhenVectorHasO
 	}, std::invalid_argument);
 }
 
+// TEST_F(ParserParamsTest, GetPairParams_ShouldThrowInvalidArgument_WhenVectorHasOnlyOneElement) {
+// 	// ARRANGE
+// 	Parser()
+// 	std::vector<std::string> inputVector = {"command"};
+
+// 	// ACT & ASSERT
+// 	EXPECT_THROW({
+// 		ParserParams::GetPairParams(inputVector);
+// 	}, std::invalid_argument);
+// }
+
 
 int main(int argc, char **argv) {
     // Setup
@@ -366,5 +380,6 @@ int main(int argc, char **argv) {
 	int num = RUN_ALL_TESTS();
 
     // Clean
+	delete logger;
 	return num;
 }

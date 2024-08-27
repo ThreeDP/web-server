@@ -9,7 +9,7 @@ HttpResponse::HttpResponse(int num) {
     _setMapStatusCode();
     _setMapTextContent();
     _setCGIExtensions();
-
+    _logger = NULL;
     (void)num;
 };
 
@@ -27,7 +27,8 @@ HttpResponse::HttpResponse(ILogger *logger) :
 }
 
 HttpResponse::~HttpResponse(void) {
-   std::cerr << _logger->Log(&Logger::LogDebug, "Deleted HttpResponse Class.") << std::endl; 
+    if (_logger != NULL)
+        std::cerr << _logger->Log(&Logger::LogDebug, "Deleted HttpResponse Class.") << std::endl;
 }
 
 // Generate Response

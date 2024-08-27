@@ -69,6 +69,18 @@ std::string	Utils::getCurrentTimeInGMT(void) {
 	return (Utils::formatTimeString(now));
 }
 
+std::string Utils::VectorToString(std::vector<std::string> words) {
+    std::stringstream ss;
+
+    if (words.empty())
+        return std::string();
+    std::vector<std::string>::iterator it = words.begin();
+    for ( ; it != words.end(); ++it) {
+        ss << *it << " ";
+    }
+    return ss.str();
+}
+
 void   Utils::checkPathEnd(std::string &path, std::string append) {
     if (!path.empty() && path[path.size() - 1] == '/')
         path += append;

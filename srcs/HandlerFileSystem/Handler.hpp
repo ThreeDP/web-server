@@ -26,7 +26,6 @@ class Handler : public IHandler {
 		std::pair<bool, std::string>    ReadLine(std::ifstream &file) {
 			std::string			line;
 			bool response = (std::getline(file, line)) ? true : false;
-			std::cout << "==" << line << "==" << std::endl;
 			return std::make_pair(response, line);
 		}
 };

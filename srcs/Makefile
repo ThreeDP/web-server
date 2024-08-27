@@ -6,7 +6,7 @@
 #    By: dapaulin <dapaulin@student.42sp.org.br>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/11/03 15:04:07 by dapaulin          #+#    #+#              #
-#    Updated: 2024/08/19 20:20:24 by dapaulin         ###   ########.fr        #
+#    Updated: 2024/08/26 19:23:45 by dapaulin         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -28,7 +28,7 @@ HEADERS										=	Http/ \
 												Http/Route
 # Parser/
 INCLUDE_FLAGS 								:= 	-g3 -O3 -MMD -MP $(addprefix -I, $(HEADERS))
-VPATH										=	Http/:Parser:Logging:Http/Server/:Utils/:Http/Response:HandlerFileSystem:Http/Route:Http/Request
+VPATH										=	Http:Parser:Logging:Http/Server/:Utils/:Http/Response:HandlerFileSystem:Http/Route:Http/Request
 
 ######################## FLAGS ###############################
 FLAGS										= 	-Wall -Wextra -std=c++98
@@ -36,7 +36,7 @@ FLAGS										= 	-Wall -Wextra -std=c++98
 SRC_RESPONSE								=	HttpResponse.cpp BuilderResponse.cpp
 SRC_ROUTE									=	Route.cpp BuilderRoute.cpp
 SRC_SERVER									=	Server.cpp BuilderServer.cpp
-# SRC_PARSER									=	Parser.cpp Handler.cpp
+SRC_PARSER									=	Parser.cpp
 SRC_HTTP									=	Http.cpp HttpRequest.cpp # CommonParameters.cpp
 SRC_UTILS									=	Utils.cpp Handler.cpp
 SRC											= 	$(SRC_UTILS)				\
@@ -63,11 +63,11 @@ all: $(NAME)
 
 CONFIG_HOST:
 	@echo "Configure Hosts"	
-	sudo chmod a+w /etc/hosts
-	sudo cat /etc/hosts | grep dapaulin.42.fr || echo "127.0.0.1 dapaulin.42.fr" >> /etc/hosts
-	sudo cat /etc/hosts | grep rleslie.42.fr || echo "127.0.0.1 rleslie.42.fr" >> /etc/hosts
-	sudo mkdir -p $(WEB_DIR)
-	sudo tar -xpf $(TAR_FILE) -C $(WEB_DIR)
+	@sudo chmod a+w /etc/hosts
+	@sudo cat /etc/hosts | grep dapaulin.42.fr || echo "127.0.0.1 dapaulin.42.fr" >> /etc/hosts
+	@sudo cat /etc/hosts | grep rleslie.42.fr || echo "127.0.0.1 rleslie.42.fr" >> /etc/hosts
+	@sudo mkdir -p $(WEB_DIR)
+	@sudo tar -xpf $(TAR_FILE) -C $(WEB_DIR)
 
 $(OBJS_PATH)%.o: %.cpp $(HEADER)
 

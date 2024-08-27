@@ -132,7 +132,7 @@ std::string         Server::FindMatchRoute(HttpRequest &res) {
 }
 
 void                Server::ProcessRequest(HttpRequest &request, int client_fd) {
-    BuilderResponse builder = BuilderResponse(_logger, new Handler());
+    BuilderResponse builder = BuilderResponse(_logger, _handler);
     std::string keyPath = this->FindMatchRoute(request);
     std::cout << _logger->Log(
         &ILogger::LogInformation,
