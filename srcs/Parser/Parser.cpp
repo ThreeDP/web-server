@@ -80,7 +80,7 @@ void    Parser::InsertService(Http &http, EnumParams::Param p, std::vector<std::
     std::cout << params[0] << std::endl;
     if (SetParamIntoRoute(http, p, params)) {return;}
     if (SetParamIntoServer(http, p, params)) {return;}
-    else if (p == EnumParams::_SERVER) {
+    else if (p == EnumParams::_SERVER && params.size() == 2 && params.back() == "{") {
         this->_serverOpen = true;
         _builder->SetupServer();
     } else {
@@ -117,26 +117,26 @@ bool    Parser::SetParamIntoRoute(Http &http, EnumParams::Param p, std::vector<s
                     ));
                     break;	
                 case EnumParams::_REWRITE:
-                    _builder->GetBuilderRoute()->WithRedirectPath(ParserParams::GetStringParam(params));
+                    _builder->GetBuilderRoute()->WithRedirectPath(ParserParams::GetStringParam(params, ";"));
                     break;
                 case EnumParams::_ROOT:
-                    _builder->GetBuilderRoute()->WithRootDirectory(ParserParams::GetStringParam(params));
+                    _builder->GetBuilderRoute()->WithRootDirectory(ParserParams::GetStringParam(params, ";"));
                     break;
                 case EnumParams::_ERROR_PAGE:
-                    code = ParserParams::GetPairCodeParams(params);
+                    code = ParserParams::GetPairCodeParams(params, ";");
                     _builder->GetBuilderRoute()->WithErrorPage(code.first, code.second);
                     break;
                 case EnumParams::_BODY_LIMIT:
-                    _builder->GetBuilderRoute()->WithBodyLimit(ParserParams::GetBodyLimitParam(params));
+                    _builder->GetBuilderRoute()->WithBodyLimit(ParserParams::GetBodyLimitParam(params, ";"));
                     break;
                 case EnumParams::_ALLOW_METHODS:
-                    _builder->GetBuilderRoute()->WithAllowMethods(ParserParams::GetSetParams(params));
+                    _builder->GetBuilderRoute()->WithAllowMethods(ParserParams::GetSetParams(params, ";"));
                     break;
                 case EnumParams::_AUTOINDEX:
-                    _builder->GetBuilderRoute()->WithAutoIndex(ParserParams::GetAutoIndexParam(params));
+                    _builder->GetBuilderRoute()->WithAutoIndex(ParserParams::GetAutoIndexParam(params, ";"));
                     break;
                 case EnumParams::_INDEX:
-                    _builder->GetBuilderRoute()->WithPageIndexes(ParserParams::GetVectorParams(params));
+                    _builder->GetBuilderRoute()->WithPageIndexes(ParserParams::GetVectorParams(params, ";"));
                     break;
                 default:
                     throw std::invalid_argument("4 Syntax Error.");
@@ -162,36 +162,36 @@ bool    Parser::SetParamIntoServer(Http &http, EnumParams::Param p, std::vector<
                 ));
                 break;
             case EnumParams::_REWRITE:
-                _builder->WithRedirectPath(ParserParams::GetPairParams(params));
+                _builder->WithRedirectPath(ParserParams::GetPairParams(params, ";"));
                 break;
             case EnumParams::_ROOT:
-                _builder->WithRootDirectory(ParserParams::GetStringParam(params));
+                _builder->WithRootDirectory(ParserParams::GetStringParam(params, ";"));
                 break;
             case EnumParams::_LISTEN:
-                _builder->WithPort(ParserParams::GetStringParam(params));
+                _builder->WithPort(ParserParams::GetStringParam(params, ";"));
                 break;
             case EnumParams::_ERROR_PAGE:
-                code = ParserParams::GetPairCodeParams(params);
+                code = ParserParams::GetPairCodeParams(params, ";");
                 _builder->WithErrorPages(code.first, code.second);
                 break;
             case EnumParams::_BODY_LIMIT:
-                _builder->WithBodyLimit(ParserParams::GetBodyLimitParam(params));
+                _builder->WithBodyLimit(ParserParams::GetBodyLimitParam(params, ";"));
                 break;
             case EnumParams::_ALLOW_METHODS:
-                _builder->WithAllowMethods(ParserParams::GetSetParams(params));
+                _builder->WithAllowMethods(ParserParams::GetSetParams(params, ";"));
                 break;
             case EnumParams::_INDEX:
-                _builder->WithIndexes(ParserParams::GetVectorParams(params));
+                _builder->WithIndexes(ParserParams::GetVectorParams(params, ";"));
                 break;
             case EnumParams::_AUTOINDEX:
-                _builder->WithAutoIndex(ParserParams::GetAutoIndexParam(params));
+                _builder->WithAutoIndex(ParserParams::GetAutoIndexParam(params, ";"));
                 break;
             case EnumParams::_ROUTE:
                 this->_routeOpen = true;
-                _builder->GetBuilderRoute()->SetupRoute(ParserParams::GetStringParam(params));
+                _builder->GetBuilderRoute()->SetupRoute(ParserParams::GetStringParam(params, "{"));
                 break;
             case EnumParams::_SERVER_NAME:
-                _builder->WithHosts(ParserParams::GetVectorParams(params));
+                _builder->WithHosts(ParserParams::GetVectorParams(params, ";"));
                 break;	
             default:
                 throw std::invalid_argument("6 Syntax Error.");

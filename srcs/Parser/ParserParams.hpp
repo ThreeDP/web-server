@@ -62,16 +62,16 @@ class ParserParams {
 			return pieces;
 		}
 
-		static std::vector<std::string> GetVectorParams(std::vector<std::string> vector) {
-			if (vector.empty() || vector.size() <= 2 || vector.back() == ";")
+		static std::vector<std::string> GetVectorParams(std::vector<std::string> vector, std::string end) {
+			if (vector.empty() || vector.size() <= 2 || vector.back() != end)
 				throw std::invalid_argument("8 Syntax Error.");
 			std::vector<std::string>::iterator start = vector.begin() + 1;
-			std::vector<std::string>::iterator end = vector.end() - 1;
-			return std::vector<std::string>(start, end);
+			std::vector<std::string>::iterator finish = vector.end() - 1;
+			return std::vector<std::string>(start, finish);
 		}
 
-		static std::set<std::string> GetSetParams(std::vector<std::string> vector) {
-			if (vector.empty() || vector.size() <= 2)
+		static std::set<std::string> GetSetParams(std::vector<std::string> vector, std::string end) {
+			if (vector.empty() || vector.size() <= 2 || vector.back() != end)
 				throw std::invalid_argument("9 Syntax Error.");
 			std::vector<std::string>::iterator it = vector.begin() + 1;
 			std::set<std::string> newSet;
@@ -81,22 +81,15 @@ class ParserParams {
 			return newSet;
 		}
 
-		static std::pair<std::string, std::string> GetPairParams(std::vector<std::string> vector) {
-			int size;
-			if (!vector.empty() && (size = vector.size() - 2) == 2) {
+		static std::pair<std::string, std::string> GetPairParams(std::vector<std::string> vector, std::string end) {
+			if (!vector.empty() && (vector.size() - 2) == 2 && vector.back() == end)
 				return std::pair<std::string, std::string>(vector[1], vector[2]);
-			}
-			std::stringstream ss;
-			ss << "Wrong number of params for {" << "command" << "}." << std::endl; 
-			throw std::invalid_argument(ss.str());
+			throw std::invalid_argument("Wrong number of params for 138");
 		}
 
-		static std::pair<std::set<HttpStatusCode::Code>, std::string> GetPairCodeParams(std::vector<std::string> vector) {
-			int size = vector.size() - 2;
-			std::stringstream ss;
-			ss << "Wrong number of params for {" << vector[0] << "}." << std::endl; 
-			if (size < 2)
-				throw std::invalid_argument(ss.str());
+		static std::pair<std::set<HttpStatusCode::Code>, std::string> GetPairCodeParams(std::vector<std::string> vector, std::string end) {
+			if (vector.empty() && (vector.size() - 2) <= 2 && vector.back() != end)
+				throw std::invalid_argument("Wrong number of params for 158");
 			std::vector<std::string>::iterator it = vector.begin() + 1;
 			std::set<HttpStatusCode::Code> codes;
 			for (; it != vector.end() - 2; ++it) {
@@ -111,37 +104,31 @@ class ParserParams {
 			return std::pair<std::set<HttpStatusCode::Code>, std::string>(codes, *it);
 		}
 
-		static std::string GetStringParam(std::vector<std::string> vector) {
-			std::cout << "TA AQUI?" << std::endl;
-			int size = vector.size() - 2;
-			std::stringstream ss;
-			ss << "Wrong number of params for {" << vector[0] << "}." << std::endl; 
-			if (size != 1)
-				throw std::invalid_argument(ss.str());
-
+		static std::string GetStringParam(std::vector<std::string> vector, std::string end) { 
+			if (vector.empty() || (vector.size() - 2) != 1 || vector.back() != end)
+				throw std::invalid_argument("99 Syntax Error.");
 			return std::string(vector[1]);
 		}
 
-		static int GetBodyLimitParam(std::vector<std::string> vector) {
-			int size = vector.size() - 2;
-			std::stringstream ss;
-			ss << "Wrong number of params for {" << vector[0] << "}." << std::endl; 
-			if (size != 1)
-				throw std::invalid_argument(ss.str());
-			return 2048;
+		static int GetBodyLimitParam(std::vector<std::string> vector, std::string end) {
+			if (vector.empty() || (vector.size() - 2) != 1 || vector.back() != end)
+				throw std::invalid_argument("Wrong number of params for 157");
+			size_t bodyLimit = 0;
+			std::stringstream ss(vector[1]);
+			ss >> bodyLimit;
+			if (ss.fail())
+				throw std::invalid_argument("I need a number here!");
+			return bodyLimit;
 		}
 
-		static bool GetAutoIndexParam(std::vector<std::string> vector) {
-			int size = vector.size() - 2;
-			std::stringstream ss;
-			ss << "Wrong number of params for {" << vector[0] << "}." << std::endl; 
-			if (size != 1)
-				throw std::invalid_argument(ss.str());
+		static bool GetAutoIndexParam(std::vector<std::string> vector, std::string end) {
+			if (vector.empty() || (vector.size() - 2) != 1 || vector.back() != end)
+				throw std::invalid_argument("Wrong number of params for 156");
 			if (vector[1] == "on")
 				return true;
 			else if (vector[1] == "off")
 				return false;
-			throw std::invalid_argument("Wrong Param on autoindex options:(on, off).");
+			throw std::invalid_argument("Wrong Param on autoindex options: (on, off).");
 		}
 
 		static char SanitizeString(std::string str) {
@@ -153,7 +140,8 @@ class ParserParams {
 			} else if ((semicolon + open_curly + close_curly) == 0) {
 				int size = 0;
 				for (std::string::iterator it = str.begin(); it != str.end(); ++it) {
-					size++;
+					if (std::isspace(*it))
+						size++;
 				}
 				return (size == str.size()) ? '\0' : throw std::invalid_argument("11 Syntax Error.");
 			}
