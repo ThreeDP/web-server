@@ -1,11 +1,14 @@
 # include "Server.hpp"
 
 Server::Server(IHandler *handler, ILogger *logger) :
+_port("8080"),
+_limit_client_body_size(2048),
 _root("./"),
 _autoIndex(false),
+_ip("127.0.0.1"),
+_ipVersion("IPV4"),
 _handler(handler),
 _logger(logger),
-_limit_client_body_size(2048),
 _actualClientFD(-1)
 {
     _hosts.push_back("localhost");
@@ -16,7 +19,6 @@ _actualClientFD(-1)
     this->hints.ai_flags = AI_CANONNAME;
 
     this->result = NULL;
-    this->_stage = S_START;
     if (_logger->Env()) {
         std::cerr << _logger->Log(&Logger::LogDebug, "Created Server Class: ") << std::endl;
         std::cerr << _logger->Log(&Logger::LogTrace, "Server Standard Content {\n", this->_toString(), "\n}") << std::endl;
@@ -95,7 +97,6 @@ int Server::AcceptClientConnect(void) {
     socklen_t                   addrlen;
     struct sockaddr_storage     client_saddr;
 
-    this->_stage = S_CLIENT_CONNECT;
     addrlen = sizeof(struct sockaddr_storage);
     this->_actualClientFD = accept(
         this->GetListener(),
@@ -194,24 +195,13 @@ std::string Server::GetIPVersion(void) const {
 }
 
 std::string Server::GetListenPort(void) const {
-    std::stringstream ls_port;
-
-    ls_port << this->_listen_port;
-    return ls_port.str();
-}
-
-ServerStages    Server::GetStage(void) const {
-    return this->_stage;
-}
-
-int             Server::GetClientFD(void) const {
-    return this->_actualClientFD;
+    return _port;
 }
 
 /* Seters
 =======================================*/
 void    Server::_setServerIpInfos(struct addrinfo *result) {
-    void    *addr;
+    void    *addr = NULL;
     char ipStr[INET6_ADDRSTRLEN];
 
     if (result->ai_family == AF_INET) {
@@ -226,12 +216,6 @@ void    Server::_setServerIpInfos(struct addrinfo *result) {
     }
     inet_ntop(result->ai_family, addr, ipStr, sizeof(ipStr));
     this->_ip = ipStr;
-    this->_stage = S_LISTEN;
-}
-
-void    Server::UpdateState(ServerStages st, int client_fd) {
-    this->_stage = st;
-    this->_actualClientFD = client_fd;
 }
 
 // Geters

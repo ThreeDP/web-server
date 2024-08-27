@@ -5,16 +5,24 @@ std::map<std::string, std::string> HttpResponse::_mapTextContent;
 std::set<std::string> HttpResponse::_CGIExtensions;
 
 // Constructors
-HttpResponse::HttpResponse(int num) {
+HttpResponse::HttpResponse(int num) : 
+    _server("Ravy 1.0.0"),
+    _HTTPVersion("HTTP/1.1"),
+    _statusCode("200"),
+    _statusMessage("OK"),
+    _logger(NULL)
+{
     _setMapStatusCode();
     _setMapTextContent();
     _setCGIExtensions();
-    _logger = NULL;
     (void)num;
 };
 
 HttpResponse::HttpResponse(ILogger *logger) :
+    _server("Ravy 1.0.0"),
     _HTTPVersion("HTTP/1.1"),
+    _statusCode("200"),
+    _statusMessage("OK"),
     _logger(logger)
 {
     this->_headers["Content-Type:"] = this->_mapTextContent["text"];

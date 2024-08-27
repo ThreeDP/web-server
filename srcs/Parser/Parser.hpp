@@ -9,6 +9,7 @@
 namespace EnumParams {
 
 	enum Param {
+		_UNW,
 		_ROOT,
 		_REWRITE,
 		_SERVER_NAME,
@@ -40,9 +41,9 @@ class Parser {
 		~Parser(void);
 
 		int		ConfigHttp(Http &http, std::string fileName);
-		void    InsertService(Http &http, EnumParams::Param p, std::vector<std::string> params);
-		bool	SetParamIntoRoute(Http &http, EnumParams::Param p, std::vector<std::string> &params);
-		bool    SetParamIntoServer(Http &http, EnumParams::Param p, std::vector<std::string> &params);
+		void    InsertService(EnumParams::Param p, std::vector<std::string> params);
+		bool	SetParamIntoRoute(EnumParams::Param p, std::vector<std::string> &params);
+		bool    SetParamIntoServer(EnumParams::Param p, std::vector<std::string> &params);
 
 		EnumParams::Param			IdentifiesParameter(std::string input);
 		std::vector<std::string> 	BreakLineIntoPieces(std::string input, char c);

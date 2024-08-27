@@ -18,8 +18,6 @@ class BuilderRoute;
 
 class Route : public IRoute {
     private:
-        ILogger                                     *_logger;
-        IHandler                                    *_handler;
         std::string                                 _route_name;
         std::set<std::string>                       _allow_methods;
         std::map<HttpStatusCode::Code, std::string> _error_page;
@@ -28,6 +26,8 @@ class Route : public IRoute {
         std::string                                 _root;
         bool                                        _autoIndex;
         std::vector<std::string>                    _indexes;
+        ILogger                                     *_logger;
+        IHandler                                    *_handler;
 
         void        SetRouteName(std::string routeName);
         void        SetBodyLimit(int size);
@@ -41,8 +41,6 @@ class Route : public IRoute {
         std::string _toString(void);
 
     public:
-        RouteStages                                 _stage;
-
         Route(void) {}
 
         Route(ILogger *logger, IServer *server, IHandler *handler, std::string route_name);
