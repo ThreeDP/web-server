@@ -43,7 +43,7 @@ IBuilderResponse &BuilderResponse::WithDirectoryFile(DIR *directory, std::string
         _response->_createBodyByDirectory(directories, path, *_handler);
     }
     closedir(directory);
-    DIR = NULL;
+    directory = NULL;
     return *this;
 }
 
