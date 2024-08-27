@@ -12,7 +12,7 @@ class IServer {
     private:
         virtual std::string                 _toString(void) = 0;
     public:
-        ~IServer(void) {}
+        virtual ~IServer(void) {}
 
         // Geters
         virtual std::set<std::string>
@@ -57,8 +57,6 @@ class IServer {
         virtual std::string             GetIP(void) const = 0;
         virtual std::string             GetIPVersion(void) const = 0;
         virtual std::string             GetListenPort(void) const = 0;
-        // virtual ServerStages            GetStage(void) const = 0;
-        virtual int                     GetClientFD(void) const = 0;
 
         friend class BuilderServer;
         friend class IBuilderServer;

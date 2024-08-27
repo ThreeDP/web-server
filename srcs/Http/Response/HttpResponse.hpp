@@ -8,13 +8,14 @@
 
 class HttpResponse : public IHttpResponse {
 
+        const std::string                   _server;
 	protected:
-        ILogger                             *_logger;
 		std::string                         _HTTPVersion;
         std::string                         _statusCode;
         std::string                         _statusMessage;
         std::map<std::string, std::string>  _headers;
         std::vector<char>                   _body;
+        ILogger                             *_logger;
 
         // Geters
         std::string                         GetHttpVersion(void) const;
@@ -47,7 +48,6 @@ class HttpResponse : public IHttpResponse {
         void                    SetHeader(std::string key, std::string value);
         void                    SetBody(std::string body);
 
-        const std::string                                   _server = "Ravy 1.0.0";
         static std::map<HttpStatusCode::Code, std::string>  _mapStatusCode;
         static std::set<std::string>                        _CGIExtensions;
         static std::map<std::string, std::string>           _mapTextContent;

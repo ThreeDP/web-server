@@ -41,11 +41,6 @@ IBuilderRoute       *BuilderServer::GetBuilderRoute(void) {
     return _builderRoute;
 };
 
-IBuilderServer      &BuilderServer::StartBRoute(void) {
-    if (_builderRoute == NULL)
-        _builderRoute = new BuilderRoute(_logger, _server, _handler);
-}
-
 IBuilderServer      &BuilderServer::WithRoute(IRoute *route) {
     _server->SetRoute(route->GetRouteName(), route);
     return *this;

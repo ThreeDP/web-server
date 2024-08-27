@@ -20,9 +20,6 @@ enum ServerStages {
 class Server : public IServer {
     private:
         // Configs
-        std::string                                     _listen_host;
-        unsigned short                                  _listen_port;
-
         std::vector<std::string>                        _hosts;
         std::string                                     _port;
         std::set<std::string>                           _allowMethods;
@@ -36,7 +33,6 @@ class Server : public IServer {
 
         std::string     _ip;
         std::string     _ipVersion;
-        ServerStages    _stage;
         IHandler        *_handler;
         ILogger         *_logger;
 
@@ -101,8 +97,6 @@ class Server : public IServer {
         std::string             GetIP(void) const;
         std::string             GetIPVersion(void) const;
         std::string             GetListenPort(void) const;
-        ServerStages            GetStage(void) const;
-        int                     GetClientFD(void) const;
 
         // Seters
 

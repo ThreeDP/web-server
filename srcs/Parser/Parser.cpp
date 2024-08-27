@@ -4,8 +4,8 @@ Parser::Parser(ILogger *logger, IHandler *handler, IBuilderServer *builder) :
     _handler(handler),
     _logger(logger),
     _builder(builder),
-    _routeOpen(false),
     _serverOpen(false),
+    _routeOpen(false),
     _line(0),
     _file(NULL)
 {
@@ -30,7 +30,7 @@ int	Parser::ConfigHttp(Http &http, std::string fileName) {
         ));
     while ((line = _handler->ReadLine(*_file)).first) {
         this->_line++;
-        EnumParams::Param p;
+        EnumParams::Param p = EnumParams::_UNW;
         std::vector<std::string> pieces;
         char ch = this->SanitizeString(line.second);
 
@@ -65,7 +65,7 @@ int	Parser::ConfigHttp(Http &http, std::string fileName) {
         }
         if (_logger->Env())
             _logger->Log(&Logger::LogTrace, "Line:", Utils::VectorToString(pieces), "\tFlag:", p);
-        this->InsertService(http, p, pieces);
+        this->InsertService(p, pieces);
     }
     if (_file != NULL) {
         _file->close();
@@ -74,11 +74,11 @@ int	Parser::ConfigHttp(Http &http, std::string fileName) {
     return 0;
 }
 
-void    Parser::InsertService(Http &http, EnumParams::Param p, std::vector<std::string> params) {
+void    Parser::InsertService(EnumParams::Param p, std::vector<std::string> params) {
     if (params.empty())
         ExceptionValidation("Syntax error on line", "", "16");
-    if (SetParamIntoRoute(http, p, params)) {return;}
-    if (SetParamIntoServer(http, p, params)) {return;}
+    if (SetParamIntoRoute(p, params)) {return;}
+    if (SetParamIntoServer(p, params)) {return;}
     else if (p == EnumParams::_SERVER && params.size() == 2 && params.back() == "{") {
         this->_serverOpen = true;
         _builder->SetupServer();
@@ -91,7 +91,7 @@ void    Parser::InsertService(Http &http, EnumParams::Param p, std::vector<std::
     }
 }
 
-bool    Parser::SetParamIntoRoute(Http &http, EnumParams::Param p, std::vector<std::string> &params) {
+bool    Parser::SetParamIntoRoute(EnumParams::Param p, std::vector<std::string> &params) {
     if (this->_serverOpen) {
         if (this->_routeOpen) {
             std::pair<std::set<HttpStatusCode::Code>, std::string> code;
@@ -145,7 +145,7 @@ bool    Parser::SetParamIntoRoute(Http &http, EnumParams::Param p, std::vector<s
     return false;
 }
 
-bool    Parser::SetParamIntoServer(Http &http, EnumParams::Param p, std::vector<std::string> &params) {
+bool    Parser::SetParamIntoServer(EnumParams::Param p, std::vector<std::string> &params) {
     if (this->_serverOpen) {
         std::pair<std::set<HttpStatusCode::Code>, std::string> code;
         switch (p)
@@ -216,14 +216,14 @@ EnumParams::Param Parser::IdentifiesParameter(std::string input) {
     std::map<std::string, EnumParams::Param>::iterator it = map.find(input);
     if (it != map.end())
         return it->second;
-    ExceptionValidation("Invalid Param on line", input, "13");
+    return (ExceptionValidation("Invalid Param on line", input, "13"), EnumParams::_UNW);
 }
 
 std::vector<std::string> Parser::BreakLineIntoPieces(std::string input, char c) {
-    int hasFinish = input.find_last_of(c);
+    long unsigned int hasFinish = input.find_last_of(c);
 
     std::string ch(1, c);
-    if (hasFinish != input.size() - 1)
+    if (hasFinish != (input.size() - 1))
         throw std::invalid_argument(
             _logger->Log(
                 &Logger::LogCaution,
@@ -278,7 +278,7 @@ std::set<std::string> Parser::GetSetParams(std::vector<std::string> vector, std:
 std::pair<std::string, std::string> Parser::GetPairParams(std::vector<std::string> vector, std::string end) {
     if ((vector.size() - 2) == 2 && vector.back() == end)
         return std::pair<std::string, std::string>(vector[1], vector[2]);
-    ExceptionValidation("Syntax error on line", Utils::VectorToString(vector), "2");
+    return (ExceptionValidation("Syntax error on line", Utils::VectorToString(vector), "2"), std::pair<std::string, std::string>());
 
 }
 
@@ -307,7 +307,7 @@ std::string Parser::GetStringParam(std::vector<std::string> vector, std::string 
 
 int Parser::GetBodyLimitParam(std::vector<std::string> vector, std::string end) {
     if ((vector.size() - 2) != 1 || vector.back() != end)
-        return (-1, ExceptionValidation("Syntax error on line", Utils::VectorToString(vector), "6"));
+        return (ExceptionValidation("Syntax error on line", Utils::VectorToString(vector), "6"), -1);
     size_t bodyLimit = 0;
     std::stringstream ss(vector[1]);
     ss >> bodyLimit;
@@ -323,7 +323,7 @@ bool Parser::GetAutoIndexParam(std::vector<std::string> vector, std::string end)
         return true;
     else if (vector[1] == "off")
         return false;
-    ExceptionValidation("Invalid param on line", Utils::VectorToString(vector), "9");
+    return (ExceptionValidation("Invalid param on line", Utils::VectorToString(vector), "9"), false);
 }
 
 char Parser::SanitizeString(std::string str) {
@@ -333,7 +333,7 @@ char Parser::SanitizeString(std::string str) {
     if ((semicolon + open_curly + close_curly) > 1) {
         return ExceptionValidation("Syntax error on line", str, "10");
     } else if ((semicolon + open_curly + close_curly) == 0) {
-        int size = 0;
+        long unsigned int size = 0;
         for (std::string::iterator it = str.begin(); it != str.end(); ++it) {
             if (std::isspace(*it))
                 size++;
