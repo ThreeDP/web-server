@@ -13,12 +13,13 @@ void    Http::StartPollList(void) {
     std::map<std::string, IServer*>::iterator it = this->servers.begin();
     for (; it != this->servers.end(); ++it) {
         memset(&event, 0, sizeof(struct epoll_event));
-        it->second->SetAddrInfo();
+        it->second->SetAddrInfo(it->first);
         it->second->CreateSocketAndBind();
-        event.data.fd = it->second->StartListen();
+        event.data.fd = it->second->StartListen(it->first);
         event.events = EPOLLIN;
         if (epoll_ctl(epollFD, EPOLL_CTL_ADD, it->second->GetListener(), &event) == -1)
             throw Except("Error on add server: <name> port: <port>");
+        // add listener array
     }
 }
 
