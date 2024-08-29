@@ -43,9 +43,9 @@ class IServer {
     public:
         // Methods
         virtual void        SetRoute(std::string routeName, IRoute *route) = 0;
-        virtual void        SetAddrInfo(void) = 0;
+        virtual void        SetAddrInfo(std::string host) = 0;
         virtual void        CreateSocketAndBind(void) = 0;
-        virtual int         StartListen(void) = 0;
+        virtual int         StartListen(std::string host) = 0;
         virtual int         AcceptClientConnect(void) = 0;
 
         virtual IHttpResponse*             ProcessResponse(int client_fd) = 0;

@@ -12,6 +12,7 @@ _logger(logger),
 _actualClientFD(-1)
 {
     _hosts.push_back("localhost");
+    _allowMethods.insert("GET");
     _handler = handler;
     memset(&hints, 0, sizeof(struct addrinfo));
     this->hints.ai_family = AF_UNSPEC;
@@ -35,10 +36,12 @@ Server::~Server(void) {
 /* Server Methods
 =======================================*/
 
-void    Server::SetAddrInfo(void) {
+void    Server::SetAddrInfo(std::string host) {
     int status = 0;
+    // memset(&result, 0, sizeof(struct addrinfo));
+
     status = getaddrinfo(
-        "localhost",
+        host.c_str(),
         _port.c_str(),
         &this->hints,
         &this->result
@@ -62,7 +65,7 @@ void    Server::CreateSocketAndBind(void) {
         );
         if (listener == - 1)
             continue;
-        if (setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof (int)) == -1)
+        if (setsockopt(listener, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof (int)) == -1)
             throw Except("setsockopt");
         if (bind(listener, result->ai_addr, result->ai_addrlen) == 0) {
             break;
@@ -77,7 +80,7 @@ void    Server::CreateSocketAndBind(void) {
     this->_setServerIpInfos(result);
 }
 
-int    Server::StartListen(void) {
+int    Server::StartListen(std::string host) {
     std::cout << _logger->Log(&Logger::LogInformation, "Try Starting Listen...") << std::endl;
     if ((listen(this->listener, this->backlog)) == -1) {
         throw Except(_logger->Log(
@@ -89,7 +92,7 @@ int    Server::StartListen(void) {
             ">\n")
         );
     }
-    std::cout << _logger->Log(&Logger::LogInformation, "Listening on:", _hosts[0], _port) << std::endl;
+    std::cout << _logger->Log(&Logger::LogInformation, "Listening on:", host, _port) << std::endl;
     return this->listener;
 }
 

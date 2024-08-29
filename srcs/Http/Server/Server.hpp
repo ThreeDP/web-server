@@ -79,9 +79,9 @@ class Server : public IServer {
 
         std::string                 GetPort(void);
         // Server Methods
-        void                    SetAddrInfo(void);
+        void                    SetAddrInfo(std::string host);
         void                    CreateSocketAndBind(void);
-        int                     StartListen(void);
+        int                     StartListen(std::string host);
         int                     AcceptClientConnect(void);
 
         // Server Process
