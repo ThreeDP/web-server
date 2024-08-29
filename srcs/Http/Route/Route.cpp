@@ -16,6 +16,7 @@ HttpStatusCode::Code Route::_handlerErrorResponse(
             builder
                 .SetupResponse()
                 .WithStatusCode(statusCode)
+                .WithLocation(path)
                 .WithLastModified(path)
                 .WithContentType(Utils::GetFileExtension(path))
                 .WithFileDescriptor(fd);
