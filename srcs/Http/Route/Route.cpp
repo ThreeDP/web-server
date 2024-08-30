@@ -39,35 +39,21 @@ HttpStatusCode::Code Route::ProcessRequest(
 ) {
     std::ifstream   *fd = NULL;
     std::string     absolutePath;
+    HttpStatusCode::Code result = HttpStatusCode::_DO_NOTHING;
     
     absolutePath = Utils::SanitizePath(this->_root, request.GetPath());
-    if (!this->IsAllowMethod(request.GetMethod())) {
-        return this->_handlerErrorResponse(
-            fd,
-            HttpStatusCode::_METHOD_NOT_ALLOWED,
-            builder
-        );
-    } else if (this->GetBodyLimit() < request.GetBodySize()) {
-        return this->_handlerErrorResponse(
-            fd,
-            HttpStatusCode::_CONTENT_TOO_LARGE,
-            builder
-        );
-    } else if (this->GetRedirectPath() != "") {
-        builder
-            .SetupResponse()
-            .WithStatusCode(HttpStatusCode::_PERMANENT_REDIRECT)
-            .WithLocation("/" + this->GetRedirectPath())
-            .WithDefaultPage();
-        std::cout << _logger->Log(&Logger::LogInformation, "Permanent Redirect: ", HttpStatusCode::_PERMANENT_REDIRECT) << std::endl;
-        return (HttpStatusCode::_PERMANENT_REDIRECT);
-    }
+    if (( result = this->_checkAllowMethod(request.GetMethod() ))) { return result; }
+    if (( result = this->_checkRedirectPath(this->GetRedirectPath()) )) { return result; }
+    if (( result = this->_methods[request.GetMethod()](request) )) { return result; }
+    
+
     if (this->_handler->PathExist(absolutePath))
     {
         bool isDirectory = this->_handler->FileIsDirectory(absolutePath);
         bool allow = this->_handler->IsAllowToGetFile(absolutePath);
         if (allow && isDirectory)
         {
+            if (( result = this->_checkExistIndex(request.GetPath(), absolutePath, isDirectory, allow) )) { return result; }
             std::vector<std::string>::iterator it = this->_indexes.begin();
             for ( ; it != this->_indexes.end(); ++it)
             {
@@ -114,6 +100,8 @@ HttpStatusCode::Code Route::ProcessRequest(
     }
     return this->_handlerErrorResponse(fd, HttpStatusCode::_NOT_FOUND, builder);
 }
+
+HttpStatusCode::Code Route::
 
 // Set Methods
 void        Route::SetRouteName(std::string routeName) {
@@ -213,6 +201,10 @@ Route::Route(ILogger *logger, IServer *server, IHandler *handler, std::string ro
     _logger(logger),
     _handler(handler)
 {
+    _method["GET"] = &Route::Get
+    _method["POST"] = &Route::Post
+    _method["DELETE"] = &Route::Delete
+    _builder = new BuilderResponse(_handler, _logger);
     if (_logger->Env()) {
         std::cerr << _logger->Log(&Logger::LogDebug, "Created Route Class: ") << std::endl;
         std::cerr << _logger->Log(&Logger::LogTrace, "Route Standard Content {\n", this->_toString(), "\n}") << std::endl;
