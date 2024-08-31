@@ -13,7 +13,7 @@ class IRoute {
     public:
         virtual ~IRoute(void) { }
         
-        virtual HttpStatusCode::Code ProcessRequest(
+        virtual IHttpResponse *ProcessRequest(
             HttpRequest &request
         ) = 0;
 

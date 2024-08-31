@@ -7,17 +7,29 @@
  * 
  */
 
-HttpStatusCode::Code Route::ProcessRequest(
+IHttpResponse *Route::ProcessRequest(
     HttpRequest &request
 ) {
     std::string     absolutePath;
-    HttpStatusCode::Code result = HttpStatusCode::_DO_NOTHING;
     
     absolutePath = Utils::SanitizePath(this->_root, request.GetPath());
-    if (( result = this->_checkAllowMethod( request.GetMethod() ))) { return result; }
-    if (( result = this->_checkRedirectPath( this->GetRedirectPath() ) )) { return result; }
-    if (( result = (this->*_httpMethods[request.GetMethod()])( request, absolutePath ) )) { return result; }
-    return HttpStatusCode::_INTERNAL_SERVER_ERROR;
+    if (this->_checkAllowMethod(request.GetMethod())) {
+        return _builder->GetResult(); 
+    }
+    if (this->_checkRedirectPath(this->GetRedirectPath())) {
+        return _builder->GetResult();
+    }
+    if (((this->*_httpMethods[request.GetMethod()])( request, absolutePath ) )) {
+        return _builder->GetResult();
+    }
+    _builder
+        ->SetupResponse()
+        .WithStatusCode(HttpStatusCode::_INTERNAL_SERVER_ERROR)
+        .WithContentType(".html")
+        .WithDefaultPage()
+        .GetResult();
+    std::cout << _logger->Log(&Logger::LogInformation, "Route Not Found or Configurated", HttpStatusCode::_INTERNAL_SERVER_ERROR) << std::endl;
+    return _builder->GetResult();
 }
 
 /**!

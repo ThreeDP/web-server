@@ -9,7 +9,6 @@ void    Http::StartPollList(void) {
     if (epollFD == -1) {
         throw Except("Error on create Epoll");
     }
-    // std::cout << *this;
     std::map<std::string, IServer*>::iterator it = this->servers.begin();
     for (; it != this->servers.end(); ++it) {
         memset(&event, 0, sizeof(struct epoll_event));
@@ -68,15 +67,7 @@ void    Http::DisconnectClientToServer(int client_fd) {
     IServer *server = this->clientFD_Server[client_fd];
     this->clientFD_Server.erase(client_fd);
 
-    std::cout << _logger->Log(
-        &ILogger::LogInformation,
-        "Disconnect Client",
-        client_fd,
-        "from server",
-        server->GetIP(),
-        "on port",
-        server->GetPort()
-    ) << std::endl;
+    std::cout << _logger->Log(&ILogger::LogInformation, "Disconnect Client", client_fd, "from server", server->GetIP(), "on port", server->GetPort()) << std::endl;
 }
 
 bool    Http::ConnectClientToServer(int i) {
@@ -101,7 +92,8 @@ ssize_t    Http::HandleRequest(int client_fd) {
     memset(&buffer, 0, sizeof(char) * 1000000);
     ssize_t numbytes = recv(client_fd, &buffer, sizeof(char) * 1000000, 0);
     res.ParserRequest(buffer);
-    server->ProcessRequest(res, client_fd);
+    if (server != NULL) 
+        server->ProcessRequest(res, client_fd);
     return numbytes;
 }
 
@@ -130,15 +122,7 @@ void    Http::ClientHandShake(IServer *server) {
     }
     this->clientFD_Server[client_fd] = server;
 
-    std::cout << _logger->Log(
-        &ILogger::LogInformation,
-        "Connect Client",
-        client_fd,
-        "from server",
-        server->GetIP(),
-        "on port",
-        server->GetPort()
-    ) << std::endl;
+    std::cout << _logger->Log(&ILogger::LogInformation, "Connect Client", client_fd, "from server", server->GetIP(), "on port", server->GetPort()) << std::endl;
 }
 
 /* Geters

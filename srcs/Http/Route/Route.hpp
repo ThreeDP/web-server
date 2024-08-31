@@ -59,7 +59,7 @@ class Route : public IRoute {
          * 
          */
         
-        HttpStatusCode::Code ProcessRequest(
+        IHttpResponse *ProcessRequest(
             HttpRequest &request
         );
     

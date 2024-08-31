@@ -38,7 +38,6 @@ Server::~Server(void) {
 
 void    Server::SetAddrInfo(std::string host) {
     int status = 0;
-    // memset(&result, 0, sizeof(struct addrinfo));
 
     status = getaddrinfo(
         host.c_str(),
@@ -49,7 +48,6 @@ void    Server::SetAddrInfo(std::string host) {
     if (status != 0) {
         throw (Except("Configuration File Not Found!" )); //gai_strerror(status)
     }
-    std::cout << "SERVER ADDRINFO" << std::endl;
 }
 
 void    Server::CreateSocketAndBind(void) {
@@ -83,14 +81,7 @@ void    Server::CreateSocketAndBind(void) {
 int    Server::StartListen(std::string host) {
     std::cout << _logger->Log(&Logger::LogInformation, "Try Starting Listen...") << std::endl;
     if ((listen(this->listener, this->backlog)) == -1) {
-        throw Except(_logger->Log(
-            &Logger::LogCaution, 
-            "Error on listen server: <",
-            _hosts[0],
-            "> port:  <",
-            _port , 
-            ">\n")
-        );
+        throw Except(_logger->Log(&Logger::LogCaution, "Error on listen server: <", _hosts[0], "> port:  <", _port ,  ">\n"));
     }
     std::cout << _logger->Log(&Logger::LogInformation, "Listening on:", host, _port) << std::endl;
     return this->listener;
@@ -138,18 +129,11 @@ std::string         Server::FindMatchRoute(HttpRequest &res) {
 void                Server::ProcessRequest(HttpRequest &request, int client_fd) {
     BuilderResponse builder = BuilderResponse(_logger, _handler);
     std::string keyPath = this->FindMatchRoute(request);
-    std::cout << _logger->Log(
-        &ILogger::LogInformation,
-        "Request",
-        "Route",
-        keyPath,
-        request.GetMethod(),
-        request.GetPath()
-    ) << std::endl;
+    std::cout << _logger->Log(&ILogger::LogInformation, "Request", "Route", keyPath, request.GetMethod(), request.GetPath()) << std::endl;
     std::map<std::string, IRoute *>::iterator it = this->_routes.find(keyPath);
+    
     if (it != this->_routes.end()) {
-        this->_routes[keyPath]->ProcessRequest(request);
-        this->ResponsesMap[client_fd] = builder.GetResult();
+        this->ResponsesMap[client_fd] = this->_routes[keyPath]->ProcessRequest(request);
     } else {
         this->ResponsesMap[client_fd] = builder
             .SetupResponse()
