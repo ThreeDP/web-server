@@ -37,22 +37,22 @@ class Logger : public ILogger {
 
         std::string _logInformation(std::string args) const {
             std::ostringstream oss;
-            oss <<  BLUHB "[ Info - " <<Utils::getCurrentTimeInGMT() << " ]: ";
-            oss << args << __CODE_RESET__;
+            oss <<  BLUHB "[ Info - " <<Utils::getCurrentTimeInGMT() << " ]:" __CODE_RESET__ " ";
+            oss << args;
             return oss.str();
         }
 
         std::string _logWarning(std::string args) const {
             std::ostringstream oss;
-            oss <<  YELHB "[ Warning - " <<Utils::getCurrentTimeInGMT() << " ]: ";
-            oss << args << __CODE_RESET__;
+            oss <<  YELHB "[ Warning - " <<Utils::getCurrentTimeInGMT() << " ]:" __CODE_RESET__ " ";
+            oss << args;
             return oss.str();
         }
 
         std::string _logCaution(std::string args) const {
             std::ostringstream oss;
-            oss <<  REDHB "[ Caution - " <<Utils::getCurrentTimeInGMT() << " ]: ";
-            oss << args << __CODE_RESET__;
+            oss <<  REDHB "[ Caution - " <<Utils::getCurrentTimeInGMT() << " ]:" __CODE_RESET__ " ";
+            oss << args;
             return oss.str();
         }
 };

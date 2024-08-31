@@ -100,6 +100,7 @@ int Server::AcceptClientConnect(void) {
     if (this->_actualClientFD == -1) {
         throw Except("Error on accept client");
     }
+    _logger->Log(&Logger::LogInformation, "Client [", this->_actualClientFD, "] connect on");
     return this->_actualClientFD;
 }
 

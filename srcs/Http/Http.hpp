@@ -11,6 +11,8 @@ class Http {
     std::map<std::string, IServer *>    servers;
     std::map<int, IServer *>            clientFD_Server;
     std::vector<IServer *>              _serversPointer;
+    std::map<int, std::string>          _clientFDToStringHost;
+    std::map<int, IServer *>            _clientFDToServer;
 
     const static int                    eventsLimit = 10;
     

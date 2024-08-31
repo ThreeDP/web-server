@@ -18,7 +18,8 @@ void    Http::StartPollList(void) {
         event.events = EPOLLIN;
         if (epoll_ctl(epollFD, EPOLL_CTL_ADD, it->second->GetListener(), &event) == -1)
             throw Except("Error on add server: <name> port: <port>");
-        // add listener array
+        _clientFDToStringHost[it->second->GetListener()] = it->first;
+        _clientFDToServer[it->second->GetListener()] = it->second;
     }
 }
 
@@ -75,7 +76,9 @@ bool    Http::ConnectClientToServer(int i) {
     std::map<std::string, IServer*>::iterator it = this->servers.begin();
     // Busca o Server compativel com o fd do request.
     for (; it != this->servers.end(); ++it) {
-        if (this->clientEvents[i].data.fd == it->second->GetListener()) {
+        int fd = this->clientEvents[i].data.fd;
+        if (fd == it->second->GetListener()) {
+            _logger->Log(&Logger::LogInformation, "New client try to connect on:", _clientFDToStringHost[fd]);
             this->ClientHandShake(it->second);
             hasHandShake = true;
             break;
