@@ -1,11 +1,88 @@
 # include "Route.hpp"
 
-HttpStatusCode::Code Route::_handlerErrorResponse(
-    std::ifstream *fd,
-    HttpStatusCode::Code statusCode,
-    IBuilderResponse &builder
+/**!
+ * 
+ * Init Method:
+ * Route processes a request
+ * 
+ */
+
+HttpStatusCode::Code Route::ProcessRequest(
+    HttpRequest &request
 ) {
+    std::string     absolutePath;
+    HttpStatusCode::Code result = HttpStatusCode::_DO_NOTHING;
+    
+    absolutePath = Utils::SanitizePath(this->_root, request.GetPath());
+    if (( result = this->_checkAllowMethod( request.GetMethod() ))) { return result; }
+    if (( result = this->_checkRedirectPath( this->GetRedirectPath() ) )) { return result; }
+    if (( result = (this->*_httpMethods[request.GetMethod()])( request, absolutePath ) )) { return result; }
+    return HttpStatusCode::_INTERNAL_SERVER_ERROR;
+}
+
+/**!
+ * 
+ * General Assets
+ * Use in all http methods GET, POST and DELETE.
+ * 
+ */
+
+HttpStatusCode::Code Route::_checkAllowMethod(std::string method) {
+    if (!this->IsAllowMethod(method)) {
+        HttpStatusCode::Code status = HttpStatusCode::_METHOD_NOT_ALLOWED;
+        HttpStatusCode::Code result = HttpStatusCode::_DO_NOTHING;
+
+        if ((result = this->_errorHandlerWithFile(status))) { return result; }
+        return this->_errorHandlerDefault(status);
+    }
+    return HttpStatusCode::_DO_NOTHING;
+}
+
+HttpStatusCode::Code Route::_checkRedirectPath(std::string path) {
+    HttpStatusCode::Code result = HttpStatusCode::_DO_NOTHING;
+
+    if (path != "") {
+        result = HttpStatusCode::_PERMANENT_REDIRECT;
+
+        _builder
+            ->SetupResponse()
+            .WithStatusCode(result)
+            .WithLocation("/" + path)
+            .WithDefaultPage();
+        std::cout << _logger->Log(&Logger::LogInformation, "Permanent Redirect: ", HttpStatusCode::_PERMANENT_REDIRECT) << std::endl;
+        return (result);
+    }
+    return result;
+}
+
+HttpStatusCode::Code Route::_checkBodyLimit(size_t limit) {
+    if (this->GetBodyLimit() < limit) {
+        HttpStatusCode::Code status = HttpStatusCode::_CONTENT_TOO_LARGE;
+        HttpStatusCode::Code result = HttpStatusCode::_DO_NOTHING;
+        
+        if ((result = this->_errorHandlerWithFile(status))) { return result; }
+        return this->_errorHandlerDefault(status);
+    }
+    return HttpStatusCode::_DO_NOTHING;
+}
+
+HttpStatusCode::Code Route::_checkAutoIndex(std::string absolutePath) {
+    if (this->GetAutoIndex()) {
+        DIR *dir = this->_handler->OpenDirectory(absolutePath);
+        _builder
+            ->SetupResponse()
+            .WithStatusCode(HttpStatusCode::_OK)
+            .WithContentType(".html")
+            .WithDirectoryFile(dir, absolutePath);
+        std::cout << _logger->Log(&Logger::LogInformation, "Response By Directories: ", HttpStatusCode::_OK) << std::endl;
+        return (HttpStatusCode::_OK);
+    }
+    return HttpStatusCode::_DO_NOTHING;
+}
+
+HttpStatusCode::Code Route::_errorHandlerWithFile(HttpStatusCode::Code statusCode) {
     std::string path;
+    std::ifstream *fd = NULL;
 
     bool hasErrorPage = (path = this->GetErrorPage(statusCode)) != "";
     std::string abspath = Utils::SanitizePath(this->_root, this->_route_name);
@@ -13,8 +90,8 @@ HttpStatusCode::Code Route::_handlerErrorResponse(
     if (hasErrorPage && this->_handler->FileExist(path)) {
         if (this->_handler->IsAllowToGetFile(path)) {
             fd = this->_handler->OpenFile(path);
-            builder
-                .SetupResponse()
+            _builder
+                ->SetupResponse()
                 .WithStatusCode(statusCode)
                 .WithLocation(path)
                 .WithLastModified(path)
@@ -24,86 +101,130 @@ HttpStatusCode::Code Route::_handlerErrorResponse(
             return (statusCode);
         }
     }
-    builder
-        .SetupResponse()
+    return HttpStatusCode::_DO_NOTHING;
+}
+
+HttpStatusCode::Code Route::_errorHandlerDefault(HttpStatusCode::Code statusCode) {
+    _builder
+        ->SetupResponse()
         .WithStatusCode(statusCode)
         .WithContentType(".html")
         .WithDefaultPage();
+    
     std::cout << _logger->Log(&Logger::LogInformation, "Response By Default Error: ", statusCode) << std::endl;
     return (statusCode);
 }
 
-HttpStatusCode::Code Route::ProcessRequest(
-    HttpRequest &request,
-    IBuilderResponse &builder
-) {
-    std::ifstream   *fd = NULL;
-    std::string     absolutePath;
-    HttpStatusCode::Code result = HttpStatusCode::_DO_NOTHING;
-    
-    absolutePath = Utils::SanitizePath(this->_root, request.GetPath());
-    if (( result = this->_checkAllowMethod(request.GetMethod() ))) { return result; }
-    if (( result = this->_checkRedirectPath(this->GetRedirectPath()) )) { return result; }
-    if (( result = this->_methods[request.GetMethod()](request) )) { return result; }
-    
-
-    if (this->_handler->PathExist(absolutePath))
-    {
-        bool isDirectory = this->_handler->FileIsDirectory(absolutePath);
-        bool allow = this->_handler->IsAllowToGetFile(absolutePath);
-        if (allow && isDirectory)
-        {
-            if (( result = this->_checkExistIndex(request.GetPath(), absolutePath, isDirectory, allow) )) { return result; }
-            std::vector<std::string>::iterator it = this->_indexes.begin();
-            for ( ; it != this->_indexes.end(); ++it)
-            {
-                std::string pathAutoindex = absolutePath;
-                pathAutoindex = Utils::SanitizePath(pathAutoindex, *it);
-                std::cout << pathAutoindex << std::endl;
-                if (this->_handler->PathExist(pathAutoindex)
-                && this->_handler->IsAllowToGetFile(pathAutoindex)
-                && !this->_handler->FileIsDirectory(pathAutoindex))
-                {
-                    builder
-                        .SetupResponse()
-                        .WithStatusCode(HttpStatusCode::_FOUND)
-                        .WithLocation(Utils::SanitizePath("http://localhost:8081",
-                            Utils::SanitizePath(request.GetPath(), *it)))
-                        .WithDefaultPage();
-                    std::cout << _logger->Log(&Logger::LogInformation, "Redirect by index: ", HttpStatusCode::_FOUND) << std::endl;
-                    return (HttpStatusCode::_FOUND);
-                }
-            }
-            if (this->GetAutoIndex()) {
-                DIR *dir = this->_handler->OpenDirectory(absolutePath);
-                builder
-                    .SetupResponse()
-                    .WithStatusCode(HttpStatusCode::_OK)
-                    .WithContentType(".html")
-                    .WithDirectoryFile(dir, absolutePath);
-                std::cout << _logger->Log(&Logger::LogInformation, "Response By Directories: ", HttpStatusCode::_OK) << std::endl;
-                return (HttpStatusCode::_OK);
-            }
-        } else if (allow) {
-            fd = this->_handler->OpenFile(absolutePath);
-            builder
-                .SetupResponse()
-                .WithStatusCode(HttpStatusCode::_OK)
-                .WithLastModified(absolutePath)
-                .WithContentType(Utils::GetFileExtension(absolutePath))
-                .WithFileDescriptor(fd);
-            std::cout << _logger->Log(&Logger::LogInformation, "Response By File Descriptor: ", HttpStatusCode::_OK) << std::endl;
-            return (HttpStatusCode::_OK);
-        } else if (!allow) {
-            return this->_handlerErrorResponse(fd, HttpStatusCode::_FORBIDDEN, builder);
-        }
-    }
-    return this->_handlerErrorResponse(fd, HttpStatusCode::_NOT_FOUND, builder);
+HttpStatusCode::Code Route::_checkActionInFile(std::string absolutePath) {
+    std::ifstream *fd = this->_handler->OpenFile(absolutePath);
+    _builder
+        ->SetupResponse()
+        .WithStatusCode(HttpStatusCode::_OK)
+        .WithLastModified(absolutePath)
+        .WithContentType(Utils::GetFileExtension(absolutePath))
+        .WithFileDescriptor(fd);
+    std::cout << _logger->Log(&Logger::LogInformation, "Response By File Descriptor: ", HttpStatusCode::_OK) << std::endl;
+    return (HttpStatusCode::_OK);
 }
 
-HttpStatusCode::Code Route::
+HttpStatusCode::Code Route::_notFound(void) {
+    HttpStatusCode::Code status = HttpStatusCode::_NOT_FOUND;
+    HttpStatusCode::Code result = HttpStatusCode::_DO_NOTHING;
+    
+    if ((result = this->_errorHandlerWithFile(status))) { return result; }
+    return this->_errorHandlerDefault(status);
+}
 
-// Set Methods
+/**!
+ * 
+ * POST Assets
+ * Use in Post for produces they rules.
+ * 
+ */
+
+HttpStatusCode::Code Route::Post(HttpRequest &request, std::string absPath) {
+    HttpStatusCode::Code result = HttpStatusCode::_DO_NOTHING;
+    if ((result = this->_checkBodyLimit(request.GetBodySize()))) { return result; }
+    if (this->_handler->PathExist(absPath)) {
+        
+    }
+    return this->_notFound();
+}
+
+
+/**!
+ * 
+ * DELETE Assets
+ * Use in Post for produces they rules.
+ * 
+ */
+
+HttpStatusCode::Code Route::Delete(HttpRequest &request, std::string absPath) {
+    HttpStatusCode::Code result = HttpStatusCode::_DO_NOTHING;
+    if ((result = this->_checkBodyLimit(request.GetBodySize()))) { return result; }
+    if (this->_handler->PathExist(absPath)) {
+        this->_checkExistIndex(request.GetPath(), absPath);
+    }
+    return this->_notFound();
+}
+
+
+/**!
+ * 
+ * GET Assets
+ * Use in Post for produces they rules.
+ * 
+ */
+
+HttpStatusCode::Code Route::Get(HttpRequest &request, std::string absPath) {
+    HttpStatusCode::Code result = HttpStatusCode::_DO_NOTHING;
+    if ( request.GetBodySize() > 0 ) { return HttpStatusCode::_BAD_REQUEST; }
+    if (this->_handler->PathExist(absPath)) {
+        bool isDirectory = this->_handler->FileIsDirectory(absPath);
+        bool allow = this->_handler->IsAllowToGetFile(absPath);
+        if (allow && isDirectory) {
+            if (( result = this->_checkExistIndex(request.GetPath(), absPath) )) { return result; }
+            if (( result = this->_checkAutoIndex(absPath) )) { return result; }
+        }
+        else if (allow && (result = this->_checkActionInFile(absPath)) ) { return result; }
+        else if (!allow) {
+            if ((result = this->_errorHandlerWithFile(HttpStatusCode::_FORBIDDEN))) { return result; }
+            return this->_errorHandlerDefault(HttpStatusCode::_FORBIDDEN);
+        }
+    }
+    return this->_notFound();
+}
+
+HttpStatusCode::Code Route::_checkExistIndex(std::string reqPath, std::string absPath) {
+    std::vector<std::string>::iterator it = this->_indexes.begin();
+    for ( ; it != this->_indexes.end(); ++it)
+    {
+        std::string pathAutoindex = absPath;
+        pathAutoindex = Utils::SanitizePath(pathAutoindex, *it);
+        if (this->_handler->PathExist(pathAutoindex)
+            && this->_handler->IsAllowToGetFile(pathAutoindex)
+            && !this->_handler->FileIsDirectory(pathAutoindex)
+        )
+        {
+            _builder
+                ->SetupResponse()
+                .WithStatusCode(HttpStatusCode::_FOUND)
+                .WithLocation(Utils::SanitizePath("http://localhost:8081",
+                    Utils::SanitizePath(reqPath, *it)))
+                .WithDefaultPage();
+            std::cout << _logger->Log(&Logger::LogInformation, "Redirect by index: ", HttpStatusCode::_FOUND) << std::endl;
+            return (HttpStatusCode::_FOUND);
+        }
+    }
+    return HttpStatusCode::_DO_NOTHING;
+}
+
+/**!
+ * 
+ * Seters
+ * 
+ */
+
 void        Route::SetRouteName(std::string routeName) {
     this->_route_name = routeName;
 }
@@ -148,12 +269,18 @@ void        Route::SetAutoIndex(bool flag) {
     this->_autoIndex = flag;
 }
 
-// Geters
+
+/**!
+ * 
+ * Geters
+ * 
+ */
+
 std::string Route::GetRouteName(void) {
     return this->_route_name;
 }
 
-int Route::GetBodyLimit(void) {
+size_t Route::GetBodyLimit(void) {
     return this->_limit_client_body_size;
 }
 
@@ -189,32 +316,6 @@ bool Route::GetAutoIndex(void) {
     return this->_autoIndex;
 }
 
-Route::Route(ILogger *logger, IServer *server, IHandler *handler, std::string route_name) : 
-    _route_name(route_name),
-    _allow_methods(server->GetAllowMethods()),
-    _error_page(server->GetErrorPages()),
-    _limit_client_body_size(server->GetBodyLimit()),
-    _redirectPath(server->GetRedirectPath(route_name)),
-    _root(server->GetRootDirectory()),
-    _autoIndex(server->GetAutoIndex()),
-    _indexes(server->GetPageIndexes()),
-    _logger(logger),
-    _handler(handler)
-{
-    _method["GET"] = &Route::Get
-    _method["POST"] = &Route::Post
-    _method["DELETE"] = &Route::Delete
-    _builder = new BuilderResponse(_handler, _logger);
-    if (_logger->Env()) {
-        std::cerr << _logger->Log(&Logger::LogDebug, "Created Route Class: ") << std::endl;
-        std::cerr << _logger->Log(&Logger::LogTrace, "Route Standard Content {\n", this->_toString(), "\n}") << std::endl;
-    }
-}
-
-Route::~Route(void) {
-    std::cerr << _logger->Log(&Logger::LogDebug, "Deleted Route Class.") << std::endl;
-}
-
 std::string Route::_toString(void) {
     std::stringstream ss;
     ss << "\t\tRoute Name: " << _route_name << std::endl;
@@ -236,4 +337,34 @@ std::string Route::_toString(void) {
     }
     ss << std::endl;
     return ss.str();
+}
+
+Route::Route(
+    ILogger *logger, 
+    IServer *server, 
+    IHandler *handler, 
+    std::string route_name) : 
+    _route_name(route_name),
+    _allow_methods(server->GetAllowMethods()),
+    _error_page(server->GetErrorPages()),
+    _limit_client_body_size(server->GetBodyLimit()),
+    _redirectPath(server->GetRedirectPath(route_name)),
+    _root(server->GetRootDirectory()),
+    _autoIndex(server->GetAutoIndex()),
+    _indexes(server->GetPageIndexes()),
+    _logger(logger),
+    _handler(handler)
+{
+    _httpMethods["GET"] = &Route::Get;
+    _httpMethods["POST"] = &Route::Post;
+    _httpMethods["DELETE"] = &Route::Delete;
+    _builder = new BuilderResponse(_logger, _handler);
+    if (_logger->Env()) {
+        std::cerr << _logger->Log(&Logger::LogDebug, "Created Route Class: ") << std::endl;
+        std::cerr << _logger->Log(&Logger::LogTrace, "Route Standard Content {\n", this->_toString(), "\n}") << std::endl;
+    }
+}
+
+Route::~Route(void) {
+    std::cerr << _logger->Log(&Logger::LogDebug, "Deleted Route Class.") << std::endl;
 }

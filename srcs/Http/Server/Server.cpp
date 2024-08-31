@@ -148,7 +148,7 @@ void                Server::ProcessRequest(HttpRequest &request, int client_fd) 
     ) << std::endl;
     std::map<std::string, IRoute *>::iterator it = this->_routes.find(keyPath);
     if (it != this->_routes.end()) {
-        this->_routes[keyPath]->ProcessRequest(request, builder);
+        this->_routes[keyPath]->ProcessRequest(request);
         this->ResponsesMap[client_fd] = builder.GetResult();
     } else {
         this->ResponsesMap[client_fd] = builder
