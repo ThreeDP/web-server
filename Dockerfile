@@ -1,6 +1,6 @@
 FROM nginx
 
-COPY srcs/config/nginx.config /etc/nginx/nginx.conf
+COPY nginx.conf /etc/nginx/nginx.conf
 COPY home /home
 COPY home/app /app
 

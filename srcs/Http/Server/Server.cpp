@@ -21,8 +21,8 @@ _actualClientFD(-1)
 
     this->result = NULL;
     if (_logger->Env()) {
-        std::cerr << _logger->Log(&Logger::LogDebug, "Created Server Class: ") << std::endl;
-        std::cerr << _logger->Log(&Logger::LogTrace, "Server Standard Content {\n", this->_toString(), "\n}") << std::endl;
+        std::cerr << _logger->Log(&Logger::LogDebug, "Created Server Class: ");
+        std::cerr << _logger->Log(&Logger::LogTrace, "Server Standard Content {\n", this->_toString(), "\n}");
     }
 }
 
@@ -30,7 +30,7 @@ Server::~Server(void) {
     if (this->result != NULL) {
         freeaddrinfo(this->result);
     }
-    std::cerr << _logger->Log(&Logger::LogDebug, "Deleted Server Class.") << std::endl;
+    std::cerr << _logger->Log(&Logger::LogDebug, "Deleted Server Class.");
 }
 
 /* Server Methods
@@ -73,17 +73,17 @@ void    Server::CreateSocketAndBind(void) {
     }
     this->listener = listener;
     if (result == NULL) {
-        throw Except("Not able to bind server: <name> port: <port>.");
+        throw std::invalid_argument(_logger->Log(&Logger::LogInformation, "test"));
     }
     this->_setServerIpInfos(result);
 }
 
 int    Server::StartListen(std::string host) {
-    std::cout << _logger->Log(&Logger::LogInformation, "Try Starting Listen...") << std::endl;
+    std::cout << _logger->Log(&Logger::LogInformation, "Try Starting Listen...");
     if ((listen(this->listener, this->backlog)) == -1) {
         throw Except(_logger->Log(&Logger::LogCaution, "Error on listen server: <", _hosts[0], "> port:  <", _port ,  ">\n"));
     }
-    std::cout << _logger->Log(&Logger::LogInformation, "Listening on:", host, _port) << std::endl;
+    std::cout << _logger->Log(&Logger::LogInformation, "Listening on:", host, _port);
     return this->listener;
 }
 
@@ -130,7 +130,7 @@ std::string         Server::FindMatchRoute(HttpRequest &res) {
 void                Server::ProcessRequest(HttpRequest &request, int client_fd) {
     BuilderResponse builder = BuilderResponse(_logger, _handler);
     std::string keyPath = this->FindMatchRoute(request);
-    std::cout << _logger->Log(&ILogger::LogInformation, "Request", "Route", keyPath, request.GetMethod(), request.GetPath()) << std::endl;
+    std::cout << _logger->Log(&ILogger::LogInformation, "Request", "Route", keyPath, request.GetMethod(), request.GetPath());
     std::map<std::string, IRoute *>::iterator it = this->_routes.find(keyPath);
     
     if (it != this->_routes.end()) {
@@ -142,18 +142,13 @@ void                Server::ProcessRequest(HttpRequest &request, int client_fd) 
             .WithContentType(".html")
             .WithDefaultPage()
             .GetResult();
-        std::cout << _logger->Log(&Logger::LogInformation, "Route Not Found or Configurated", HttpStatusCode::_INTERNAL_SERVER_ERROR) << std::endl;
+        std::cout << _logger->Log(&Logger::LogInformation, "Route Not Found or Configurated", HttpStatusCode::_INTERNAL_SERVER_ERROR);
     }
 }
 
 IHttpResponse         *Server::ProcessResponse(int client_fd) {
     IHttpResponse *response = this->ResponsesMap[client_fd];
-    std::cout << _logger->Log(
-        &ILogger::LogInformation,
-        "Response",
-        response->GetStatusCode(),
-        response->GetStatusMessage()
-    ) << std::endl;
+    std::cout << _logger->Log(&ILogger::LogInformation, "Response", response->GetStatusCode(), response->GetStatusMessage());
     this->ResponsesMap.erase(client_fd);
     return response;
 }

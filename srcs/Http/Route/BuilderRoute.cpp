@@ -7,7 +7,7 @@ BuilderRoute::BuilderRoute(ILogger *logger, IServer *server, IHandler *handler) 
     _server(server),
     _route(NULL)
 {
-    std::cerr << _logger->Log(&Logger::LogDebug, "Created BuilderRoute Class.") << std::endl;
+    std::cerr << _logger->Log(&Logger::LogDebug, "Created BuilderRoute Class.");
 }
 
 BuilderRoute::~BuilderRoute(void) {
@@ -15,7 +15,7 @@ BuilderRoute::~BuilderRoute(void) {
         delete _route;
         _route = NULL;
     }
-    std::cerr << _logger->Log(&Logger::LogDebug, "Deleted BuilderRoute Class.") << std::endl;
+    std::cerr << _logger->Log(&Logger::LogDebug, "Deleted BuilderRoute Class.");
 }
 
 // Setup Route
@@ -69,7 +69,7 @@ IRoute        *BuilderRoute::GetResult(void) {
         _route = NULL;
     }
     if (_logger->Env()) {
-        std::cerr << _logger->Log(&Logger::LogTrace, "GetResult Route: {\n", res->_toString(), "\n}") << std::endl;
+        std::cerr << _logger->Log(&Logger::LogTrace, "GetResult Route: {\n", res->_toString(), "\n}");
     }
     return res;
 }

@@ -6,7 +6,7 @@
 /*   By: dapaulin <dapaulin@student.42sp.org.br>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/03 17:50:41 by dapaulin          #+#    #+#             */
-/*   Updated: 2024/08/23 22:37:55 by dapaulin         ###   ########.fr       */
+/*   Updated: 2024/08/31 15:20:43 by dapaulin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,13 +26,13 @@ int main(int ac, char *av[]) {
     }
     try {
         Http            http(logger);
-        std::cout << logger->Log(&Logger::LogInformation, "Starting Parser.") << std::endl;
+        std::cout << logger->Log(&Logger::LogInformation, "Starting Parser.");
         parser.ConfigHttp(http, fileName);
-        std::cout << logger->Log(&Logger::LogInformation, "Finished Parser.") << std::endl;
+        std::cout << logger->Log(&Logger::LogInformation, "Finished Parser.");
         http.StartPollList();
         http.StartWatchSockets();
     } catch (const std::exception &e) {
-        std::cout << e.what() << std::endl;
+        std::cout << e.what();
     }
     delete builder;
     delete handler;

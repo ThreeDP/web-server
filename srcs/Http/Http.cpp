@@ -18,13 +18,12 @@ void    Http::StartPollList(void) {
         event.events = EPOLLIN;
         if (epoll_ctl(epollFD, EPOLL_CTL_ADD, it->second->GetListener(), &event) == -1)
             throw Except("Error on add server: <name> port: <port>");
-        _clientFDToStringHost[it->second->GetListener()] = it->first;
-        _clientFDToServer[it->second->GetListener()] = it->second;
+        _serverFDToStringHost[it->second->GetListener()] = it->first;
+        _serverFDToServer[it->second->GetListener()] = it->second;
     }
 }
 
 void    Http::StartWatchSockets(void) {
-    // std::cout << *this;
     while (true) {
         int number_of_ready_fds = epoll_wait(
             this->GetEPollFD(),
@@ -35,10 +34,10 @@ void    Http::StartWatchSockets(void) {
         if (number_of_ready_fds == -1) {
             throw Except("Epoll Wait error!");
         }
+        _logger->Log(&Logger::LogInformation, "Number of fds ready to read:", number_of_ready_fds);
         for (int i = 0; i < number_of_ready_fds; i++) {
             if ((this->clientEvents[i].events & EPOLLIN) == EPOLLIN) {
-                // Verifica se for feito um handshake e da continuidade pra o proximo fd.
-                if (this->ConnectClientToServer(i))
+                if (this->ConnectClientToServer(this->clientEvents[i].data.fd))
                     continue;
                 ssize_t numbytes = this->HandleRequest(this->clientEvents[i].data.fd);  
                 if (numbytes == -1)
@@ -68,21 +67,19 @@ void    Http::DisconnectClientToServer(int client_fd) {
     IServer *server = this->clientFD_Server[client_fd];
     this->clientFD_Server.erase(client_fd);
 
-    std::cout << _logger->Log(&ILogger::LogInformation, "Disconnect Client", client_fd, "from server", server->GetIP(), "on port", server->GetPort()) << std::endl;
+    std::cout << _logger->Log(&ILogger::LogInformation, "Disconnect Client", client_fd, "from server", server->GetIP(), "on port", server->GetPort());
 }
 
-bool    Http::ConnectClientToServer(int i) {
+bool    Http::ConnectClientToServer(int fd) {
     bool hasHandShake = false;
-    std::map<std::string, IServer*>::iterator it = this->servers.begin();
-    // Busca o Server compativel com o fd do request.
-    for (; it != this->servers.end(); ++it) {
-        int fd = this->clientEvents[i].data.fd;
-        if (fd == it->second->GetListener()) {
-            _logger->Log(&Logger::LogInformation, "New client try to connect on:", _clientFDToStringHost[fd]);
+    std::map<int, IServer*>::iterator it = this->_serverFDToServer.find(fd);
+    if (it != this->_serverFDToServer.end()) {
+            _logger->Log(&Logger::LogInformation, "New client try to connect on:", _serverFDToStringHost[fd]);
             this->ClientHandShake(it->second);
             hasHandShake = true;
-            break;
-        }
+    } else {
+        _logger->Log(&Logger::LogCaution, "Error on apply handshake");
+        // Add server error response.
     }
     return hasHandShake;
 }
@@ -124,8 +121,7 @@ void    Http::ClientHandShake(IServer *server) {
         throw Except("Error on add client on epoll.");
     }
     this->clientFD_Server[client_fd] = server;
-
-    std::cout << _logger->Log(&ILogger::LogInformation, "Connect Client", client_fd, "from server", server->GetIP(), "on port", server->GetPort()) << std::endl;
+    std::cout << _logger->Log(&ILogger::LogInformation, "Connect client", client_fd, "from server", server->GetIP(), "on port", server->GetPort());
 }
 
 /* Geters

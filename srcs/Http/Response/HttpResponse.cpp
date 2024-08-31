@@ -29,14 +29,14 @@ HttpResponse::HttpResponse(ILogger *logger) :
     this->_headers["Server:"] = this->_server;
     
     if (_logger->Env()) {
-        std::cerr << _logger->Log(&Logger::LogDebug, "Create HttpResponse Class: ") << std::endl;
-        std::cerr << _logger->Log(&Logger::LogTrace, "Initial Content {\n", this->_toString(), "\n}") << std::endl;
+        std::cerr << _logger->Log(&Logger::LogDebug, "Create HttpResponse Class: ");
+        std::cerr << _logger->Log(&Logger::LogTrace, "Initial Content {\n", this->_toString(), "\n}");
     }
 }
 
 HttpResponse::~HttpResponse(void) {
     if (_logger != NULL)
-        std::cerr << _logger->Log(&Logger::LogDebug, "Deleted HttpResponse Class.") << std::endl;
+        std::cerr << _logger->Log(&Logger::LogDebug, "Deleted HttpResponse Class.");
 }
 
 // Generate Response
@@ -75,8 +75,8 @@ std::vector<char> HttpResponse::CreateResponse(void) {
     return payload;
 
     if (_logger->Env()) {
-        std::cerr << _logger->Log(&Logger::LogDebug, "Create Response Payload: ") << std::endl;
-        std::cerr << _logger->Log(&Logger::LogTrace, "Response Payload {\n", this->_toString() , "\n}") << std::endl;
+        std::cerr << _logger->Log(&Logger::LogDebug, "Create Response Payload: ");
+        std::cerr << _logger->Log(&Logger::LogTrace, "Response Payload {\n", this->_toString() , "\n}");
     }
 }
 
@@ -98,8 +98,8 @@ void HttpResponse::_defaultErrorPage(void) {
     this->_body.insert(this->_body.end(), page.begin(), page.end());
     
     if (_logger->Env()) {
-        std::cerr << _logger->Log(&Logger::LogDebug, "Create A Default Error Page: ") << std::endl;
-        std::cerr << _logger->Log(&Logger::LogTrace, "Default Page {\n", this->_toString(), "\n}") << std::endl;
+        std::cerr << _logger->Log(&Logger::LogDebug, "Create A Default Error Page: ");
+        std::cerr << _logger->Log(&Logger::LogTrace, "Default Page {\n", this->_toString(), "\n}");
     }
 }
 
@@ -137,8 +137,8 @@ void    HttpResponse::_createBodyByDirectory(
     this->_body.insert(this->_body.end(), page.begin(), page.end());
 
     if (_logger->Env()) {
-        std::cerr << _logger->Log(&Logger::LogDebug, "Create A Directory Listing: ") << std::endl;
-        std::cerr << _logger->Log(&Logger::LogTrace, "Directory Listing {\n", this->_toString(), "\n}") << std::endl;
+        std::cerr << _logger->Log(&Logger::LogDebug, "Create A Directory Listing: ");
+        std::cerr << _logger->Log(&Logger::LogTrace, "Directory Listing {\n", this->_toString(), "\n}");
     }
 }
 

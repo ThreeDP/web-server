@@ -13,7 +13,7 @@ BuilderServer::BuilderServer(IHandler *handler, ILogger *logger) :
 {
     _builderRoute = NULL;
     _server = NULL;
-    std::cerr << _logger->Log(&Logger::LogDebug, "Created BuilderServer Class.") << std::endl;
+    std::cerr << _logger->Log(&Logger::LogDebug, "Created BuilderServer Class.");
 }
 
 BuilderServer::~BuilderServer(void) {
@@ -25,7 +25,7 @@ BuilderServer::~BuilderServer(void) {
         delete _server;
         _server = NULL;
     }
-    std::cerr << _logger->Log(&Logger::LogDebug, "Deleted BuilderServer Class.") << std::endl;
+    std::cerr << _logger->Log(&Logger::LogDebug, "Deleted BuilderServer Class.");
 }
 
 IBuilderServer      &BuilderServer::SetupServer(void) {
@@ -103,6 +103,6 @@ IServer             *BuilderServer::GetResult(void) {
         _server = NULL;
     }
     if (_logger->Env())
-        std::cerr << _logger->Log(&Logger::LogTrace, "GetResult Server: {\n", res->_toString(), "\n}") << std::endl;
+        std::cerr << _logger->Log(&Logger::LogTrace, "GetResult Server: {\n", res->_toString(), "\n}");
     return res;
 }

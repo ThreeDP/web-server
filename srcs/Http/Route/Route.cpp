@@ -28,7 +28,7 @@ IHttpResponse *Route::ProcessRequest(
         .WithContentType(".html")
         .WithDefaultPage()
         .GetResult();
-    std::cout << _logger->Log(&Logger::LogInformation, "Route Not Found or Configurated", HttpStatusCode::_INTERNAL_SERVER_ERROR) << std::endl;
+    std::cout << _logger->Log(&Logger::LogInformation, "Route Not Found or Configurated", HttpStatusCode::_INTERNAL_SERVER_ERROR);
     return _builder->GetResult();
 }
 
@@ -61,7 +61,7 @@ HttpStatusCode::Code Route::_checkRedirectPath(std::string path) {
             .WithStatusCode(result)
             .WithLocation("/" + path)
             .WithDefaultPage();
-        std::cout << _logger->Log(&Logger::LogInformation, "Permanent Redirect: ", HttpStatusCode::_PERMANENT_REDIRECT) << std::endl;
+        std::cout << _logger->Log(&Logger::LogInformation, "Permanent Redirect: ", HttpStatusCode::_PERMANENT_REDIRECT);
         return (result);
     }
     return result;
@@ -86,7 +86,7 @@ HttpStatusCode::Code Route::_checkAutoIndex(std::string absolutePath) {
             .WithStatusCode(HttpStatusCode::_OK)
             .WithContentType(".html")
             .WithDirectoryFile(dir, absolutePath);
-        std::cout << _logger->Log(&Logger::LogInformation, "Response By Directories: ", HttpStatusCode::_OK) << std::endl;
+        std::cout << _logger->Log(&Logger::LogInformation, "Response By Directories: ", HttpStatusCode::_OK);
         return (HttpStatusCode::_OK);
     }
     return HttpStatusCode::_DO_NOTHING;
@@ -109,7 +109,7 @@ HttpStatusCode::Code Route::_errorHandlerWithFile(HttpStatusCode::Code statusCod
                 .WithLastModified(path)
                 .WithContentType(Utils::GetFileExtension(path))
                 .WithFileDescriptor(fd);
-            std::cout << _logger->Log(&Logger::LogInformation, "Response By Setup Erro Pages: ", statusCode) << std::endl;
+            std::cout << _logger->Log(&Logger::LogInformation, "Response By Setup Erro Pages: ", statusCode);
             return (statusCode);
         }
     }
@@ -123,7 +123,7 @@ HttpStatusCode::Code Route::_errorHandlerDefault(HttpStatusCode::Code statusCode
         .WithContentType(".html")
         .WithDefaultPage();
     
-    std::cout << _logger->Log(&Logger::LogInformation, "Response By Default Error: ", statusCode) << std::endl;
+    std::cout << _logger->Log(&Logger::LogInformation, "Response By Default Error: ", statusCode);
     return (statusCode);
 }
 
@@ -135,7 +135,7 @@ HttpStatusCode::Code Route::_checkActionInFile(std::string absolutePath) {
         .WithLastModified(absolutePath)
         .WithContentType(Utils::GetFileExtension(absolutePath))
         .WithFileDescriptor(fd);
-    std::cout << _logger->Log(&Logger::LogInformation, "Response By File Descriptor: ", HttpStatusCode::_OK) << std::endl;
+    std::cout << _logger->Log(&Logger::LogInformation, "Response By File Descriptor: ", HttpStatusCode::_OK);
     return (HttpStatusCode::_OK);
 }
 
@@ -224,7 +224,7 @@ HttpStatusCode::Code Route::_checkExistIndex(std::string reqPath, std::string ab
                 .WithLocation(Utils::SanitizePath("http://localhost:8081",
                     Utils::SanitizePath(reqPath, *it)))
                 .WithDefaultPage();
-            std::cout << _logger->Log(&Logger::LogInformation, "Redirect by index: ", HttpStatusCode::_FOUND) << std::endl;
+            std::cout << _logger->Log(&Logger::LogInformation, "Redirect by index: ", HttpStatusCode::_FOUND);
             return (HttpStatusCode::_FOUND);
         }
     }
@@ -372,11 +372,11 @@ Route::Route(
     _httpMethods["DELETE"] = &Route::Delete;
     _builder = new BuilderResponse(_logger, _handler);
     if (_logger->Env()) {
-        std::cerr << _logger->Log(&Logger::LogDebug, "Created Route Class: ") << std::endl;
-        std::cerr << _logger->Log(&Logger::LogTrace, "Route Standard Content {\n", this->_toString(), "\n}") << std::endl;
+        std::cerr << _logger->Log(&Logger::LogDebug, "Created Route Class: ");
+        std::cerr << _logger->Log(&Logger::LogTrace, "Route Standard Content {\n", this->_toString(), "\n}");
     }
 }
 
 Route::~Route(void) {
-    std::cerr << _logger->Log(&Logger::LogDebug, "Deleted Route Class.") << std::endl;
+    std::cerr << _logger->Log(&Logger::LogDebug, "Deleted Route Class.");
 }
