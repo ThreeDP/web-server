@@ -6,7 +6,7 @@
 #    By: dapaulin <dapaulin@student.42sp.org.br>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/11/03 15:04:07 by dapaulin          #+#    #+#              #
-#    Updated: 2024/08/26 19:23:45 by dapaulin         ###   ########.fr        #
+#    Updated: 2024/08/31 14:14:03 by dapaulin         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -62,12 +62,12 @@ TEST_BUILD									=	Tests/build
 all: $(NAME)
 
 CONFIG_HOST:
-	@echo "Configure Hosts"	
-	@sudo chmod a+w /etc/hosts
-	@sudo cat /etc/hosts | grep dapaulin.42.fr || echo "127.0.0.1 dapaulin.42.fr" >> /etc/hosts
-	@sudo cat /etc/hosts | grep rleslie.42.fr || echo "127.0.0.1 rleslie.42.fr" >> /etc/hosts
-	@sudo mkdir -p $(WEB_DIR)
-	@sudo tar -xpf $(TAR_FILE) -C $(WEB_DIR)
+#	@echo "Configure Hosts"	
+#	@sudo chmod a+w /etc/hosts
+#	@sudo cat /etc/hosts | grep dapaulin.42.fr || echo "127.0.0.1 dapaulin.42.fr" >> /etc/hosts
+#	@sudo cat /etc/hosts | grep rleslie.42.fr || echo "127.0.0.1 rleslie.42.fr" >> /etc/hosts
+	@mkdir -p $(WEB_DIR)
+	@ tar -xpf $(TAR_FILE) -C $(WEB_DIR)
 
 $(OBJS_PATH)%.o: %.cpp $(HEADER)
 

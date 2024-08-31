@@ -6,6 +6,7 @@
 # include "HttpResponse.hpp"
 # include "HttpRequest.hpp"
 # include "IHandler.hpp"
+# include "BuilderResponse.hpp"
 # include "IRoute.hpp"
 # include "IServer.hpp"
 
@@ -18,66 +19,157 @@ class BuilderRoute;
 
 class Route : public IRoute {
     private:
+        typedef HttpStatusCode::Code (Route::*Method)(HttpRequest &request, std::string);
         std::string                                 _route_name;
         std::set<std::string>                       _allow_methods;
         std::map<HttpStatusCode::Code, std::string> _error_page;
-        int                                         _limit_client_body_size;
+        size_t                                      _limit_client_body_size;
         std::string                                 _redirectPath;
         std::string                                 _root;
         bool                                        _autoIndex;
         std::vector<std::string>                    _indexes;
         ILogger                                     *_logger;
         IHandler                                    *_handler;
+        IBuilderResponse                            *_builder;
+        std::map<std::string, Method>               _httpMethods;
 
-        void        SetRouteName(std::string routeName);
-        void        SetBodyLimit(int size);
-        void        SetAllowMethods(std::set<std::string> methods);
-        void        SetErrorPage(std::set<HttpStatusCode::Code> statusCodes, std::string filePath);
-        void        SetRedirectPath(std::string redirectPath);
-        void        SetRootDirectory(std::string root);
-        void        SetRouteIndexes(std::vector<std::string> indexes);
-        void        SetAutoIndex(bool flag);
+        /**!
+         * 
+         * Seters
+         * 
+         */
+
+        void                            SetRouteName(std::string routeName);
+        void                            SetBodyLimit(int size);
+        void                            SetAllowMethods(std::set<std::string> methods);
+        void                            SetErrorPage(std::set<HttpStatusCode::Code> statusCodes, std::string filePath);
+        void                            SetRedirectPath(std::string redirectPath);
+        void                            SetRootDirectory(std::string root);
+        void                            SetRouteIndexes(std::vector<std::string> indexes);
+        void                            SetAutoIndex(bool flag);
 
         std::string _toString(void);
 
     public:
-        Route(void) {}
 
+        /**!
+         * 
+         * Init Method:
+         * Route processes a request
+         * 
+         */
+        
+        IHttpResponse *ProcessRequest(
+            HttpRequest &request
+        );
+    
+        Route(void) {}
         Route(ILogger *logger, IServer *server, IHandler *handler, std::string route_name);
         ~Route(void);
 
-        // Route Process
-        HttpStatusCode::Code _handlerErrorResponse(
-            std::ifstream *fd,
-            HttpStatusCode::Code statusCode,
-            IBuilderResponse &builder
-        );
-        
-        HttpStatusCode::Code ProcessRequest(
-            HttpRequest &request,
-            IBuilderResponse &builder
-        );
-        
-        // Geters
-        std::string                         GetRouteName(void);
-        int                                 GetBodyLimit(void);
-        bool                                IsAllowMethod(std::string method);
-        std::string                         GetErrorPage(HttpStatusCode::Code code);
-        std::string                         GetRedirectPath(void);
-        std::string                         GetRootDirectory(void);
-        const std::vector<std::string>      GetRouteIndexes(void);
-        bool                                GetAutoIndex(void);
+        /**!
+         * 
+         * Geters
+         * 
+         */
 
-        // Base methods
+        std::string                     GetRouteName(void);
+        size_t                          GetBodyLimit(void);
+        bool                            IsAllowMethod(std::string method);
+        std::string                     GetErrorPage(HttpStatusCode::Code code);
+        std::string                     GetRedirectPath(void);
+        std::string                     GetRootDirectory(void);
+        const std::vector<std::string>  GetRouteIndexes(void);
+        bool                            GetAutoIndex(void);
 
-        class Except: virtual public std::exception {
-			protected:
-			std::string error_message;
-			public:
-				explicit Except(const std::string& msg) : error_message(msg) {}
-				virtual ~Except() throw () {}
-				virtual const char* what() const throw () { return error_message.c_str();}
-		};
+    private:
+
+        /**!
+         * 
+         * General Assets
+         * Use in all http methods GET, POST and DELETE.
+         * 
+         */
+
+        /// @brief Check if method of request
+        /// is not allow in the route.
+        /// @param method 
+        /// @return  METHOD NOT ALLOWED
+        HttpStatusCode::Code _checkAllowMethod(std::string method);
+
+        /// @brief Check the redirect path
+        /// and inject a builder response
+        /// if they has a not empty path.
+        /// @param path 
+        /// @return PERMANENT REDIRECT
+        HttpStatusCode::Code _checkRedirectPath(std::string path);
+
+        /// @brief Check if body of request
+        /// is bigger them route limit.
+        /// @param limit 
+        /// @return CONTENT TOO LARGE
+        HttpStatusCode::Code _checkBodyLimit(size_t limit);
+
+        /// @brief Check if the Directory listining
+        /// is allowed.
+        /// @param absolutePath 
+        /// @return OK
+        HttpStatusCode::Code _checkAutoIndex(std::string absolutePath);
+
+        /// @brief Check if exist a file for the error status code
+        /// and return they if exist
+        /// @param statusCode 
+        /// @return statusCode
+        HttpStatusCode::Code _errorHandlerWithFile(HttpStatusCode::Code statusCode);
+
+        /// @brief Return a error default page.
+        /// @param statusCode 
+        /// @return statusCode
+        HttpStatusCode::Code _errorHandlerDefault(HttpStatusCode::Code statusCode);
+
+        /// @brief Check if a file can be
+        /// executed or read
+        /// @param absolutePath 
+        /// @return OK
+        HttpStatusCode::Code _checkActionInFile(std::string absolutePath);
+        HttpStatusCode::Code _notFound(void);
+
+
+        /**!
+         * 
+         * POST Assets
+         * Use in Post for produces they rules.
+         * 
+         */
+
+        HttpStatusCode::Code Post(HttpRequest &request, std::string absPath);
+
+        /**!
+         * 
+         * DELETE Assets
+         * Use in Post for produces they rules.
+         * 
+         */
+
+        HttpStatusCode::Code Delete(HttpRequest &request, std::string absPath);
+
+
+        /**!
+         * 
+         * GET Assets
+         * Use in Post for produces they rules.
+         * 
+         */
+
+        HttpStatusCode::Code Get(HttpRequest &request, std::string absPath);
+    
+    private:
+        /// @brief Checks if there is any file
+        /// in indexes valid for the route.
+        /// @param reqPath 
+        /// @param absPath 
+        /// @return OK
+        HttpStatusCode::Code _checkExistIndex(std::string reqPath, std::string absPath);
 
         friend class IBuilderResponse;
         friend class BuilderResponse;

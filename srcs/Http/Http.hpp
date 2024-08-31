@@ -11,11 +11,13 @@ class Http {
     std::map<std::string, IServer *>    servers;
     std::map<int, IServer *>            clientFD_Server;
     std::vector<IServer *>              _serversPointer;
+    std::map<int, std::string>          _serverFDToStringHost;
+    std::map<int, IServer *>            _serverFDToServer;
 
     const static int                    eventsLimit = 10;
     
     // epoll config
-    int                                 _epollFD;
+    //int                                 _epollFD;
     struct epoll_event                  clientEvents[eventsLimit];
 
     public:
