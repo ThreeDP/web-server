@@ -6,7 +6,7 @@
 #    By: dapaulin <dapaulin@student.42sp.org.br>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/11/03 15:04:07 by dapaulin          #+#    #+#              #
-#    Updated: 2024/08/31 14:14:03 by dapaulin         ###   ########.fr        #
+#    Updated: 2024/08/31 21:16:31 by dapaulin         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -25,15 +25,16 @@ HEADERS										=	Http/ \
 												Http/Server \
 												Http/Response \
 												Http/Request \
-												Http/Route
+												Http/Route \
+												Http/Fastcgi
 # Parser/
 INCLUDE_FLAGS 								:= 	-g3 -O3 -MMD -MP $(addprefix -I, $(HEADERS))
-VPATH										=	Http:Parser:Logging:Http/Server/:Utils/:Http/Response:HandlerFileSystem:Http/Route:Http/Request
+VPATH										=	Http:Http/Fastcgi:Parser:Logging:Http/Server/:Utils/:Http/Response:HandlerFileSystem:Http/Route:Http/Request
 
 ######################## FLAGS ###############################
-FLAGS										= 	-Wall -Wextra -Werror -std=c++98
+FLAGS										= 	-Wall -Wextra -std=c++98
 ######################## SOURCES #############################
-SRC_RESPONSE								=	HttpResponse.cpp BuilderResponse.cpp
+SRC_RESPONSE								=	HttpResponse.cpp BuilderResponse.cpp Fastcgi.cpp
 SRC_ROUTE									=	Route.cpp BuilderRoute.cpp
 SRC_SERVER									=	Server.cpp BuilderServer.cpp
 SRC_PARSER									=	Parser.cpp

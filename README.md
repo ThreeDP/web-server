@@ -341,3 +341,15 @@ struct protoent {
 ### Status Code Refs
 - [RFC Status Code Ref](https://www.rfc-editor.org/rfc/rfc9110)
 - [Cat Status Code Ref](https://http.cat/)
+
+```mermaid
+sequenceDiagram
+Client Request->>Server: Envio de request CGI
+Server->>Server: Deve passar pelo epoll  Le a string de request
+Server->>CGI: Passa o request para o CGI
+CGI->>Processo: Abrir um processo e passar envp
+CGI->>CGI: Gera dois sockets novos para o epoll
+Processo->>Server: sv[0] para que o Server Leia.
+Server->>Server: Deve passar pelo epoll
+Server->>Client Request: Responde o cliente 
+```

@@ -6,6 +6,7 @@
 # include <sstream>
 # include <string>
 # include <cstring>
+# include <vector>
 
 class HttpRequest {
     public:
@@ -16,9 +17,25 @@ class HttpRequest {
         size_t                              _bodySize;
 
     public:
+        // AllowMethod:          GET
         std::map<std::string, std::string>  _payload;
         
         void                ParserRequest(std::string request);
+        std::vector<std::string>             GetEnvp(void) {
+            std::vector<std::string> vec;
+            std::map<std::string, std::string>::iterator it = _payload.begin();
+            vec.push_back("REQUEST_METHOD=" + _method);
+            for ( ;  it != _payload.end(); ++it) {
+                std::string key = it->first.substr(0, it->first.size() - 1);
+                vec.push_back(key + "=" + it->second);
+            }
+            std::string line;
+            std::stringstream ss(_body);
+            while (std::getline(ss, line, '\n')) {
+                vec.push_back(line);
+            }
+            return vec;
+        }
 
         // Base Methods
         HttpRequest();

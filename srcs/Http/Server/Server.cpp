@@ -147,9 +147,14 @@ void                Server::ProcessRequest(HttpRequest &request, int client_fd) 
 }
 
 IHttpResponse         *Server::ProcessResponse(int client_fd) {
+    std::cout << "TAMO AQUI 0 ?" << std::endl;
     IHttpResponse *response = this->ResponsesMap[client_fd];
+    if (response == NULL)
+        std::cout << "TAMO AQUI 1 ?" << std::endl;
     std::cout << _logger->Log(&ILogger::LogInformation, "Response", response->GetStatusCode(), response->GetStatusMessage());
+    std::cout << "TAMO AQUI 2 ?" << std::endl;
     this->ResponsesMap.erase(client_fd);
+    std::cout << "TAMO AQUI 3 ?" << std::endl;
     return response;
 }
 

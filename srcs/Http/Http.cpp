@@ -1,4 +1,22 @@
 # include "Http.hpp"
+void modify_epoll_event(int epoll_fd, int sock_fd, uint32_t new_events) {
+    // Remove o socket atual do epoll
+    struct epoll_event event;
+    memset(&event, '\0', sizeof(struct epoll_event));
+    if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, sock_fd, NULL) == -1) {
+        std::cerr << "Erro ao remover o socket do epoll: " << strerror(errno) << std::endl;
+        return;
+    }
+
+    // Configura o novo evento
+    event.events = new_events;
+    event.data.fd = sock_fd;
+
+    // Adiciona o socket de volta ao epoll com o novo evento
+    if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, sock_fd, &event) == -1) {
+        std::cerr << "Erro ao adicionar o socket ao epoll: " << strerror(errno) << std::endl;
+    }
+}
 
 /* Http Methods
 =================================================*/
@@ -39,18 +57,22 @@ void    Http::StartWatchSockets(void) {
             if ((this->clientEvents[i].events & EPOLLIN) == EPOLLIN) {
                 if (this->ConnectClientToServer(this->clientEvents[i].data.fd))
                     continue;
-                ssize_t numbytes = this->HandleRequest(this->clientEvents[i].data.fd);  
+                ssize_t numbytes = this->HandleRequest(this->clientEvents[i].data.fd);
+                modify_epoll_event(this->GetEPollFD(), this->clientEvents[i].data.fd, EPOLLOUT);
                 if (numbytes == -1)
                     throw Except("error recv");
                 if (numbytes == 0) {
                     this->DisconnectClientToServer(this->clientEvents[i].data.fd);
                 } else if (numbytes > 0) {
-                    this->HandleResponse(this->clientEvents[i].data.fd);
-                    this->DisconnectClientToServer(this->clientEvents[i].data.fd);
-                    break;
+
                 }
             }
-            break;
+            
+            if ((this->clientEvents[i].events & EPOLLOUT) == EPOLLOUT) {
+                this->HandleResponse(this->clientEvents[i].data.fd);
+                this->DisconnectClientToServer(this->clientEvents[i].data.fd);
+                break;
+            }
         }
     }
 }
