@@ -42,6 +42,7 @@ int Server::newProcessCGI(HttpRequest &req, int epollFD) {
             throw std::invalid_argument("");
 		return sv[0];
 	}
+    return (-1);
 }
 
 Server::Server(IHandler *handler, ILogger *logger) :
@@ -171,34 +172,25 @@ std::string         Server::FindMatchRoute(HttpRequest &res) {
     return keyPath;
 }
 
-void Server::CreateCGIResponse(int cgifd, int clientfd) {
-    std::cout << "TA AQUI 1" << std::endl;
+void Server::CreateCGIResponse(int epollfd, int cgifd, int clientfd) {
+    /*
+    verificar o tamanho do respose do cgi
+    */
     char buf[1024];
     memset(buf, '\0', 1024);
-    
     ssize_t n = recv(cgifd, buf, 1024, 0);
-    std::cout << "TA AQUI 2" << std::endl;
     if (n == -1) {
         std::cerr << "Erro ao ler do socket: " << strerror(errno) << std::endl;
-    } else {
-        // buf[n] = '\0';  // Adiciona o terminador nulo
-        std::cout << "Saída do CGI:\n" << buf << std::endl;
     }
-    std::cout << "TA AQUI 3" << std::endl;
-    BuilderResponse b(_logger, _handler);
-    std::cout << "TA AQUI 4" << std::endl;
-    
-    b
-        .SetupResponse()
-        .WithStatusCode(HttpStatusCode::_OK)
-        .WithContentType(".html")
-        .WithBody(buf, 1024);
+    BuilderResponse builderResponse(_logger, _handler);
+    this->ResponsesMap[clientfd] = builderResponse
+                                    .SetupResponse()
+                                    .WithStatusCode(HttpStatusCode::_OK)
+                                    .WithContentType(".html")
+                                    .WithBody(buf, 1024)
+                                    .GetResult();
     close(cgifd);
-    std::cout << "TA AQUI 5" << std::endl;
-    IHttpResponse *novo = b.GetResult();
-    std::cout << "TA AQUI 6" << std::endl;
-    this->ResponsesMap[clientfd] = novo;
-    std::cout << "TA AQUI 7" << std::endl;
+    (void)epollfd;
 }
 
 void                Server::ProcessRequest(HttpRequest &request, int client_fd) {
@@ -218,6 +210,30 @@ void                Server::ProcessRequest(HttpRequest &request, int client_fd) 
             .GetResult();
         std::cout << _logger->Log(&Logger::LogInformation, "Route Not Found or Configurated", HttpStatusCode::_INTERNAL_SERVER_ERROR);
     }
+}
+
+HttpStatusCode::Code                Server::ProcessRequest(HttpRequest &request, int client_fd, int* cgifd, int epoll) {
+    BuilderResponse builder = BuilderResponse(_logger, _handler);
+    std::string keyPath = this->FindMatchRoute(request);
+    std::cout << _logger->Log(&ILogger::LogInformation, "Request", "Route", keyPath, request.GetMethod(), request.GetPath());
+    std::map<std::string, IRoute *>::iterator it = this->_routes.find(keyPath);
+    
+    if (it != this->_routes.end()) {
+        IHttpResponse *novo = this->_routes[keyPath]->ProcessRequest(request, cgifd, epoll);
+        if (novo == NULL) {
+            return HttpStatusCode::_CGI;
+        }
+        this->ResponsesMap[client_fd] = novo;
+    } else {
+        this->ResponsesMap[client_fd] = builder
+            .SetupResponse()
+            .WithStatusCode(HttpStatusCode::_INTERNAL_SERVER_ERROR)
+            .WithContentType(".html")
+            .WithDefaultPage()
+            .GetResult();
+        std::cout << _logger->Log(&Logger::LogInformation, "Route Not Found or Configurated", HttpStatusCode::_INTERNAL_SERVER_ERROR);
+    }
+    return HttpStatusCode::_INTERNAL_SERVER_ERROR;
 }
 
 IHttpResponse         *Server::ProcessResponse(int client_fd) {

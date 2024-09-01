@@ -9,6 +9,7 @@
 # include "BuilderResponse.hpp"
 # include "IRoute.hpp"
 # include "IServer.hpp"
+#include <sys/wait.h>
 
 enum RouteStages {
     R_START,
@@ -61,6 +62,11 @@ class Route : public IRoute {
         
         IHttpResponse *ProcessRequest(
             HttpRequest &request
+        );
+        IHttpResponse *ProcessRequest(
+            HttpRequest &request,
+            int* cgifd,
+            int epoll
         );
     
         Route(void) {}
@@ -160,8 +166,10 @@ class Route : public IRoute {
          * Use in Post for produces they rules.
          * 
          */
+        void        cgiAction(HttpRequest &req, int epollFD, std::string absPath, int* cgifd);
 
         HttpStatusCode::Code Get(HttpRequest &request, std::string absPath);
+        HttpStatusCode::Code Get(HttpRequest &request, std::string absPath, int* cgifd, int epoll);
     
     private:
         /// @brief Checks if there is any file

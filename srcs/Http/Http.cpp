@@ -53,19 +53,23 @@ void    Http::StartWatchSockets(void) {
         if (number_of_ready_fds == -1) {
             throw Except("Epoll Wait error!");
         }
-        _logger->Log(&Logger::LogInformation, "Number of fds ready to read:", number_of_ready_fds);
+        std::cout << _logger->Log(&Logger::LogInformation, "Number of fds ready to read:", number_of_ready_fds);
         for (int i = 0; i < number_of_ready_fds; i++) {
             std::map<int, int>::iterator it = _cgis.find(this->clientEvents[i].data.fd);
+            std::cout <<"AQUI 1"<< std::endl;
             if ((this->clientEvents[i].events & EPOLLIN) == EPOLLIN) {
+                std::cout <<"AQUI 2"<< std::endl;
                 if (it != _cgis.end()) {
-                    std::cout << "Nosso CGI: " << this->clientEvents[i].data.fd << std::endl;
-                    std::cout << "client: " << it->second << "\tcgi: " << it->first << std::endl;
-                    clientFD_Server[it->second]->CreateCGIResponse(it->first, it->second);
+                    std::cout <<"AQUI 3"<< std::endl;
+                    clientFD_Server[it->second]->CreateCGIResponse(this->GetEPollFD(), it->first, it->second);
+                    // modify_epoll_event(this->GetEPollFD(), this->clientEvents[i].data.fd, EPOLLOUT);
+                    _cgis.erase(it->first);
+                    std::cout <<"AQUI 6"<< std::endl;
                     break;
                 } else {
                     if (this->ConnectClientToServer(this->clientEvents[i].data.fd))
                         continue;
-                    std::cout << "Nosso cliente: " << this->clientEvents[i].data.fd << std::endl;
+                    std::cout <<"AQUI 4"<< std::endl;
                     ssize_t numbytes = this->HandleRequest(this->clientEvents[i].data.fd, this->GetEPollFD());
                     modify_epoll_event(this->GetEPollFD(), this->clientEvents[i].data.fd, EPOLLOUT);
                     if (numbytes == -1)
@@ -76,14 +80,14 @@ void    Http::StartWatchSockets(void) {
                     if (numbytes > 0){
                         break ;
                     }
+                    std::cout <<"AQUI 8"<< std::endl;
                 }
-
-            }
-               
+            }   
             if ((this->clientEvents[i].events & EPOLLOUT)) {
-                std::cout << "Cheguei no events" << std::endl;
+                std::cout <<"EPOLLOUT IN"<< std::endl;
                 this->HandleResponse(this->clientEvents[i].data.fd);
                 this->DisconnectClientToServer(this->clientEvents[i].data.fd);
+                std::cout <<"EPOLLOUT OUT"<< std::endl;
                 break;
             }
         }
@@ -127,11 +131,19 @@ ssize_t    Http::HandleRequest(int client_fd, int poll_fd) {
     ssize_t numbytes = recv(client_fd, &buffer, sizeof(char) * 1000000, 0);
     res.ParserRequest(buffer);
     if (res.IsCGIRequest()){
-        std::cout << "É um CGI!" << std::endl;
-        this->_cgis[server->newProcessCGI(res, poll_fd)] = client_fd;
+        int sv[2]; 
+        if (socketpair(AF_UNIX, SOCK_STREAM, 0, sv) == -1) {
+            std::cerr << "Erro ao criar socket pair: " << strerror(errno) << std::endl;
+            return -1;
+        }
+        this->_cgis[sv[0]] = client_fd;
+        if (server->ProcessRequest(res, client_fd, sv, this->GetEPollFD()) == HttpStatusCode::_CGI) {
+            return numbytes;
+        }
     } else if (!res.IsCGIRequest() && server != NULL){
         server->ProcessRequest(res, client_fd);
     }
+    (void)poll_fd;
     return numbytes;
 }
 

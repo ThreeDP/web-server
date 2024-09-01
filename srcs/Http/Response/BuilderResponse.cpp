@@ -89,13 +89,8 @@ IBuilderResponse &BuilderResponse::WithLocation(std::string location) {
 };
 
 IHttpResponse *BuilderResponse::GetResult(void) {
-    std::cout << "antes" << std::endl;
     IHttpResponse *res = _response;
-    std::cout << "depois" << std::endl;
-
-    // _response = NULL;
-    std::cout << "antes depois " << std::endl;
-
+    _response = NULL;
     return res;
 }
 
