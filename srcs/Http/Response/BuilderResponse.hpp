@@ -19,6 +19,7 @@ class BuilderResponse : public IBuilderResponse {
         IBuilderResponse &WithDirectoryFile(DIR *directory, std::string path);
         IBuilderResponse &WithFileDescriptor(std::ifstream *fd);
         IBuilderResponse &WithDefaultPage(void);
+        IBuilderResponse &WithBody(char *buf, int size);
         IBuilderResponse &WithContentType(std::string extension);
         IBuilderResponse &WithLastModified(std::string path);
         IBuilderResponse &WithLocation(std::string location);

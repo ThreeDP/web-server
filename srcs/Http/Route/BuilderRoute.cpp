@@ -12,7 +12,7 @@ BuilderRoute::BuilderRoute(ILogger *logger, IServer *server, IHandler *handler) 
 
 BuilderRoute::~BuilderRoute(void) {
     if (_route != NULL) {
-        delete _route;
+        // delete _route;
         _route = NULL;
     }
     std::cerr << _logger->Log(&Logger::LogDebug, "Deleted BuilderRoute Class.");

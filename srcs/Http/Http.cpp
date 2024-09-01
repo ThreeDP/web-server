@@ -1,4 +1,5 @@
 # include "Http.hpp"
+
 void modify_epoll_event(int epoll_fd, int sock_fd, uint32_t new_events) {
     // Remove o socket atual do epoll
     struct epoll_event event;
@@ -54,21 +55,33 @@ void    Http::StartWatchSockets(void) {
         }
         _logger->Log(&Logger::LogInformation, "Number of fds ready to read:", number_of_ready_fds);
         for (int i = 0; i < number_of_ready_fds; i++) {
+            std::map<int, int>::iterator it = _cgis.find(this->clientEvents[i].data.fd);
             if ((this->clientEvents[i].events & EPOLLIN) == EPOLLIN) {
-                if (this->ConnectClientToServer(this->clientEvents[i].data.fd))
-                    continue;
-                ssize_t numbytes = this->HandleRequest(this->clientEvents[i].data.fd);
-                modify_epoll_event(this->GetEPollFD(), this->clientEvents[i].data.fd, EPOLLOUT);
-                if (numbytes == -1)
-                    throw Except("error recv");
-                if (numbytes == 0) {
-                    this->DisconnectClientToServer(this->clientEvents[i].data.fd);
-                } else if (numbytes > 0) {
-
+                if (it != _cgis.end()) {
+                    std::cout << "Nosso CGI: " << this->clientEvents[i].data.fd << std::endl;
+                    std::cout << "client: " << it->second << "\tcgi: " << it->first << std::endl;
+                    clientFD_Server[it->second]->CreateCGIResponse(it->first, it->second);
+                    break;
+                } else {
+                    if (this->ConnectClientToServer(this->clientEvents[i].data.fd))
+                        continue;
+                    std::cout << "Nosso cliente: " << this->clientEvents[i].data.fd << std::endl;
+                    ssize_t numbytes = this->HandleRequest(this->clientEvents[i].data.fd, this->GetEPollFD());
+                    modify_epoll_event(this->GetEPollFD(), this->clientEvents[i].data.fd, EPOLLOUT);
+                    if (numbytes == -1)
+                        throw Except("error recv");
+                    if (numbytes == 0) {
+                        this->DisconnectClientToServer(this->clientEvents[i].data.fd);
+                    }  
+                    if (numbytes > 0){
+                        break ;
+                    }
                 }
+
             }
-            
-            if ((this->clientEvents[i].events & EPOLLOUT) == EPOLLOUT) {
+               
+            if ((this->clientEvents[i].events & EPOLLOUT)) {
+                std::cout << "Cheguei no events" << std::endl;
                 this->HandleResponse(this->clientEvents[i].data.fd);
                 this->DisconnectClientToServer(this->clientEvents[i].data.fd);
                 break;
@@ -101,12 +114,11 @@ bool    Http::ConnectClientToServer(int fd) {
             hasHandShake = true;
     } else {
         _logger->Log(&Logger::LogCaution, "Error on apply handshake");
-        // Add server error response.
     }
     return hasHandShake;
 }
 
-ssize_t    Http::HandleRequest(int client_fd) {
+ssize_t    Http::HandleRequest(int client_fd, int poll_fd) {
     char        buffer[1000000];
     HttpRequest res;
     IServer      *server = this->clientFD_Server[client_fd];
@@ -114,8 +126,12 @@ ssize_t    Http::HandleRequest(int client_fd) {
     memset(&buffer, 0, sizeof(char) * 1000000);
     ssize_t numbytes = recv(client_fd, &buffer, sizeof(char) * 1000000, 0);
     res.ParserRequest(buffer);
-    if (server != NULL) 
+    if (res.IsCGIRequest()){
+        std::cout << "É um CGI!" << std::endl;
+        this->_cgis[server->newProcessCGI(res, poll_fd)] = client_fd;
+    } else if (!res.IsCGIRequest() && server != NULL){
         server->ProcessRequest(res, client_fd);
+    }
     return numbytes;
 }
 
@@ -125,10 +141,10 @@ void    Http::HandleResponse(int client_fd) {
 
     std::vector<char> test = message->CreateResponse();
     if (send(client_fd, &test[0], test.size(), 0) == -1) {
-        delete message;
+        //delete message;
         throw Except("Error on send Response");
     }
-    delete message;
+    //delete message;
 }
 
 void    Http::ClientHandShake(IServer *server) {

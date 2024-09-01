@@ -21,11 +21,11 @@ class Fastcgi {
 		Fastcgi(void) {
 		}
 
-		void	Process(HttpRequest &request) {
+		// void	Process(HttpRequest &request) {
 
-		}
+		// }
 
-		void newProcessCGI(HttpRequest &req, int epollFD);
+		int newProcessCGI(HttpRequest &req, int epollFD);
 };
 
 #endif

@@ -13,6 +13,7 @@ class Http {
     std::vector<IServer *>              _serversPointer;
     std::map<int, std::string>          _serverFDToStringHost;
     std::map<int, IServer *>            _serverFDToServer;
+    std::map<int, int>            _cgis;
 
     const static int                    eventsLimit = 10;
     
@@ -29,7 +30,7 @@ class Http {
         void                        HandleResponse(int client_fd);
         bool                        ConnectClientToServer(int i);
         void                        DisconnectClientToServer(int client_fd);
-        ssize_t                     HandleRequest(int client_fd);
+        ssize_t                     HandleRequest(int client_fd, int poll_fd);
 
         
 

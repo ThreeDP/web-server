@@ -15,7 +15,7 @@ Parser::Parser(ILogger *logger, IHandler *handler, IBuilderServer *builder) :
 Parser::~Parser(void) {
     if (_file != NULL) {
         _file->close();
-        delete _file;
+        // delete _file;
     }
 }
 
@@ -69,7 +69,7 @@ int	Parser::ConfigHttp(Http &http, std::string fileName) {
     }
     if (_file != NULL) {
         _file->close();
-        delete _file;
+        // delete _file;
     }
     return 0;
 }

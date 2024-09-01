@@ -1,5 +1,49 @@
 # include "Server.hpp"
 
+int Server::newProcessCGI(HttpRequest &req, int epollFD) {
+	std::vector<std::string> ev = req.GetEnvp();
+	char **envp = new char*[ev.size() + 1];
+
+	for (size_t i = 0; i < ev.size(); ++i) {
+		envp[i] = new char[ev[i].size() + 1];  
+		std::strcpy(envp[i], ev[i].c_str());
+	}
+
+	envp[ev.size()] = NULL;
+
+	const char *phpInterpreter = "/usr/bin/php";
+	const char *scriptPath = "/nfs/homes/rleslie-/web-server/home/ranna-site/index.php";
+	const char *argv[] = {phpInterpreter, scriptPath, NULL};
+	int sv[2]; 
+    if (socketpair(AF_UNIX, SOCK_STREAM, 0, sv) == -1) {
+        std::cerr << "Erro ao criar socket pair: " << strerror(errno) << std::endl;
+        return -1;
+    }
+	pid_t pid = fork();
+	if (pid == 0) {
+        close(sv[0]);
+
+        dup2(sv[1], STDOUT_FILENO);
+        dup2(sv[1], STDERR_FILENO);
+
+        close(sv[1]);
+
+		execve("/usr/bin/php", (char**)argv, envp);
+	} else {
+		int status;
+		waitpid(pid, &status, 0);
+		close(sv[1]);  // Fecha o socket não utilizado no processo pai
+		struct epoll_event  event;
+
+		memset(&event, 0, sizeof(struct epoll_event));
+        event.events = EPOLLIN;
+        event.data.fd = sv[0];
+		if (epoll_ctl(epollFD, EPOLL_CTL_ADD, sv[0], &event) == -1)
+            throw std::invalid_argument("");
+		return sv[0];
+	}
+}
+
 Server::Server(IHandler *handler, ILogger *logger) :
 _port("8080"),
 _limit_client_body_size(2048),
@@ -127,6 +171,36 @@ std::string         Server::FindMatchRoute(HttpRequest &res) {
     return keyPath;
 }
 
+void Server::CreateCGIResponse(int cgifd, int clientfd) {
+    std::cout << "TA AQUI 1" << std::endl;
+    char buf[1024];
+    memset(buf, '\0', 1024);
+    
+    ssize_t n = recv(cgifd, buf, 1024, 0);
+    std::cout << "TA AQUI 2" << std::endl;
+    if (n == -1) {
+        std::cerr << "Erro ao ler do socket: " << strerror(errno) << std::endl;
+    } else {
+        // buf[n] = '\0';  // Adiciona o terminador nulo
+        std::cout << "Saída do CGI:\n" << buf << std::endl;
+    }
+    std::cout << "TA AQUI 3" << std::endl;
+    BuilderResponse b(_logger, _handler);
+    std::cout << "TA AQUI 4" << std::endl;
+    
+    b
+        .SetupResponse()
+        .WithStatusCode(HttpStatusCode::_OK)
+        .WithContentType(".html")
+        .WithBody(buf, 1024);
+    close(cgifd);
+    std::cout << "TA AQUI 5" << std::endl;
+    IHttpResponse *novo = b.GetResult();
+    std::cout << "TA AQUI 6" << std::endl;
+    this->ResponsesMap[clientfd] = novo;
+    std::cout << "TA AQUI 7" << std::endl;
+}
+
 void                Server::ProcessRequest(HttpRequest &request, int client_fd) {
     BuilderResponse builder = BuilderResponse(_logger, _handler);
     std::string keyPath = this->FindMatchRoute(request);
@@ -147,14 +221,10 @@ void                Server::ProcessRequest(HttpRequest &request, int client_fd) 
 }
 
 IHttpResponse         *Server::ProcessResponse(int client_fd) {
-    std::cout << "TAMO AQUI 0 ?" << std::endl;
     IHttpResponse *response = this->ResponsesMap[client_fd];
-    if (response == NULL)
-        std::cout << "TAMO AQUI 1 ?" << std::endl;
     std::cout << _logger->Log(&ILogger::LogInformation, "Response", response->GetStatusCode(), response->GetStatusMessage());
-    std::cout << "TAMO AQUI 2 ?" << std::endl;
     this->ResponsesMap.erase(client_fd);
-    std::cout << "TAMO AQUI 3 ?" << std::endl;
+
     return response;
 }
 

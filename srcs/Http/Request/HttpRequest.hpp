@@ -49,6 +49,8 @@ class HttpRequest {
         std::string                         GetBody(void) const;
         int                              GetBodySize(void) const;
 
+        bool                          IsCGIRequest(void);
+
         bool operator==(const HttpRequest &other);
 };
 
