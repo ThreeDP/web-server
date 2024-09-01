@@ -50,13 +50,17 @@ class IServer {
 
         virtual IHttpResponse*          ProcessResponse(int client_fd) = 0;
         virtual void                    ProcessRequest(HttpRequest &request, int client_fd) = 0;
+        virtual HttpStatusCode::Code                    ProcessRequest(HttpRequest &request, int client_fd, int* cgifd, int epoll) = 0;
         virtual std::string             FindMatchRoute(HttpRequest &res) = 0;
+        virtual void                    CreateCGIResponse(int epollfd, int cgifd, int clientfd) = 0;
 
         virtual int                     GetListener(void) const = 0;
         virtual std::string             GetHosts(void) const = 0;
         virtual std::string             GetIP(void) const = 0;
         virtual std::string             GetIPVersion(void) const = 0;
         virtual std::string             GetListenPort(void) const = 0;
+        virtual int                     newProcessCGI(HttpRequest &req, int epollFD) = 0;
+
 
         friend class BuilderServer;
         friend class IBuilderServer;

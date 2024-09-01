@@ -189,6 +189,7 @@ void    HttpResponse::SetHeader(std::string key, std::string value) {
 }
 
 void    HttpResponse::SetBody(std::string body) {
+    std::cout << "BODY INSERT" << std::endl;
     this->_body.insert(this->_body.end(), body.begin(), body.end());
 }
 

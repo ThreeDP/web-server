@@ -17,6 +17,12 @@ class IRoute {
             HttpRequest &request
         ) = 0;
 
+        virtual IHttpResponse *ProcessRequest(
+            HttpRequest &request,
+            int* cgifd,
+            int epoll
+        ) = 0;
+
         // Geters
         virtual std::string                     GetRouteName(void) = 0;
         virtual size_t                          GetBodyLimit(void) = 0;

@@ -380,6 +380,6 @@ int main(int argc, char **argv) {
 	int num = RUN_ALL_TESTS();
 
     // Clean
-	delete logger;
+	 delete logger;
 	return num;
 }

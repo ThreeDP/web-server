@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: dapaulin <dapaulin@student.42sp.org.br>    +#+  +:+       +#+         #
+#    By: rleslie- <rleslie-@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/11/03 15:04:07 by dapaulin          #+#    #+#              #
-#    Updated: 2024/08/31 14:14:03 by dapaulin         ###   ########.fr        #
+#    Updated: 2024/09/01 18:14:09 by rleslie-         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -25,7 +25,7 @@ HEADERS										=	Http/ \
 												Http/Server \
 												Http/Response \
 												Http/Request \
-												Http/Route
+												Http/Route 
 # Parser/
 INCLUDE_FLAGS 								:= 	-g3 -O3 -MMD -MP $(addprefix -I, $(HEADERS))
 VPATH										=	Http:Parser:Logging:Http/Server/:Utils/:Http/Response:HandlerFileSystem:Http/Route:Http/Request

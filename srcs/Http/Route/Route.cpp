@@ -32,6 +32,35 @@ IHttpResponse *Route::ProcessRequest(
     return _builder->GetResult();
 }
 
+IHttpResponse *Route::ProcessRequest(
+    HttpRequest &request,
+    int* cgifd,
+    int epoll
+) {
+    std::string     absolutePath;
+    
+    absolutePath = Utils::SanitizePath(this->_root, request.GetPath());
+    if (this->_checkAllowMethod(request.GetMethod())) {
+        return _builder->GetResult(); 
+    }
+    if (this->_checkRedirectPath(this->GetRedirectPath())) {
+        return _builder->GetResult();
+    }
+    if (request.GetMethod() == "GET") {
+        if (this->Get( request, absolutePath, cgifd, epoll ) == HttpStatusCode::_CGI) {
+            return NULL;
+        }
+        return _builder->GetResult();
+    }
+    _builder->SetupResponse()
+        .WithStatusCode(HttpStatusCode::_INTERNAL_SERVER_ERROR)
+        .WithContentType(".html")
+        .WithDefaultPage()
+        .GetResult();
+    std::cout << _logger->Log(&Logger::LogInformation, "Route Not Found or Configurated", HttpStatusCode::_INTERNAL_SERVER_ERROR);
+    return _builder->GetResult();
+}
+
 /**!
  * 
  * General Assets
@@ -188,6 +217,51 @@ HttpStatusCode::Code Route::Delete(HttpRequest &request, std::string absPath) {
  * 
  */
 
+void Route::cgiAction(HttpRequest &req, int epollFD, std::string absPath, int* cgifd) {
+    // Deve adicionar o GetEnvp no envp do server em todo request.
+	std::vector<std::string> ev = req.GetEnvp();
+	char **envp = new char*[ev.size() + 1];
+
+	for (size_t i = 0; i < ev.size(); ++i) {
+		envp[i] = new char[ev[i].size() + 1];  
+		std::strcpy(envp[i], ev[i].c_str());
+	}
+
+	envp[ev.size()] = NULL;
+
+	const char *phpInterpreter = "/usr/bin/php";
+    const char *scriptPath = absPath.c_str();
+	const char *argv[] = {phpInterpreter, scriptPath, NULL};
+	// int sv[2]; 
+    // if (socketpair(AF_UNIX, SOCK_STREAM, 0, sv) == -1) {
+    //     std::cerr << "Erro ao criar socket pair: " << strerror(errno) << std::endl;
+    //     return -1;
+    // }
+	pid_t pid = fork();
+	if (pid == 0) {
+        close(cgifd[0]);
+
+        dup2(cgifd[1], STDOUT_FILENO);
+        dup2(cgifd[1], STDERR_FILENO);
+
+        close(cgifd[1]);
+
+		execve("/usr/bin/php", (char**)argv, envp);
+	} else {
+		int status;
+		waitpid(pid, &status, 0);
+        // Validar os error de wait pid.
+		close(cgifd[1]);  // Fecha o socket não utilizado no processo pai
+		struct epoll_event  event;
+
+		memset(&event, 0, sizeof(struct epoll_event));
+        event.events = EPOLLIN;
+        event.data.fd = cgifd[0];
+		if (epoll_ctl(epollFD, EPOLL_CTL_ADD, cgifd[0], &event) == -1)
+            throw std::invalid_argument("");
+	}
+}
+
 HttpStatusCode::Code Route::Get(HttpRequest &request, std::string absPath) {
     HttpStatusCode::Code result = HttpStatusCode::_DO_NOTHING;
     if ( request.GetBodySize() > 0 ) { return HttpStatusCode::_BAD_REQUEST; }
@@ -197,6 +271,30 @@ HttpStatusCode::Code Route::Get(HttpRequest &request, std::string absPath) {
         if (allow && isDirectory) {
             if (( result = this->_checkExistIndex(request.GetPath(), absPath) )) { return result; }
             if (( result = this->_checkAutoIndex(absPath) )) { return result; }
+        }
+       // else if (allow && Utils::GetFileExtension(absPath) == ".php" && this->cgiAction()) { return HttpStatusCode::_CGI}
+        else if (allow && (result = this->_checkActionInFile(absPath)) ) { return result; }
+        else if (!allow) {
+            if ((result = this->_errorHandlerWithFile(HttpStatusCode::_FORBIDDEN))) { return result; }
+            return this->_errorHandlerDefault(HttpStatusCode::_FORBIDDEN);
+        }
+    }
+    return this->_notFound();
+}
+
+HttpStatusCode::Code Route::Get(HttpRequest &request, std::string absPath, int* cgifd, int epoll) {
+    HttpStatusCode::Code result = HttpStatusCode::_DO_NOTHING;
+    if ( request.GetBodySize() > 0 ) { return HttpStatusCode::_BAD_REQUEST; }
+    if (this->_handler->PathExist(absPath)) {
+        bool isDirectory = this->_handler->FileIsDirectory(absPath);
+        bool allow = this->_handler->IsAllowToGetFile(absPath);
+        if (allow && isDirectory) {
+            if (( result = this->_checkExistIndex(request.GetPath(), absPath) )) { return result; }
+            if (( result = this->_checkAutoIndex(absPath) )) { return result; }
+        }
+        else if (allow && Utils::GetFileExtension(absPath) == ".php") {
+            this->cgiAction(request, epoll, absPath, cgifd);
+            return HttpStatusCode::_CGI;
         }
         else if (allow && (result = this->_checkActionInFile(absPath)) ) { return result; }
         else if (!allow) {

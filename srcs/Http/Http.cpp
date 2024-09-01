@@ -1,5 +1,24 @@
 # include "Http.hpp"
 
+void modify_epoll_event(int epoll_fd, int sock_fd, uint32_t new_events) {
+    // Remove o socket atual do epoll
+    struct epoll_event event;
+    memset(&event, '\0', sizeof(struct epoll_event));
+    if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, sock_fd, NULL) == -1) {
+        std::cerr << "Erro ao remover o socket do epoll: " << strerror(errno) << std::endl;
+        return;
+    }
+
+    // Configura o novo evento
+    event.events = new_events;
+    event.data.fd = sock_fd;
+
+    // Adiciona o socket de volta ao epoll com o novo evento
+    if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, sock_fd, &event) == -1) {
+        std::cerr << "Erro ao adicionar o socket ao epoll: " << strerror(errno) << std::endl;
+    }
+}
+
 /* Http Methods
 =================================================*/
 void    Http::StartPollList(void) {
@@ -34,23 +53,43 @@ void    Http::StartWatchSockets(void) {
         if (number_of_ready_fds == -1) {
             throw Except("Epoll Wait error!");
         }
-        _logger->Log(&Logger::LogInformation, "Number of fds ready to read:", number_of_ready_fds);
+        std::cout << _logger->Log(&Logger::LogInformation, "Number of fds ready to read:", number_of_ready_fds);
         for (int i = 0; i < number_of_ready_fds; i++) {
+            std::map<int, int>::iterator it = _cgis.find(this->clientEvents[i].data.fd);
+            std::cout <<"AQUI 1"<< std::endl;
             if ((this->clientEvents[i].events & EPOLLIN) == EPOLLIN) {
-                if (this->ConnectClientToServer(this->clientEvents[i].data.fd))
-                    continue;
-                ssize_t numbytes = this->HandleRequest(this->clientEvents[i].data.fd);  
-                if (numbytes == -1)
-                    throw Except("error recv");
-                if (numbytes == 0) {
-                    this->DisconnectClientToServer(this->clientEvents[i].data.fd);
-                } else if (numbytes > 0) {
-                    this->HandleResponse(this->clientEvents[i].data.fd);
-                    this->DisconnectClientToServer(this->clientEvents[i].data.fd);
+                std::cout <<"AQUI 2"<< std::endl;
+                if (it != _cgis.end()) {
+                    std::cout <<"AQUI 3"<< std::endl;
+                    clientFD_Server[it->second]->CreateCGIResponse(this->GetEPollFD(), it->first, it->second);
+                    // modify_epoll_event(this->GetEPollFD(), this->clientEvents[i].data.fd, EPOLLOUT);
+                    _cgis.erase(it->first);
+                    std::cout <<"AQUI 6"<< std::endl;
                     break;
+                } else {
+                    if (this->ConnectClientToServer(this->clientEvents[i].data.fd))
+                        continue;
+                    std::cout <<"AQUI 4"<< std::endl;
+                    ssize_t numbytes = this->HandleRequest(this->clientEvents[i].data.fd, this->GetEPollFD());
+                    modify_epoll_event(this->GetEPollFD(), this->clientEvents[i].data.fd, EPOLLOUT);
+                    if (numbytes == -1)
+                        throw Except("error recv");
+                    if (numbytes == 0) {
+                        this->DisconnectClientToServer(this->clientEvents[i].data.fd);
+                    }  
+                    if (numbytes > 0){
+                        break ;
+                    }
+                    std::cout <<"AQUI 8"<< std::endl;
                 }
+            }   
+            if ((this->clientEvents[i].events & EPOLLOUT)) {
+                std::cout <<"EPOLLOUT IN"<< std::endl;
+                this->HandleResponse(this->clientEvents[i].data.fd);
+                this->DisconnectClientToServer(this->clientEvents[i].data.fd);
+                std::cout <<"EPOLLOUT OUT"<< std::endl;
+                break;
             }
-            break;
         }
     }
 }
@@ -79,12 +118,11 @@ bool    Http::ConnectClientToServer(int fd) {
             hasHandShake = true;
     } else {
         _logger->Log(&Logger::LogCaution, "Error on apply handshake");
-        // Add server error response.
     }
     return hasHandShake;
 }
 
-ssize_t    Http::HandleRequest(int client_fd) {
+ssize_t    Http::HandleRequest(int client_fd, int poll_fd) {
     char        buffer[1000000];
     HttpRequest res;
     IServer      *server = this->clientFD_Server[client_fd];
@@ -92,8 +130,20 @@ ssize_t    Http::HandleRequest(int client_fd) {
     memset(&buffer, 0, sizeof(char) * 1000000);
     ssize_t numbytes = recv(client_fd, &buffer, sizeof(char) * 1000000, 0);
     res.ParserRequest(buffer);
-    if (server != NULL) 
+    if (res.IsCGIRequest()){
+        int sv[2]; 
+        if (socketpair(AF_UNIX, SOCK_STREAM, 0, sv) == -1) {
+            std::cerr << "Erro ao criar socket pair: " << strerror(errno) << std::endl;
+            return -1;
+        }
+        this->_cgis[sv[0]] = client_fd;
+        if (server->ProcessRequest(res, client_fd, sv, this->GetEPollFD()) == HttpStatusCode::_CGI) {
+            return numbytes;
+        }
+    } else if (!res.IsCGIRequest() && server != NULL){
         server->ProcessRequest(res, client_fd);
+    }
+    (void)poll_fd;
     return numbytes;
 }
 
@@ -103,10 +153,10 @@ void    Http::HandleResponse(int client_fd) {
 
     std::vector<char> test = message->CreateResponse();
     if (send(client_fd, &test[0], test.size(), 0) == -1) {
-        delete message;
+        //delete message;
         throw Except("Error on send Response");
     }
-    delete message;
+    //delete message;
 }
 
 void    Http::ClientHandShake(IServer *server) {

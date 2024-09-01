@@ -6,6 +6,7 @@
 # include <sys/epoll.h>
 # include "BuilderResponse.hpp"
 # include "BuilderRoute.hpp"
+# include <sys/wait.h>
 
 enum ServerStages {
     S_START,
@@ -86,9 +87,13 @@ class Server : public IServer {
 
         // Server Process
 
-        IHttpResponse*             ProcessResponse(int client_fd);
+        IHttpResponse*          ProcessResponse(int client_fd);
         void                    ProcessRequest(HttpRequest &request, int client_fd);
+        HttpStatusCode::Code                    ProcessRequest(HttpRequest &request, int client_fd, int* cgifd, int epoll);
         std::string             FindMatchRoute(HttpRequest &res);
+        
+        int                     newProcessCGI(HttpRequest &req, int epollFD);
+        void                    CreateCGIResponse(int epoll, int cgifd, int clientfd);
 
         // Geters
 

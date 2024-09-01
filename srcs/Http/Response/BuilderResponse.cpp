@@ -12,7 +12,7 @@ BuilderResponse::BuilderResponse(ILogger *logger, IHandler *handler) :
 BuilderResponse::~BuilderResponse(void) {
     std::cerr << _logger->Log(&Logger::LogDebug, "Deleted BuilderResponse Class.");
     if (_response != NULL) {
-        delete _response;
+        //delete _response;
         _response = NULL;
     }
 }
@@ -20,7 +20,7 @@ BuilderResponse::~BuilderResponse(void) {
 // Setup Response
 IBuilderResponse &BuilderResponse::SetupResponse(void) {
     if (_response != NULL) {
-        delete _response;
+        //delete _response;
         _response = NULL;
     }
     _response = new HttpResponse(_logger);
@@ -47,6 +47,11 @@ IBuilderResponse &BuilderResponse::WithDirectoryFile(DIR *directory, std::string
     return *this;
 }
 
+
+IBuilderResponse &BuilderResponse::WithBody(char *buf, int size) {
+    _response->SetBody(std::vector<char>(buf, buf + size));
+    return *this;
+}
 IBuilderResponse &BuilderResponse::WithFileDescriptor(std::ifstream *fd) {
     if (fd != NULL && _response->GetBody() == "") {
         _response->SetBody(_handler->ReadRegularFile(fd));

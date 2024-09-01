@@ -4,6 +4,7 @@
 namespace HttpStatusCode {
     enum Code {
         _DO_NOTHING = 0,
+        _CGI = 1,
         _OK = 200,
         _CREATED = 201,
         _ACCEPTED = 202,

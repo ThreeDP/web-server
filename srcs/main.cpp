@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dapaulin <dapaulin@student.42sp.org.br>    +#+  +:+       +#+        */
+/*   By: rleslie- <rleslie-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/03 17:50:41 by dapaulin          #+#    #+#             */
-/*   Updated: 2024/08/31 15:20:43 by dapaulin         ###   ########.fr       */
+/*   Updated: 2024/09/01 18:12:56 by rleslie-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,8 +34,8 @@ int main(int ac, char *av[]) {
     } catch (const std::exception &e) {
         std::cout << e.what();
     }
-    delete builder;
-    delete handler;
-    delete logger;
+     delete builder;
+     delete handler;
+     delete logger;
     return (0);
 }
