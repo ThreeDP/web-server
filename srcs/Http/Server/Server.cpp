@@ -1,50 +1,5 @@
 # include "Server.hpp"
 
-int Server::newProcessCGI(HttpRequest &req, int epollFD) {
-	std::vector<std::string> ev = req.GetEnvp();
-	char **envp = new char*[ev.size() + 1];
-
-	for (size_t i = 0; i < ev.size(); ++i) {
-		envp[i] = new char[ev[i].size() + 1];  
-		std::strcpy(envp[i], ev[i].c_str());
-	}
-
-	envp[ev.size()] = NULL;
-
-	const char *phpInterpreter = "/usr/bin/php";
-	const char *scriptPath = "/nfs/homes/rleslie-/web-server/home/ranna-site/index.php";
-	const char *argv[] = {phpInterpreter, scriptPath, NULL};
-	int sv[2]; 
-    if (socketpair(AF_UNIX, SOCK_STREAM, 0, sv) == -1) {
-        std::cerr << "Erro ao criar socket pair: " << strerror(errno) << std::endl;
-        return -1;
-    }
-	pid_t pid = fork();
-	if (pid == 0) {
-        close(sv[0]);
-
-        dup2(sv[1], STDOUT_FILENO);
-        dup2(sv[1], STDERR_FILENO);
-
-        close(sv[1]);
-
-		execve("/usr/bin/php", (char**)argv, envp);
-	} else {
-		int status;
-		waitpid(pid, &status, 0);
-		close(sv[1]);  // Fecha o socket não utilizado no processo pai
-		struct epoll_event  event;
-
-		memset(&event, 0, sizeof(struct epoll_event));
-        event.events = EPOLLIN;
-        event.data.fd = sv[0];
-		if (epoll_ctl(epollFD, EPOLL_CTL_ADD, sv[0], &event) == -1)
-            throw std::invalid_argument("");
-		return sv[0];
-	}
-    return (-1);
-}
-
 Server::Server(IHandler *handler, ILogger *logger) :
 _port("8080"),
 _limit_client_body_size(2048),
@@ -171,23 +126,31 @@ std::string         Server::FindMatchRoute(HttpRequest &res) {
         keyPath = "/";
     return keyPath;
 }
-
 void Server::CreateCGIResponse(int epollfd, int cgifd, int clientfd) {
     /*
     verificar o tamanho do respose do cgi
     */
-    char buf[1024];
-    memset(buf, '\0', 1024);
-    ssize_t n = recv(cgifd, buf, 1024, 0);
-    if (n == -1) {
-        std::cerr << "Erro ao ler do socket: " << strerror(errno) << std::endl;
-    }
+    char                buffer[__SIZE_BUFF__];
+    ssize_t             responseSize = 0;
+    std::vector<char>   responseBody;
+
+    ssize_t numbytes;
+    do {
+        numbytes = 0;
+        memset(&buffer, 0, sizeof(char) * __SIZE_BUFF__);
+        numbytes = recv(cgifd, &buffer, sizeof(char) * __SIZE_BUFF__, 0);
+        if (numbytes > 0) {
+            responseSize += numbytes;
+            responseBody.insert(responseBody.end(), buffer, buffer + __SIZE_BUFF__);
+        }
+    } while (numbytes);
+
     BuilderResponse builderResponse(_logger, _handler);
     this->ResponsesMap[clientfd] = builderResponse
                                     .SetupResponse()
                                     .WithStatusCode(HttpStatusCode::_OK)
                                     .WithContentType(".html")
-                                    .WithBody(buf, 1024)
+                                    .WithBody(responseBody)
                                     .GetResult();
     close(cgifd);
     (void)epollfd;

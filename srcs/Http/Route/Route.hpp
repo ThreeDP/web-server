@@ -149,6 +149,7 @@ class Route : public IRoute {
          */
 
         HttpStatusCode::Code Post(HttpRequest &request, std::string absPath);
+        HttpStatusCode::Code Post(HttpRequest &request, std::string absPath, int* cgifd, int epoll);
 
         /**!
          * 
@@ -158,6 +159,7 @@ class Route : public IRoute {
          */
 
         HttpStatusCode::Code Delete(HttpRequest &request, std::string absPath);
+        HttpStatusCode::Code Delete(HttpRequest &request, std::string absPath, int* cgifd, int epoll);
 
 
         /**!

@@ -110,7 +110,7 @@ std::ostream &operator<<(std::ostream &os, HttpRequest const &request) {
 
 bool HttpRequest::IsCGIRequest(void) {
     std::string path = this->GetPath();
-    if (path.find(".php") != std::string::npos) {
+    if (path.find(".py") != std::string::npos) {
         return true;
     }
     return false;

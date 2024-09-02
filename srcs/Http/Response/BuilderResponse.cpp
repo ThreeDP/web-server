@@ -48,8 +48,15 @@ IBuilderResponse &BuilderResponse::WithDirectoryFile(DIR *directory, std::string
 }
 
 
-IBuilderResponse &BuilderResponse::WithBody(char *buf, int size) {
-    _response->SetBody(std::vector<char>(buf, buf + size));
+IBuilderResponse &BuilderResponse::WithBody(std::vector<char> body) {
+    if (_response->GetBody() == "") {
+        _response->SetBody(body);
+        
+        if (_logger->Env()) {
+            std::cerr << _logger->Log(&Logger::LogDebug, "Create A Body CGI: ");
+            std::cerr << _logger->Log(&Logger::LogTrace, "Payload CGI {\n", _response->_toString(), "\n}");
+        }
+    }
     return *this;
 }
 IBuilderResponse &BuilderResponse::WithFileDescriptor(std::ifstream *fd) {

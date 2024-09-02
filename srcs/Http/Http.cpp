@@ -123,13 +123,14 @@ bool    Http::ConnectClientToServer(int fd) {
 }
 
 ssize_t    Http::HandleRequest(int client_fd, int poll_fd) {
-    char        buffer[1000000];
-    HttpRequest res;
-    IServer      *server = this->clientFD_Server[client_fd];
+    char            buffer[1000000];
+    HttpRequest     res;
+    IServer         *server = this->clientFD_Server[client_fd];
 
     memset(&buffer, 0, sizeof(char) * 1000000);
     ssize_t numbytes = recv(client_fd, &buffer, sizeof(char) * 1000000, 0);
     res.ParserRequest(buffer);
+
     if (res.IsCGIRequest()){
         int sv[2]; 
         if (socketpair(AF_UNIX, SOCK_STREAM, 0, sv) == -1) {

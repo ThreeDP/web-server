@@ -14,7 +14,7 @@ class IBuilderResponse {
         virtual IBuilderResponse &WithDirectoryFile(DIR *directory, std::string path) = 0;
         virtual IBuilderResponse &WithFileDescriptor(std::ifstream *fd) = 0;
         virtual IBuilderResponse &WithLastModified(std::string path) = 0;
-        virtual IBuilderResponse &WithBody(char *buf, int size) = 0;
+        virtual IBuilderResponse &WithBody(std::vector<char> body) = 0;
         virtual IBuilderResponse &WithDefaultPage(void) = 0;
         virtual IBuilderResponse &WithContentType(std::string extension) = 0;
         virtual IBuilderResponse &WithLocation(std::string location) = 0;

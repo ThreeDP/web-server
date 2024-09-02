@@ -124,4 +124,6 @@
 # include <cstring>
 # include <sstream>
 
+# define __SIZE_BUFF__ 1024
+
 #endif

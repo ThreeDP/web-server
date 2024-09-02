@@ -59,7 +59,6 @@ class IServer {
         virtual std::string             GetIP(void) const = 0;
         virtual std::string             GetIPVersion(void) const = 0;
         virtual std::string             GetListenPort(void) const = 0;
-        virtual int                     newProcessCGI(HttpRequest &req, int epollFD) = 0;
 
 
         friend class BuilderServer;
