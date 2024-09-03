@@ -290,6 +290,7 @@ void Route::cgiAction(HttpRequest &req, int epollFD, std::string absPath, int* c
 		envp[i] = new char[ev[i].size() + 1];  
 		std::strcpy(envp[i], ev[i].c_str());
 	}
+    
 
 	envp[ev.size()] = NULL;
 
