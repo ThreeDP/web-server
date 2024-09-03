@@ -83,6 +83,25 @@ bool Handler::PathExist(std::string path) {
     return true;
 }
 
+std::string Handler::GetPathRoute(std::string path) {
+    struct stat file;
+    std::stringstream ss(path);
+    std::string pathPiece;
+
+    path = "";
+    while (std::getline(ss, pathPiece, '/'))
+    {
+        memset(&file, 0, sizeof(struct stat));
+        if (this->FileIsDirectory(path)) {
+            path += pathPiece;
+            path += "/";
+            continue;
+        }
+        break;
+    }
+    return path;
+}
+
 bool Handler::IsAllowToRunScript(std::string path) {
     struct stat file;
 

@@ -12,6 +12,7 @@ namespace HttpStatusCode {
         _MUILTIPLE_CHOICE = 300,
         _MOVED_PERMANENTLY = 301,
         _FOUND = 302,
+        _TEMPORARY_REDIRECT = 307,
         _PERMANENT_REDIRECT = 308,
         _BAD_REQUEST = 400,
         _UNAUTHORIZED = 401,

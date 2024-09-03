@@ -22,6 +22,7 @@ class Handler : public IHandler {
 		std::set<std::string> 			ReadDirectory(DIR *directory);
 		std::vector<char> 				ReadRegularFile(std::ifstream *file);
 
+		std::string 					GetPathRoute(std::string path);
 		bool                            PathExist(std::string path);
 		std::pair<bool, std::string>    ReadLine(std::ifstream &file) {
 			std::string			line;

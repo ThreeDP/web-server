@@ -41,7 +41,6 @@ void    HttpRequest::ParserRequest(std::string request) {
         std::getline(swords, key, ' ');
         std::getline(swords, value, '\r');
         this->_payload[key] = value;
-        std::cout << this << std::endl;
     }
 }
 

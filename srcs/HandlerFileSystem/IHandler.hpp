@@ -22,7 +22,7 @@ class IHandler {
         virtual bool                            IsAllowToGetFile(std::string path) = 0;
         virtual bool                            IsAllowToRunScript(std::string path) = 0;
         virtual bool                            PathExist(std::string path) = 0;
-
+        virtual std::string 					GetPathRoute(std::string path) = 0;
         virtual std::set<std::string>           ReadDirectory(DIR *directory) = 0;
         virtual std::vector<char>               ReadRegularFile(std::ifstream *file) = 0;
         virtual std::pair<bool, std::string>    ReadLine(std::ifstream &file) = 0;
