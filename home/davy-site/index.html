@@ -1,18 +1,41 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Basic HTML Page</title>
+    <title>Script CGI em Python</title>
+    <script>
+        async function submitForm(event) {
+            event.preventDefault(); // Impede o envio padrão do formulário
+            
+            const form = document.querySelector('form');
+            const formData = new FormData(form);
+            const name = formData.get('name');
+
+            // Envia o POST com JSON
+            try {
+                const response = await fetch('index.py', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ NAME: name }),
+                });
+
+                const responseText = await response.text();
+
+                // Redireciona para uma nova página com a resposta na URL
+                window.location.href = `result.html?response=${encodeURIComponent(responseText)}`;
+            } catch (error) {
+                document.getElementById('response').innerText = 'Erro ao enviar o pedido.';
+            }
+        }
+    </script>
 </head>
 <body>
-    <h1>Welcome to My Page</h1>
-    <p>This is a paragraph of text.</p>
-    <img src="https://placehold.co/200" alt="Placeholder Image">
-    <ul>
-        <li>List item 1</li>
-        <li>List item 2</li>
-        <li>List item 3</li>
-    </ul>
-    <a href="https://www.google.com">Link to Google</a>
+    <h1>Envie um Nome</h1>
+    <form onsubmit="submitForm(event)">
+        Nome: <input type="text" name="name" required>
+        <input type="submit" value="Enviar">
+    </form>
+    <pre id="response"></pre>
 </body>
 </html>
