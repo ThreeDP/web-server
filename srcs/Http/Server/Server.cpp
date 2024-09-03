@@ -30,6 +30,10 @@ Server::~Server(void) {
     if (this->result != NULL) {
         freeaddrinfo(this->result);
     }
+    std::map<std::string, IRoute *>::iterator it = _routes.begin();
+    for ( ; it != _routes.end(); ++it) {
+        delete it->second;
+    }
     std::cerr << _logger->Log(&Logger::LogDebug, "Deleted Server Class.");
 }
 
@@ -38,7 +42,7 @@ Server::~Server(void) {
 
 void    Server::SetAddrInfo(std::string host) {
     int status = 0;
-
+        
     status = getaddrinfo(
         host.c_str(),
         _port.c_str(),
@@ -73,7 +77,7 @@ void    Server::CreateSocketAndBind(void) {
     }
     this->listener = listener;
     if (result == NULL) {
-        throw std::invalid_argument(_logger->Log(&Logger::LogInformation, "test"));
+        throw std::invalid_argument(_logger->Log(&Logger::LogCaution, "test"));
     }
     this->_setServerIpInfos(result);
 }
@@ -117,7 +121,7 @@ std::string         Server::FindMatchRoute(HttpRequest &res) {
         if (comp[size - 1] != '/' && size++)
             comp += "/";
         std::string subPath = res.GetPath().substr(0, size);
-        if (subPath[size - 1] != '/')
+        if (size > 0 && static_cast<std::string::size_type>(size) <= subPath.size() && subPath[size - 1] != '/')
             continue;
         if (comp == subPath)
             keyPath = it->first;

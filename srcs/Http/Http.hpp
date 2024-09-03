@@ -20,6 +20,7 @@ class Http {
     // epoll config
     //int                                 _epollFD;
     struct epoll_event                  clientEvents[eventsLimit];
+    
 
     public:
 
@@ -36,7 +37,7 @@ class Http {
 
         // Geters
         IServer                      *GetServer(std::string server);
-        int                         &GetEPollFD(void);
+        static int                         &GetEPollFD(void);
 
         // Base Methods
         Http(ILogger *logger);
