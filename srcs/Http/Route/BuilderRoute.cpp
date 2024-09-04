@@ -24,8 +24,9 @@ IBuilderRoute &BuilderRoute::SetupRoute(std::string route_name) {
         delete _route;
         _route = NULL;
     }
-    if (route_name[route_name.length() - 1] != '/')
-        route_name += '/';
+    if (route_name[route_name.length() - 1] == '/') {
+        route_name = route_name.substr(0, route_name.length() - 1);
+    }
     _route = new Route(_logger, _server, _handler, route_name);
     return *this;
 }

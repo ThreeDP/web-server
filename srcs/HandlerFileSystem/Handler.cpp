@@ -73,33 +73,16 @@ bool Handler::PathExist(std::string path) {
     while (std::getline(ss, pathPiece, '/'))
     {
         path += pathPiece;
+        std::cout << pathPiece << std::endl;
         memset(&file, 0, sizeof(struct stat));
         if (this->FileIsDirectory(path))
             path += "/";
         if (stat(path.c_str(), &file) != 0) {
+            std::cout << "Falsiane: " << path << std::endl;
             return false;
         }
     }
     return true;
-}
-
-std::string Handler::GetPathRoute(std::string path) {
-    struct stat file;
-    std::stringstream ss(path);
-    std::string pathPiece;
-
-    path = "";
-    while (std::getline(ss, pathPiece, '/'))
-    {
-        memset(&file, 0, sizeof(struct stat));
-        if (this->FileIsDirectory(path)) {
-            path += pathPiece;
-            path += "/";
-            continue;
-        }
-        break;
-    }
-    return path;
 }
 
 bool Handler::IsAllowToRunScript(std::string path) {

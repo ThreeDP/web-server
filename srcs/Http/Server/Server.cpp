@@ -111,22 +111,21 @@ std::string         Server::FindMatchRoute(HttpRequest &res) {
     std::string keyPath = "/";
     std::map<std::string, IRoute *>::iterator it = this->_routes.begin();
 
-    // std::string dirs = _handler->GetPathRoute(res.GetPath());
-    std::string dirs = res.GetPath();
+    std::string requestPath = res.GetPath();
     int max = 0;
     for (; it != this->_routes.end(); ++it) {
-        //int size = dirs.size();
         std::string routePath = it->first;
-        if (routePath[routePath.length() - 1] != '/')
-            routePath += "/";
-        int routeSize = routePath.length(); 
-        std::string subPath = dirs.substr(0, routeSize);
+        int routeSize = routePath.length();
+        std::string subPath;
+        if (routePath[routePath.length() - 1] != '/') {
+            subPath = requestPath.substr(0, routeSize + 1);
+        } else {
+            subPath = requestPath.substr(0, routeSize);
+        }
         if (routeSize > max && !subPath.compare(routePath)) {
-            keyPath = routePath;
+            keyPath = it->first;
             max = routeSize;
         }
-        std::cout << keyPath << std::endl;
-        std::cout << "Route: '" << routePath << "'\t\t\t\t\tRequest: '" << dirs << "'\t\t\t\t\tSUB: '" << subPath << "'" << std::endl;
     }
     return keyPath;
 }
@@ -339,7 +338,9 @@ void    Server::SetPort(std::string port) {
 }
 
 void    Server::SetRoute(std::string routeName, IRoute *route) {
-    this->_routes[routeName] = route;
+    if (!routeName.empty())
+        this->_routes[routeName] = route;
+    this->_routes[Utils::SanitizePath(routeName, "/")] = route;
 }
 
 std::string Server::_toString(void) {

@@ -38,7 +38,6 @@ IHttpResponse *Route::ProcessRequest(
     int epoll
 ) {
     std::string     absolutePath;
-    
     absolutePath = Utils::SanitizePath(this->_root, request.GetPath());
     if (this->_checkAllowMethod(request.GetMethod())) {
         return _builder->GetResult(); 
@@ -48,6 +47,7 @@ IHttpResponse *Route::ProcessRequest(
     }
 
     if (request.GetMethod() == "GET") {
+
         if (this->Get( request, absolutePath, cgifd, epoll ) == HttpStatusCode::_CGI) {
             return NULL;
         }
@@ -336,17 +336,17 @@ void Route::cgiAction(HttpRequest &req, int epollFD, std::string absPath, int* c
 
 HttpStatusCode::Code Route::Get(HttpRequest &request, std::string absPath, int* cgifd, int epoll) {
     HttpStatusCode::Code result = HttpStatusCode::_DO_NOTHING;
-    std::cout << _logger->Log(&Logger::LogCaution, absPath) << std::endl;
     if ( request.GetBodySize() > 0 ) { return HttpStatusCode::_BAD_REQUEST; }
     if (this->_handler->PathExist(absPath)) {
         bool isDirectory = this->_handler->FileIsDirectory(absPath);
         bool allow = this->_handler->IsAllowToGetFile(absPath);
+        std::cout << _logger->Log(&Logger::LogCaution, absPath, "is directory: ", isDirectory, "is allow: ", allow) << std::endl;
         if (allow && isDirectory) {
             if (( absPath[absPath.length() - 1] != '/')) {
                 _builder->SetupResponse()
                     .WithContentType(".html")
                     .WithStatusCode(HttpStatusCode::_TEMPORARY_REDIRECT)
-                    .WithLocation(Utils::SanitizePath("", absPath + "/"))
+                    .WithLocation(Utils::SanitizePath("/", request.GetPath() + "/"))
                     .WithDefaultPage();
                     return HttpStatusCode::_TEMPORARY_REDIRECT;
             }
