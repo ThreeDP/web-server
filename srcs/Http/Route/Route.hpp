@@ -32,7 +32,7 @@ class Route : public IRoute {
         ILogger                                     *_logger;
         IHandler                                    *_handler;
         IBuilderResponse                            *_builder;
-        std::map<std::string, Method>               _httpMethods;
+        // std::map<std::string, Method>               _httpMethods;
 
         /**!
          * 
@@ -60,9 +60,9 @@ class Route : public IRoute {
          * 
          */
         
-        IHttpResponse *ProcessRequest(
-            HttpRequest &request
-        );
+        // IHttpResponse *ProcessRequest(
+        //     HttpRequest &request
+        // );
         IHttpResponse *ProcessRequest(
             HttpRequest &request,
             int* cgifd,
@@ -116,6 +116,8 @@ class Route : public IRoute {
         /// @return CONTENT TOO LARGE
         HttpStatusCode::Code _checkBodyLimit(size_t limit);
 
+        HttpStatusCode::Code _checkDirectory(std::string absPath, HttpRequest &request);
+
         /// @brief Check if the Directory listining
         /// is allowed.
         /// @param absolutePath 
@@ -148,7 +150,8 @@ class Route : public IRoute {
          * 
          */
 
-        HttpStatusCode::Code Post(HttpRequest &request, std::string absPath);
+        // HttpStatusCode::Code Post(HttpRequest &request, std::string absPath);
+        HttpStatusCode::Code Post(HttpRequest &request, std::string absPath, int* cgifd, int epoll);
 
         /**!
          * 
@@ -157,7 +160,8 @@ class Route : public IRoute {
          * 
          */
 
-        HttpStatusCode::Code Delete(HttpRequest &request, std::string absPath);
+        // HttpStatusCode::Code Delete(HttpRequest &request, std::string absPath);
+        HttpStatusCode::Code Delete(HttpRequest &request, std::string absPath, int* cgifd, int epoll);
 
 
         /**!
@@ -168,7 +172,7 @@ class Route : public IRoute {
          */
         void        cgiAction(HttpRequest &req, int epollFD, std::string absPath, int* cgifd);
 
-        HttpStatusCode::Code Get(HttpRequest &request, std::string absPath);
+        // HttpStatusCode::Code Get(HttpRequest &request, std::string absPath);
         HttpStatusCode::Code Get(HttpRequest &request, std::string absPath, int* cgifd, int epoll);
     
     private:

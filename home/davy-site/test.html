@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Formulário de Query Params</title>
+    <script>
+        function submitForm(event) {
+            event.preventDefault(); // Impede o envio padrão do formulário
+            
+            const form = document.querySelector('form');
+            const formData = new FormData(form);
+            const queryParams = {};
+
+            // Preenche o objeto de parâmetros de consulta com os dados do formulário
+            formData.forEach((value, key) => {
+                queryParams[key] = value;
+            });
+
+            // Envia o POST request com JSON
+            fetch('index.py', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(queryParams),
+            })
+            .then(response => response.text())
+            .then(responseText => {
+                // Redireciona para index.py com os parâmetros de consulta
+                window.location.href = `index.py?${new URLSearchParams(queryParams).toString()}`;
+            })
+            .catch(error => {
+                console.error('Erro ao enviar o pedido:', error);
+                document.getElementById('response').innerText = 'Erro ao enviar o pedido.';
+            });
+        }
+    </script>
+</head>
+<body>
+    <h1>Preencha os Parâmetros de Consulta</h1>
+    <form onsubmit="submitForm(event)">
+        <label for="name">Nome:</label>
+        <input type="text" id="name" name="NAME" required>
+        <br>
+        <label for="age">Idade:</label>
+        <input type="text" id="age" name="AGE">
+        <br>
+        <label for="city">Cidade:</label>
+        <input type="text" id="city" name="CITY">
+        <br>
+        <input type="submit" value="Enviar">
+    </form>
+    <pre id="response"></pre>
+</body>
+</html>
+

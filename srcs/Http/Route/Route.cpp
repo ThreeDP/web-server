@@ -7,30 +7,30 @@
  * 
  */
 
-IHttpResponse *Route::ProcessRequest(
-    HttpRequest &request
-) {
-    std::string     absolutePath;
+// IHttpResponse *Route::ProcessRequest(
+//     HttpRequest &request
+// ) {
+//     std::string     absolutePath;
     
-    absolutePath = Utils::SanitizePath(this->_root, request.GetPath());
-    if (this->_checkAllowMethod(request.GetMethod())) {
-        return _builder->GetResult(); 
-    }
-    if (this->_checkRedirectPath(this->GetRedirectPath())) {
-        return _builder->GetResult();
-    }
-    if (((this->*_httpMethods[request.GetMethod()])( request, absolutePath ) )) {
-        return _builder->GetResult();
-    }
-    _builder
-        ->SetupResponse()
-        .WithStatusCode(HttpStatusCode::_INTERNAL_SERVER_ERROR)
-        .WithContentType(".html")
-        .WithDefaultPage()
-        .GetResult();
-    std::cout << _logger->Log(&Logger::LogInformation, "Route Not Found or Configurated", HttpStatusCode::_INTERNAL_SERVER_ERROR);
-    return _builder->GetResult();
-}
+//     absolutePath = Utils::SanitizePath(this->_root, request.GetPath());
+//     if (this->_checkAllowMethod(request.GetMethod())) {
+//         return _builder->GetResult(); 
+//     }
+//     if (this->_checkRedirectPath(this->GetRedirectPath())) {
+//         return _builder->GetResult();
+//     }
+//     if (((this->*_httpMethods[request.GetMethod()])( request, absolutePath ) )) {
+//         return _builder->GetResult();
+//     }
+//     _builder
+//         ->SetupResponse()
+//         .WithStatusCode(HttpStatusCode::_INTERNAL_SERVER_ERROR)
+//         .WithContentType(".html")
+//         .WithDefaultPage()
+//         .GetResult();
+//     std::cout << _logger->Log(&Logger::LogInformation, "Route Not Found or Configurated", HttpStatusCode::_INTERNAL_SERVER_ERROR);
+//     return _builder->GetResult();
+// }
 
 IHttpResponse *Route::ProcessRequest(
     HttpRequest &request,
@@ -38,7 +38,6 @@ IHttpResponse *Route::ProcessRequest(
     int epoll
 ) {
     std::string     absolutePath;
-    
     absolutePath = Utils::SanitizePath(this->_root, request.GetPath());
     if (this->_checkAllowMethod(request.GetMethod())) {
         return _builder->GetResult(); 
@@ -46,12 +45,25 @@ IHttpResponse *Route::ProcessRequest(
     if (this->_checkRedirectPath(this->GetRedirectPath())) {
         return _builder->GetResult();
     }
+
     if (request.GetMethod() == "GET") {
+
         if (this->Get( request, absolutePath, cgifd, epoll ) == HttpStatusCode::_CGI) {
             return NULL;
         }
         return _builder->GetResult();
+    } else if (request.GetMethod() == "POST") {
+        if (this->Post( request, absolutePath, cgifd, epoll ) == HttpStatusCode::_CGI) {
+            return NULL;
+        }
+        return _builder->GetResult();
+    } else if (request.GetMethod() == "DELETE") {
+        if (this->Delete( request, absolutePath, cgifd, epoll ) == HttpStatusCode::_CGI) {
+            return NULL;
+        }
+        return _builder->GetResult();
     }
+
     _builder->SetupResponse()
         .WithStatusCode(HttpStatusCode::_INTERNAL_SERVER_ERROR)
         .WithContentType(".html")
@@ -69,9 +81,13 @@ IHttpResponse *Route::ProcessRequest(
  */
 
 HttpStatusCode::Code Route::_checkAllowMethod(std::string method) {
+    HttpStatusCode::Code status = HttpStatusCode::_METHOD_NOT_ALLOWED;
+    HttpStatusCode::Code result = HttpStatusCode::_DO_NOTHING;
+    if (Utils::SanitizeOneMethod(method)) {
+        if ((result = this->_errorHandlerWithFile(HttpStatusCode::_BAD_REQUEST))) { return result; }
+        return this->_errorHandlerDefault(HttpStatusCode::_BAD_REQUEST);
+    }
     if (!this->IsAllowMethod(method)) {
-        HttpStatusCode::Code status = HttpStatusCode::_METHOD_NOT_ALLOWED;
-        HttpStatusCode::Code result = HttpStatusCode::_DO_NOTHING;
 
         if ((result = this->_errorHandlerWithFile(status))) { return result; }
         return this->_errorHandlerDefault(status);
@@ -88,7 +104,7 @@ HttpStatusCode::Code Route::_checkRedirectPath(std::string path) {
         _builder
             ->SetupResponse()
             .WithStatusCode(result)
-            .WithLocation("/" + path)
+            .WithLocation(Utils::SanitizePath("", path))
             .WithDefaultPage();
         std::cout << _logger->Log(&Logger::LogInformation, "Permanent Redirect: ", HttpStatusCode::_PERMANENT_REDIRECT);
         return (result);
@@ -103,6 +119,18 @@ HttpStatusCode::Code Route::_checkBodyLimit(size_t limit) {
         
         if ((result = this->_errorHandlerWithFile(status))) { return result; }
         return this->_errorHandlerDefault(status);
+    }
+    return HttpStatusCode::_DO_NOTHING;
+}
+
+HttpStatusCode::Code Route::_checkDirectory(std::string absPath, HttpRequest &request) {
+    if (( absPath[absPath.length() - 1] != '/')) {
+        _builder->SetupResponse()
+            .WithContentType(".html")
+            .WithStatusCode(HttpStatusCode::_TEMPORARY_REDIRECT)
+            .WithLocation(Utils::SanitizePath("/", request.GetPath() + "/"))
+            .WithDefaultPage();
+            return HttpStatusCode::_TEMPORARY_REDIRECT;
     }
     return HttpStatusCode::_DO_NOTHING;
 }
@@ -183,11 +211,29 @@ HttpStatusCode::Code Route::_notFound(void) {
  * 
  */
 
-HttpStatusCode::Code Route::Post(HttpRequest &request, std::string absPath) {
+HttpStatusCode::Code Route::Post(HttpRequest &request, std::string absPath, int* cgifd, int epoll) {
     HttpStatusCode::Code result = HttpStatusCode::_DO_NOTHING;
     if ((result = this->_checkBodyLimit(request.GetBodySize()))) { return result; }
     if (this->_handler->PathExist(absPath)) {
-        
+        bool isDirectory = this->_handler->FileIsDirectory(absPath);
+        bool allow = this->_handler->IsAllowToGetFile(absPath);
+        if (allow && isDirectory) {
+            if ((result = this->_checkDirectory(absPath, request))) { return result; }
+            if (( result = this->_checkExistIndex(request.GetPath(), absPath) )) { return result; }
+            if (( result = this->_checkAutoIndex(absPath) )) { return result; }
+        }
+        else if (allow && Utils::GetFileExtension(absPath) == ".py") {
+            this->cgiAction(request, epoll, absPath, cgifd);
+            return HttpStatusCode::_CGI;
+        }
+        else if (allow){
+            if ((result = this->_errorHandlerWithFile(HttpStatusCode::_BAD_REQUEST))) { return result; }
+            return this->_errorHandlerDefault(HttpStatusCode::_BAD_REQUEST);
+        }
+        else if (!allow) {
+            if ((result = this->_errorHandlerWithFile(HttpStatusCode::_FORBIDDEN))) { return result; }
+            return this->_errorHandlerDefault(HttpStatusCode::_FORBIDDEN);
+        }
     }
     return this->_notFound();
 }
@@ -200,11 +246,29 @@ HttpStatusCode::Code Route::Post(HttpRequest &request, std::string absPath) {
  * 
  */
 
-HttpStatusCode::Code Route::Delete(HttpRequest &request, std::string absPath) {
+HttpStatusCode::Code Route::Delete(HttpRequest &request, std::string absPath, int* cgifd, int epoll) {
     HttpStatusCode::Code result = HttpStatusCode::_DO_NOTHING;
     if ((result = this->_checkBodyLimit(request.GetBodySize()))) { return result; }
     if (this->_handler->PathExist(absPath)) {
-        this->_checkExistIndex(request.GetPath(), absPath);
+        bool isDirectory = this->_handler->FileIsDirectory(absPath);
+        bool allow = this->_handler->IsAllowToGetFile(absPath);
+        if (allow && isDirectory) {
+            if ((result = this->_checkDirectory(absPath, request))) { return result; }
+            if (( result = this->_checkExistIndex(request.GetPath(), absPath) )) { return result; }
+            if (( result = this->_checkAutoIndex(absPath) )) { return result; }
+        }
+        else if (allow && Utils::GetFileExtension(absPath) == ".py") {
+            this->cgiAction(request, epoll, absPath, cgifd);
+            return HttpStatusCode::_CGI;
+        }
+        else if (allow){
+            if ((result = this->_errorHandlerWithFile(HttpStatusCode::_BAD_REQUEST))) { return result; }
+            return this->_errorHandlerDefault(HttpStatusCode::_BAD_REQUEST);
+        }
+        else if (!allow) {
+            if ((result = this->_errorHandlerWithFile(HttpStatusCode::_FORBIDDEN))) { return result; }
+            return this->_errorHandlerDefault(HttpStatusCode::_FORBIDDEN);
+        }
     }
     return this->_notFound();
 }
@@ -226,17 +290,14 @@ void Route::cgiAction(HttpRequest &req, int epollFD, std::string absPath, int* c
 		envp[i] = new char[ev[i].size() + 1];  
 		std::strcpy(envp[i], ev[i].c_str());
 	}
+    
 
 	envp[ev.size()] = NULL;
 
-	const char *phpInterpreter = "/usr/bin/php";
+	const char *phpInterpreter = "/usr/bin/python3";
     const char *scriptPath = absPath.c_str();
 	const char *argv[] = {phpInterpreter, scriptPath, NULL};
-	// int sv[2]; 
-    // if (socketpair(AF_UNIX, SOCK_STREAM, 0, sv) == -1) {
-    //     std::cerr << "Erro ao criar socket pair: " << strerror(errno) << std::endl;
-    //     return -1;
-    // }
+
 	pid_t pid = fork();
 	if (pid == 0) {
         close(cgifd[0]);
@@ -246,40 +307,49 @@ void Route::cgiAction(HttpRequest &req, int epollFD, std::string absPath, int* c
 
         close(cgifd[1]);
 
-		execve("/usr/bin/php", (char**)argv, envp);
+		execve(phpInterpreter, (char**)argv, envp);
+        exit(1);
 	} else {
-		int status;
-		waitpid(pid, &status, 0);
-        // Validar os error de wait pid.
-		close(cgifd[1]);  // Fecha o socket não utilizado no processo pai
-		struct epoll_event  event;
+        int status;
+        if (waitpid(pid, &status, 0) == -1) {
+            perror("Erro ao esperar pelo processo filho com waitpid");
+            // Trate o erro conforme necessário, talvez com uma saída antecipada ou tentativa de recuperação.
+            exit(EXIT_FAILURE);
+        }
 
-		memset(&event, 0, sizeof(struct epoll_event));
+        // Verifica se o processo filho terminou normalmente.
+        if (WIFEXITED(status)) {
+            int exitStatus = WEXITSTATUS(status);
+            if (exitStatus != 0) {
+                std::cerr << "O processo filho terminou com status de erro: " << exitStatus << std::endl;
+                // Trate o erro conforme necessário.
+            }
+        } else if (WIFSIGNALED(status)) {
+            int signal = WTERMSIG(status);
+            std::cerr << "O processo filho foi terminado por um sinal: " << signal << std::endl;
+            // Trate o erro conforme necessário.
+        } else {
+            std::cerr << "O processo filho terminou de maneira inesperada." << std::endl;
+            // Trate o erro conforme necessário.
+        }
+
+        if (close(cgifd[1]) == -1) {
+            perror("Erro ao fechar o socket no processo pai");
+            // Trate o erro conforme necessário.
+            exit(EXIT_FAILURE);
+        }
+
+        struct epoll_event event;
+        memset(&event, 0, sizeof(struct epoll_event));
         event.events = EPOLLIN;
         event.data.fd = cgifd[0];
-		if (epoll_ctl(epollFD, EPOLL_CTL_ADD, cgifd[0], &event) == -1)
-            throw std::invalid_argument("");
-	}
-}
 
-HttpStatusCode::Code Route::Get(HttpRequest &request, std::string absPath) {
-    HttpStatusCode::Code result = HttpStatusCode::_DO_NOTHING;
-    if ( request.GetBodySize() > 0 ) { return HttpStatusCode::_BAD_REQUEST; }
-    if (this->_handler->PathExist(absPath)) {
-        bool isDirectory = this->_handler->FileIsDirectory(absPath);
-        bool allow = this->_handler->IsAllowToGetFile(absPath);
-        if (allow && isDirectory) {
-            if (( result = this->_checkExistIndex(request.GetPath(), absPath) )) { return result; }
-            if (( result = this->_checkAutoIndex(absPath) )) { return result; }
+        if (epoll_ctl(epollFD, EPOLL_CTL_ADD, cgifd[0], &event) == -1) {
+            perror("Erro ao adicionar o descritor ao epoll");
+            // Trate o erro conforme necessário, como fechando o socket e/ou liberando recursos.
+            exit(EXIT_FAILURE);
         }
-       // else if (allow && Utils::GetFileExtension(absPath) == ".php" && this->cgiAction()) { return HttpStatusCode::_CGI}
-        else if (allow && (result = this->_checkActionInFile(absPath)) ) { return result; }
-        else if (!allow) {
-            if ((result = this->_errorHandlerWithFile(HttpStatusCode::_FORBIDDEN))) { return result; }
-            return this->_errorHandlerDefault(HttpStatusCode::_FORBIDDEN);
-        }
-    }
-    return this->_notFound();
+	}
 }
 
 HttpStatusCode::Code Route::Get(HttpRequest &request, std::string absPath, int* cgifd, int epoll) {
@@ -288,11 +358,13 @@ HttpStatusCode::Code Route::Get(HttpRequest &request, std::string absPath, int* 
     if (this->_handler->PathExist(absPath)) {
         bool isDirectory = this->_handler->FileIsDirectory(absPath);
         bool allow = this->_handler->IsAllowToGetFile(absPath);
+        std::cout << _logger->Log(&Logger::LogCaution, absPath, "is directory: ", isDirectory, "is allow: ", allow) << std::endl;
         if (allow && isDirectory) {
+            if ((result = this->_checkDirectory(absPath, request))) { return result; }
             if (( result = this->_checkExistIndex(request.GetPath(), absPath) )) { return result; }
             if (( result = this->_checkAutoIndex(absPath) )) { return result; }
         }
-        else if (allow && Utils::GetFileExtension(absPath) == ".php") {
+        else if (allow && Utils::GetFileExtension(absPath) == ".py") {
             this->cgiAction(request, epoll, absPath, cgifd);
             return HttpStatusCode::_CGI;
         }
@@ -318,12 +390,12 @@ HttpStatusCode::Code Route::_checkExistIndex(std::string reqPath, std::string ab
         {
             _builder
                 ->SetupResponse()
-                .WithStatusCode(HttpStatusCode::_FOUND)
-                .WithLocation(Utils::SanitizePath("http://localhost:8081",
+                .WithStatusCode(HttpStatusCode::_TEMPORARY_REDIRECT)
+                .WithLocation(Utils::SanitizePath("",
                     Utils::SanitizePath(reqPath, *it)))
                 .WithDefaultPage();
-            std::cout << _logger->Log(&Logger::LogInformation, "Redirect by index: ", HttpStatusCode::_FOUND);
-            return (HttpStatusCode::_FOUND);
+            std::cout << _logger->Log(&Logger::LogInformation, "Redirect by index: ", HttpStatusCode::_TEMPORARY_REDIRECT);
+            return (HttpStatusCode::_TEMPORARY_REDIRECT);
         }
     }
     return HttpStatusCode::_DO_NOTHING;
@@ -378,6 +450,8 @@ void        Route::SetRouteIndexes(std::vector<std::string> indexes) {
 void        Route::SetAutoIndex(bool flag) {
     this->_autoIndex = flag;
 }
+
+
 
 
 /**!
@@ -465,9 +539,9 @@ Route::Route(
     _logger(logger),
     _handler(handler)
 {
-    _httpMethods["GET"] = &Route::Get;
-    _httpMethods["POST"] = &Route::Post;
-    _httpMethods["DELETE"] = &Route::Delete;
+    // _httpMethods["GET"] = &Route::Get;
+    // _httpMethods["POST"] = &Route::Post;
+    // _httpMethods["DELETE"] = &Route::Delete;
     _builder = new BuilderResponse(_logger, _handler);
     if (_logger->Env()) {
         std::cerr << _logger->Log(&Logger::LogDebug, "Created Route Class: ");
