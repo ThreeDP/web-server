@@ -81,9 +81,13 @@ IHttpResponse *Route::ProcessRequest(
  */
 
 HttpStatusCode::Code Route::_checkAllowMethod(std::string method) {
+    HttpStatusCode::Code status = HttpStatusCode::_METHOD_NOT_ALLOWED;
+    HttpStatusCode::Code result = HttpStatusCode::_DO_NOTHING;
+    if (Utils::SanitizeOneMethod(method)) {
+        if ((result = this->_errorHandlerWithFile(HttpStatusCode::_BAD_REQUEST))) { return result; }
+        return this->_errorHandlerDefault(HttpStatusCode::_BAD_REQUEST);
+    }
     if (!this->IsAllowMethod(method)) {
-        HttpStatusCode::Code status = HttpStatusCode::_METHOD_NOT_ALLOWED;
-        HttpStatusCode::Code result = HttpStatusCode::_DO_NOTHING;
 
         if ((result = this->_errorHandlerWithFile(status))) { return result; }
         return this->_errorHandlerDefault(status);
@@ -115,6 +119,18 @@ HttpStatusCode::Code Route::_checkBodyLimit(size_t limit) {
         
         if ((result = this->_errorHandlerWithFile(status))) { return result; }
         return this->_errorHandlerDefault(status);
+    }
+    return HttpStatusCode::_DO_NOTHING;
+}
+
+HttpStatusCode::Code Route::_checkDirectory(std::string absPath, HttpRequest &request) {
+    if (( absPath[absPath.length() - 1] != '/')) {
+        _builder->SetupResponse()
+            .WithContentType(".html")
+            .WithStatusCode(HttpStatusCode::_TEMPORARY_REDIRECT)
+            .WithLocation(Utils::SanitizePath("/", request.GetPath() + "/"))
+            .WithDefaultPage();
+            return HttpStatusCode::_TEMPORARY_REDIRECT;
     }
     return HttpStatusCode::_DO_NOTHING;
 }
@@ -202,6 +218,7 @@ HttpStatusCode::Code Route::Post(HttpRequest &request, std::string absPath, int*
         bool isDirectory = this->_handler->FileIsDirectory(absPath);
         bool allow = this->_handler->IsAllowToGetFile(absPath);
         if (allow && isDirectory) {
+            if ((result = this->_checkDirectory(absPath, request))) { return result; }
             if (( result = this->_checkExistIndex(request.GetPath(), absPath) )) { return result; }
             if (( result = this->_checkAutoIndex(absPath) )) { return result; }
         }
@@ -236,6 +253,7 @@ HttpStatusCode::Code Route::Delete(HttpRequest &request, std::string absPath, in
         bool isDirectory = this->_handler->FileIsDirectory(absPath);
         bool allow = this->_handler->IsAllowToGetFile(absPath);
         if (allow && isDirectory) {
+            if ((result = this->_checkDirectory(absPath, request))) { return result; }
             if (( result = this->_checkExistIndex(request.GetPath(), absPath) )) { return result; }
             if (( result = this->_checkAutoIndex(absPath) )) { return result; }
         }
@@ -342,14 +360,7 @@ HttpStatusCode::Code Route::Get(HttpRequest &request, std::string absPath, int* 
         bool allow = this->_handler->IsAllowToGetFile(absPath);
         std::cout << _logger->Log(&Logger::LogCaution, absPath, "is directory: ", isDirectory, "is allow: ", allow) << std::endl;
         if (allow && isDirectory) {
-            if (( absPath[absPath.length() - 1] != '/')) {
-                _builder->SetupResponse()
-                    .WithContentType(".html")
-                    .WithStatusCode(HttpStatusCode::_TEMPORARY_REDIRECT)
-                    .WithLocation(Utils::SanitizePath("/", request.GetPath() + "/"))
-                    .WithDefaultPage();
-                    return HttpStatusCode::_TEMPORARY_REDIRECT;
-            }
+            if ((result = this->_checkDirectory(absPath, request))) { return result; }
             if (( result = this->_checkExistIndex(request.GetPath(), absPath) )) { return result; }
             if (( result = this->_checkAutoIndex(absPath) )) { return result; }
         }
@@ -439,6 +450,8 @@ void        Route::SetRouteIndexes(std::vector<std::string> indexes) {
 void        Route::SetAutoIndex(bool flag) {
     this->_autoIndex = flag;
 }
+
+
 
 
 /**!

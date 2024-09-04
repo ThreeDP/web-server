@@ -116,6 +116,8 @@ class Route : public IRoute {
         /// @return CONTENT TOO LARGE
         HttpStatusCode::Code _checkBodyLimit(size_t limit);
 
+        HttpStatusCode::Code _checkDirectory(std::string absPath, HttpRequest &request);
+
         /// @brief Check if the Directory listining
         /// is allowed.
         /// @param absolutePath 

@@ -288,6 +288,9 @@ IRoute  *Server::GetRoute(std::string routeName) {
 
 // Seters
 void    Server::SetAllowMethods(std::set<std::string> methods) {
+    if (Utils::SanitizeMethods(methods)) {
+        throw std::invalid_argument(_logger->Log(&Logger::LogCaution, "Incorrect Http Method."));
+    }
     this->_allowMethods.clear();
     std::set<std::string>::iterator it = methods.begin();
     for ( ; it != methods.end(); ++it) {
@@ -313,6 +316,7 @@ void    Server::SetRedirectPath(std::pair<std::string, std::string> pair) {
 void    Server::SetRootDirectory(std::string root) {
     this->_root = root;
 }
+
 void    Server::SetPagesIndexes(std::vector<std::string> indexes) {
     this->_indexes.clear();
     std::vector<std::string>::iterator it = indexes.begin();

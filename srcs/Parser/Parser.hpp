@@ -36,6 +36,7 @@ class Parser {
 		std::ifstream	*_file;
 
 
+
 	public:
 		Parser(ILogger *logger, IHandler *handler, IBuilderServer *builder);
 		~Parser(void);
@@ -58,6 +59,7 @@ class Parser {
 		bool						GetAutoIndexParam(std::vector<std::string> vector, std::string end);
 		char 						SanitizeString(std::string str);
 		char						ExceptionValidation(std::string title, std::string params, std::string set);
+
 };
 
 #endif

@@ -102,3 +102,34 @@ std::string Utils::SanitizePath(std::string root, std::string path) {
     response << root << path;
     return response.str();
 }
+
+bool Utils::SanitizeMethods(std::set<std::string> methods) {
+    std::set<std::string> Methods;
+    Methods.insert("GET");
+    Methods.insert("POST");
+    Methods.insert("DELETE");
+    Methods.insert("INFO");
+    Methods.insert("PATH");
+    std::set<std::string>::iterator it = methods.begin();
+    for ( ; it != methods.end(); ++it) {
+        std::set<std::string>::iterator m = Methods.find(*it);
+        if (m == Methods.end()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Utils::SanitizeOneMethod(std::string method) {
+    std::set<std::string> Methods;
+    Methods.insert("GET");
+    Methods.insert("POST");
+    Methods.insert("DELETE");
+    Methods.insert("INFO");
+    Methods.insert("PATH");
+    std::set<std::string>::iterator m = Methods.find(method);
+    if (m == Methods.end()) {
+        return true;
+    }
+    return false;
+}

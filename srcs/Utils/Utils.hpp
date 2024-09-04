@@ -20,6 +20,8 @@ bool    endsWithSemicolon(const std::string &str);
 class Utils {
 	
 	public:
+        static bool                 SanitizeOneMethod(std::string method);
+        static bool 				SanitizeMethods(std::set<std::string> methods);
         static std::string          SanitizePath(std::string root, std::string path);
 		static std::string          getActualDir(std::string path);
         static std::string	        getLastModifiedOfFile(const std::string &filename);
