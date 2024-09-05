@@ -56,20 +56,15 @@ void    Http::StartWatchSockets(void) {
         std::cout << _logger->Log(&Logger::LogInformation, "Number of fds ready to read:", number_of_ready_fds);
         for (int i = 0; i < number_of_ready_fds; i++) {
             std::map<int, int>::iterator it = _cgis.find(this->clientEvents[i].data.fd);
-            std::cout <<"AQUI 1"<< std::endl;
             if ((this->clientEvents[i].events & EPOLLIN) == EPOLLIN) {
-                std::cout <<"AQUI 2"<< std::endl;
                 if (it != _cgis.end()) {
-                    std::cout <<"AQUI 3"<< std::endl;
                     clientFD_Server[it->second]->CreateCGIResponse(this->GetEPollFD(), it->first, it->second);
                     // modify_epoll_event(this->GetEPollFD(), this->clientEvents[i].data.fd, EPOLLOUT);
                     _cgis.erase(it->first);
-                    std::cout <<"AQUI 6"<< std::endl;
                     break;
                 } else {
                     if (this->ConnectClientToServer(this->clientEvents[i].data.fd))
                         continue;
-                    std::cout <<"AQUI 4"<< std::endl;
                     ssize_t numbytes = this->HandleRequest(this->clientEvents[i].data.fd, this->GetEPollFD());
                     modify_epoll_event(this->GetEPollFD(), this->clientEvents[i].data.fd, EPOLLOUT);
                     if (numbytes == -1)
@@ -80,7 +75,6 @@ void    Http::StartWatchSockets(void) {
                     if (numbytes > 0){
                         break ;
                     }
-                    std::cout <<"AQUI 8"<< std::endl;
                 }
             }   
             if ((this->clientEvents[i].events & EPOLLOUT)) {
@@ -144,6 +138,7 @@ ssize_t    Http::HandleRequest(int client_fd, int poll_fd) {
         close(sv[1]);
     }
     (void)poll_fd;
+    delete server;
     return numbytes;
 }
 
@@ -212,6 +207,7 @@ Http::Http(ILogger *logger) {
 }
 
 Http::~Http(void) {
+    std::cout << _logger->Log(&Logger::LogTrace, "Destruction Http.");
     std::vector<IServer *>::iterator it = _serversPointer.begin();
     for ( ; it != _serversPointer.end(); ++it) {
         delete *it;

@@ -12,7 +12,7 @@ BuilderResponse::BuilderResponse(ILogger *logger, IHandler *handler) :
 BuilderResponse::~BuilderResponse(void) {
     std::cerr << _logger->Log(&Logger::LogDebug, "Deleted BuilderResponse Class.");
     if (_response != NULL) {
-        //delete _response;
+        delete _response;
         _response = NULL;
     }
 }
@@ -20,7 +20,7 @@ BuilderResponse::~BuilderResponse(void) {
 // Setup Response
 IBuilderResponse &BuilderResponse::SetupResponse(void) {
     if (_response != NULL) {
-        //delete _response;
+        delete _response;
         _response = NULL;
     }
     _response = new HttpResponse(_logger);
