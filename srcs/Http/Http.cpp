@@ -34,7 +34,7 @@ void    Http::StartPollList(void) {
         it->second->SetAddrInfo(it->first);
         it->second->CreateSocketAndBind();
         event.data.fd = it->second->StartListen(it->first);
-        event.events = EPOLLIN;
+        event.events = EPOLLIN | EPOLLOUT;
         if (epoll_ctl(epollFD, EPOLL_CTL_ADD, it->second->GetListener(), &event) == -1)
             throw Except("Error on add server: <name> port: <port>");
         _serverFDToStringHost[it->second->GetListener()] = it->first;
@@ -56,41 +56,43 @@ void    Http::StartWatchSockets(void) {
         std::cout << _logger->Log(&Logger::LogInformation, "Number of fds ready to read:", number_of_ready_fds);
         for (int i = 0; i < number_of_ready_fds; i++) {
             std::map<int, int>::iterator it = _cgis.find(this->clientEvents[i].data.fd);
-            std::cout <<"AQUI 1"<< std::endl;
-            if ((this->clientEvents[i].events & EPOLLIN) == EPOLLIN) {
-                std::cout <<"AQUI 2"<< std::endl;
-                if (it != _cgis.end()) {
-                    std::cout <<"AQUI 3"<< std::endl;
-                    clientFD_Server[it->second]->CreateCGIResponse(this->GetEPollFD(), it->first, it->second);
-                    // modify_epoll_event(this->GetEPollFD(), this->clientEvents[i].data.fd, EPOLLOUT);
-                    _cgis.erase(it->first);
-                    std::cout <<"AQUI 6"<< std::endl;
-                    break;
-                } else {
-                    if (this->ConnectClientToServer(this->clientEvents[i].data.fd))
-                        continue;
-                    std::cout <<"AQUI 4"<< std::endl;
-                    ssize_t numbytes = this->HandleRequest(this->clientEvents[i].data.fd, this->GetEPollFD());
-                    modify_epoll_event(this->GetEPollFD(), this->clientEvents[i].data.fd, EPOLLOUT);
-                    if (numbytes == -1)
-                        throw Except("error recv");
-                    if (numbytes == 0) {
-                        this->DisconnectClientToServer(this->clientEvents[i].data.fd);
-                    }  
-                    if (numbytes > 0){
-                        break ;
-                    }
-                    std::cout <<"AQUI 8"<< std::endl;
-                }
-            }   
+
             if ((this->clientEvents[i].events & EPOLLOUT)) {
-                std::cout <<"EPOLLOUT IN"<< std::endl;
                 this->HandleResponse(this->clientEvents[i].data.fd);
                 this->DisconnectClientToServer(this->clientEvents[i].data.fd);
-                std::cout <<"EPOLLOUT OUT"<< std::endl;
                 break;
             }
-        }
+
+            if ((this->clientEvents[i].events & EPOLLIN) == EPOLLIN) {
+
+                if (it != _cgis.end()) {
+                    clientFD_Server[it->second]->CreateCGIResponse(this->GetEPollFD(), it->first, it->second);
+                    _cgis.erase(it->first);
+                    break;
+                }
+                
+                if (this->ConnectClientToServer(this->clientEvents[i].data.fd))
+                    continue;
+
+                ssize_t numbytes = this->HandleRequest(this->clientEvents[i].data.fd, this->GetEPollFD());
+                if (numbytes == -1)
+                    throw Except("error recv");
+                if (numbytes == 0) {
+                    this->DisconnectClientToServer(this->clientEvents[i].data.fd);
+                }  
+                if (numbytes > 0) {
+                    epoll_event ev;
+                    memset(&ev, '\0', sizeof(epoll_event));
+                    ev.events = EPOLLOUT;
+                    ev.data.fd = this->clientEvents[i].data.fd;
+                    if (epoll_ctl(this->GetEPollFD(), EPOLL_CTL_MOD, this->clientEvents[i].data.fd, &ev) == -1)
+                        throw Except("Error on add server: <name> port: <port>");
+                    break ;
+                }
+
+            }
+        }   
+
     }
 }
 
