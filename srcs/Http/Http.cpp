@@ -125,18 +125,17 @@ ssize_t    Http::HandleRequest(int client_fd, int poll_fd) {
     ssize_t numbytes = recv(client_fd, &buffer, sizeof(char) * 1000000, 0);
     res.ParserRequest(buffer);
 
-    if (res.IsCGIRequest()){
-        int sv[2]; 
-        if (socketpair(AF_UNIX, SOCK_STREAM, 0, sv) == -1) {
-            std::cerr << "Erro ao criar socket pair: " << strerror(errno) << std::endl;
-            return -1;
-        }
-        this->_cgis[sv[0]] = client_fd;
-        if (server->ProcessRequest(res, client_fd, sv, this->GetEPollFD()) == HttpStatusCode::_CGI) {
-            return numbytes;
-        }
-    } else if (!res.IsCGIRequest() && server != NULL){
-        server->ProcessRequest(res, client_fd);
+    int sv[2]; 
+    if (socketpair(AF_UNIX, SOCK_STREAM, 0, sv) == -1) {
+        std::cerr << "Erro ao criar socket pair: " << strerror(errno) << std::endl;
+        return -1;
+    }
+    this->_cgis[sv[0]] = client_fd;
+    if (server->ProcessRequest(res, client_fd, sv, this->GetEPollFD()) == HttpStatusCode::_CGI) {
+        return numbytes;
+    } else {
+        close(sv[0]);
+        close(sv[1]);
     }
     (void)poll_fd;
     delete server;

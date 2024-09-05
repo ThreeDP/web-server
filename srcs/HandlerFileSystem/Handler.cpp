@@ -73,10 +73,12 @@ bool Handler::PathExist(std::string path) {
     while (std::getline(ss, pathPiece, '/'))
     {
         path += pathPiece;
+        std::cout << pathPiece << std::endl;
         memset(&file, 0, sizeof(struct stat));
         if (this->FileIsDirectory(path))
             path += "/";
         if (stat(path.c_str(), &file) != 0) {
+            std::cout << "Falsiane: " << path << std::endl;
             return false;
         }
     }

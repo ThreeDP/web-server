@@ -15,6 +15,11 @@ void    HttpRequest::ParserRequest(std::string request) {
             std::getline(swords, this->_HTTPVersion, '\r');
             continue;
         }
+        size_t pos = this->_path.find_first_of('?');
+        if (pos != std::string::npos) {
+            _queryStrings = this->_path.substr(pos + 1, this->_path.size());
+            this->_path = this->_path.substr(0, pos);
+        }
         bool isSlashRFirst = std::strncmp(swords.str().c_str(), "\r", 2) == 0;
         if (isBody || isSlashRFirst) {
             if (!isBody && isSlashRFirst) {
@@ -69,6 +74,7 @@ int              HttpRequest::GetBodySize(void) const {
 HttpRequest::HttpRequest(void) :
     _method(""),
     _path(""),
+    _queryStrings(""),
     _HTTPVersion(""),
     _body(""),
     _bodySize(0) {
@@ -97,7 +103,7 @@ bool HttpRequest::operator==(const HttpRequest &other) {
 }
 
 std::ostream &operator<<(std::ostream &os, HttpRequest const &request) {
-    os << request.GetMethod() << " " << request.GetPath() << " " << request.GetHTTPVersion() << "\r\n";
+    os << request.GetMethod() << " " << request.GetPath() << " (" << request.GetQueryParams() << ") " << " " << request.GetHTTPVersion() << "\r\n";
     std::map<std::string, std::string> headers = request.GetHeaders(); 
     std::map<std::string, std::string>::iterator it = headers.begin();
     for ( ; it != headers.end(); ++it) {

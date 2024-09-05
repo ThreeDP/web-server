@@ -46,6 +46,7 @@ IBuilderServer      &BuilderServer::WithRoute(IRoute *route) {
     return *this;
 }
 
+
 IBuilderServer      &BuilderServer::WithHosts(std::vector<std::string> hosts) {
     if (!hosts.empty())
         _server->SetHosts(hosts);

@@ -112,22 +112,25 @@ int Server::AcceptClientConnect(void) {
 =======================================*/
 
 std::string         Server::FindMatchRoute(HttpRequest &res) {
-    std::string keyPath = "";
+    std::string keyPath = "/";
     std::map<std::string, IRoute *>::iterator it = this->_routes.begin();
 
+    std::string requestPath = res.GetPath();
+    int max = 0;
     for (; it != this->_routes.end(); ++it) {
-        int size = it->first.size();
-        std::string comp = it->first;
-        if (comp[size - 1] != '/' && size++)
-            comp += "/";
-        std::string subPath = res.GetPath().substr(0, size);
-        if (size > 0 && static_cast<std::string::size_type>(size) <= subPath.size() && subPath[size - 1] != '/')
-            continue;
-        if (comp == subPath)
+        std::string routePath = it->first;
+        int routeSize = routePath.length();
+        std::string subPath;
+        if (routePath[routePath.length() - 1] != '/') {
+            subPath = requestPath.substr(0, routeSize + 1);
+        } else {
+            subPath = requestPath.substr(0, routeSize);
+        }
+        if (routeSize > max && !subPath.compare(routePath)) {
             keyPath = it->first;
+            max = routeSize;
+        }
     }
-    if (keyPath == "")
-        keyPath = "/";
     return keyPath;
 }
 void Server::CreateCGIResponse(int epollfd, int cgifd, int clientfd) {
@@ -158,25 +161,6 @@ void Server::CreateCGIResponse(int epollfd, int cgifd, int clientfd) {
                                     .GetResult();
     close(cgifd);
     (void)epollfd;
-}
-
-void                Server::ProcessRequest(HttpRequest &request, int client_fd) {
-    BuilderResponse builder = BuilderResponse(_logger, _handler);
-    std::string keyPath = this->FindMatchRoute(request);
-    std::cout << _logger->Log(&ILogger::LogInformation, "Request", "Route", keyPath, request.GetMethod(), request.GetPath());
-    std::map<std::string, IRoute *>::iterator it = this->_routes.find(keyPath);
-    
-    if (it != this->_routes.end()) {
-        this->ResponsesMap[client_fd] = this->_routes[keyPath]->ProcessRequest(request);
-    } else {
-        this->ResponsesMap[client_fd] = builder
-            .SetupResponse()
-            .WithStatusCode(HttpStatusCode::_INTERNAL_SERVER_ERROR)
-            .WithContentType(".html")
-            .WithDefaultPage()
-            .GetResult();
-        std::cout << _logger->Log(&Logger::LogInformation, "Route Not Found or Configurated", HttpStatusCode::_INTERNAL_SERVER_ERROR);
-    }
 }
 
 HttpStatusCode::Code                Server::ProcessRequest(HttpRequest &request, int client_fd, int* cgifd, int epoll) {
@@ -308,6 +292,9 @@ IRoute  *Server::GetRoute(std::string routeName) {
 
 // Seters
 void    Server::SetAllowMethods(std::set<std::string> methods) {
+    if (Utils::SanitizeMethods(methods)) {
+        throw std::invalid_argument(_logger->Log(&Logger::LogCaution, "Incorrect Http Method."));
+    }
     this->_allowMethods.clear();
     std::set<std::string>::iterator it = methods.begin();
     for ( ; it != methods.end(); ++it) {
@@ -333,6 +320,7 @@ void    Server::SetRedirectPath(std::pair<std::string, std::string> pair) {
 void    Server::SetRootDirectory(std::string root) {
     this->_root = root;
 }
+
 void    Server::SetPagesIndexes(std::vector<std::string> indexes) {
     this->_indexes.clear();
     std::vector<std::string>::iterator it = indexes.begin();
@@ -358,7 +346,9 @@ void    Server::SetPort(std::string port) {
 }
 
 void    Server::SetRoute(std::string routeName, IRoute *route) {
-    this->_routes[routeName] = route;
+    if (!routeName.empty())
+        this->_routes[routeName] = route;
+    this->_routes[Utils::SanitizePath(routeName, "/")] = route;
 }
 
 std::string Server::_toString(void) {
