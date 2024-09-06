@@ -40,7 +40,7 @@ class Http {
 
         // Geters
         IServer                      *GetServer(std::string server);
-        int                         &GetEPollFD(void);
+        static int                         &GetEPollFD(void);
 
         // Base Methods
         Http(ILogger *logger);

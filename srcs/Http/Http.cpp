@@ -291,6 +291,7 @@ ssize_t    Http::HandleRequest(int client_fd, int poll_fd) {
         close(sv[1]);
     }
     (void)poll_fd;
+    delete server;
     return numbytes;
 }
 
@@ -359,6 +360,7 @@ Http::Http(ILogger *logger) {
 }
 
 Http::~Http(void) {
+    std::cout << _logger->Log(&Logger::LogTrace, "Destruction Http.");
     std::vector<IServer *>::iterator it = _serversPointer.begin();
     for ( ; it != _serversPointer.end(); ++it) {
         delete *it;

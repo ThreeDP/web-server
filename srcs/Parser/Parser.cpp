@@ -13,15 +13,21 @@ Parser::Parser(ILogger *logger, IHandler *handler, IBuilderServer *builder) :
 }
 
 Parser::~Parser(void) {
+    if (_builder != NULL)
+        delete _builder;
     if (_file != NULL) {
         _file->close();
-         delete _file;
+        delete _file;
     }
+    if (_handler != NULL)
+        delete _handler;
+    if (_logger != NULL)
+        delete _logger;
 }
 
 int	Parser::ConfigHttp(Http &http, std::string fileName) {
     std::pair<bool, std::string> line;
-    std::ifstream	*_file = _handler->OpenFile(fileName);
+    _file = _handler->OpenFile(fileName);
     if (_file == NULL)
         throw std::runtime_error(_logger->Log(
             &Logger::LogCaution,
