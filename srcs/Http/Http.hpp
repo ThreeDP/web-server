@@ -3,27 +3,31 @@
 
 # include "Server.hpp"
 
-class Http {
-    // Patterns HTTP
-    ILogger                             *_logger;
+# define BUFFER_SIZE 10000
 
-    // Parser Response
+class Http {
+    // USED
+    ILogger                             *_logger;
     std::map<std::string, IServer *>    servers;
     std::map<int, IServer *>            clientFD_Server;
     std::vector<IServer *>              _serversPointer;
-    std::map<int, std::string>          _serverFDToStringHost;
     std::map<int, IServer *>            _serverFDToServer;
+
+    // Parser Response
     std::map<int, int>            _cgis;
 
-    const static int                    eventsLimit = 10;
     
     // epoll config
-    //int                                 _epollFD;
+    //NOT USED
+    const static int                    eventsLimit = 10;
     struct epoll_event                  clientEvents[eventsLimit];
+    std::map<int, std::string>          _serverFDToStringHost;
 
     public:
+        // USED
+        void Process(void);
 
-        // Http Methods
+        // NOT USED
         void                        StartPollList(void);
         void                        StartWatchSockets(void);
         void                        ClientHandShake(IServer *server);
