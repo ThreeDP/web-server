@@ -52,8 +52,7 @@ int main(int ac, char *av[]) {
         std::cout << logger->Log(&Logger::LogInformation, "Starting Parser.");
         parser->ConfigHttp(*http, fileName);
         std::cout << logger->Log(&Logger::LogInformation, "Finished Parser.");
-        http->StartPollList();
-        http->StartWatchSockets();
+        http.Process();
     } catch (const std::exception &e) {
         std::cout << e.what();
     }

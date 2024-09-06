@@ -358,7 +358,6 @@ HttpStatusCode::Code Route::Get(HttpRequest &request, std::string absPath, int* 
     if (this->_handler->PathExist(absPath)) {
         bool isDirectory = this->_handler->FileIsDirectory(absPath);
         bool allow = this->_handler->IsAllowToGetFile(absPath);
-        std::cout << _logger->Log(&Logger::LogCaution, absPath, "is directory: ", isDirectory, "is allow: ", allow) << std::endl;
         if (allow && isDirectory) {
             if ((result = this->_checkDirectory(absPath, request))) { return result; }
             if (( result = this->_checkExistIndex(request.GetPath(), absPath) )) { return result; }
