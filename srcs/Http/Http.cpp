@@ -23,6 +23,9 @@ void modify_epoll_event(int epoll_fd, int sock_fd, uint32_t new_events) {
 
 void Http::Process(void) {
     int epollFD = epoll_create(1);
+    if (epollFD == -1) {
+        throw std::runtime_error(_logger->Log(&Logger::LogCaution, "Error: On start EPOLL."));
+    }
 	struct epoll_event event;
 	memset(&event, '\0', sizeof(struct epoll_event));
 
@@ -37,7 +40,9 @@ void Http::Process(void) {
 	// SET ENDEREÇO E PORTA
 	int status = getaddrinfo("localhost", "8081", &hints, &result);
 	if (status != 0) {
-        std::cerr << "error 1" << std::endl; //gai_strerror(status)
+        close(epollFD);
+        std::cerr << _logger->Log(&Logger::LogTrace, gai_strerror(status));
+        throw std::runtime_error(_logger->Log(&Logger::LogCaution, "Error: Host <", "locahost", "Port", "8081", "> not found."));
     }
 
 	// BIND DA FD DO SERVER COM A PORTA E HOST
@@ -48,27 +53,34 @@ void Http::Process(void) {
 		if (listener == -1)
 			continue;
 		if (setsockopt(listener, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(int)) == -1) {
-			std::cerr << "Error 2" << std::endl;
+            std::cerr << _logger->Log(&Logger::LogWarning, "setsockopt.") << std::endl;
 		}
 		if (bind(listener, result->ai_addr, result->ai_addrlen) == 0) {
 			break;
 		}
 		if (close(listener) == -1)
-			std::cerr << "Error on close 3" << std::endl;
+			std::cerr << _logger->Log(&Logger::LogWarning, "Problem on close socket.") << std::endl;
 	}
-	if (result == NULL)
-		std::cerr << "Error 4" << std::endl;
+	if (result == NULL) {
+        close(listener);
+        close(epollFD);
+        throw std::runtime_error(_logger->Log(&Logger::LogCaution, "Error: Unable to bind <", "locahost", "Port", "8081", ">."));
+    }
 
 	// COMEÇA A OUVIR NO HOST E PORTA
 	if (listen(listener, 10) == -1) {
-		std::cerr << "Error 5" << std::endl;
+        close(listener);
+        close(epollFD);
+        throw std::runtime_error(_logger->Log(&Logger::LogCaution, "Error: Unable to listen <", "locahost", "Port", "8081", ">."));
 	}
 
 	// ADICIONA O SERVER NO EPOLL
 	event.events = EPOLLIN;
 	event.data.fd = listener;
 	if (epoll_ctl(epollFD, EPOLL_CTL_ADD, listener, &event) == -1) {
-		std::cerr << "Error 6" << std::endl;
+        close(listener);
+        close(epollFD);
+        throw std::runtime_error(_logger->Log(&Logger::LogCaution, "Error: Unable to execute EPOLL_CTL_ADD on <", "locahost", "Port", "8081", ">."));
 	}
 
     _serverFDToServer[listener] = servers["localhost"];
@@ -78,7 +90,9 @@ void Http::Process(void) {
 		struct epoll_event  clientEvents[100];
 		int number_of_ready_fds = epoll_wait(epollFD, clientEvents, 100, -1);
 		if (number_of_ready_fds == -1) {
-			std::cerr << "Error 7" << std::endl;
+            close(listener);
+            close(epollFD);
+            throw std::runtime_error(_logger->Log(&Logger::LogCaution, "Error: Problem to handle epoll clients."));
 		}
 
 		for (int i = 0; i < number_of_ready_fds; i++) {
@@ -89,38 +103,45 @@ void Http::Process(void) {
             // HANDSHAKE
 			addrlen = sizeof(struct sockaddr_storage);
             if (clientEvents[i].data.fd == listener) {
+
                 if ((new_socket = accept(listener, (struct sockaddr *) &client_saddr, &addrlen)) < 0) {
-                    std::cerr << "Error 8" << std::endl;
+                    std::cerr << _logger->Log(&Logger::LogWarning, "Problem to accept client.") << std::endl;
                 }
+
                 struct epoll_event event;
 	            memset(&event, '\0', sizeof(struct epoll_event));
                 event.events = EPOLLIN;
 	            event.data.fd = new_socket;
                 if (epoll_ctl(epollFD, EPOLL_CTL_ADD, new_socket, &event) == -1) {
-                    std::cerr << "Error 11" << std::endl;
+                    close(new_socket);
+                    std::cerr << _logger->Log(&Logger::LogWarning, "Problem to execute EPOLL_CTL_ADD to client: [", new_socket, "].") << std::endl;
                 }
                 clientFD_Server[new_socket] = _serverFDToServer[listener];
+                std::cout << _logger->Log(&Logger::LogInformation, "HandShake client [",  new_socket, "] connected on", "localhost", "8081");
                 continue;
             }
 
-            // LER DO CLIENTE E ADICIONAR FD COMO EPOLLOUT
+            // LER DO CLIENTE E ADICIONAR FD COMO EPOLLIN
             if (clientEvents[i].events & EPOLLIN) {
                 HttpRequest req;
                 char request[BUFFER_SIZE];
 
                 memset(request, '\0', sizeof(char) * BUFFER_SIZE);
                 recv(clientEvents[i].data.fd, request, sizeof(char) * BUFFER_SIZE, 0);
+                std::cout << _logger->Log(&Logger::LogTrace, request);
                 req.ParserRequest(request);
                 clientFD_Server[clientEvents[i].data.fd]->ProcessRequest(req, clientEvents[i].data.fd, 0, epollFD);
-                printf("Requisição recebida:\n%s\n", request);
 
                 struct epoll_event event;
 	            memset(&event, '\0', sizeof(struct epoll_event));
                 event.events = EPOLLOUT;
 	            event.data.fd = clientEvents[i].data.fd;
                 if (epoll_ctl(epollFD, EPOLL_CTL_MOD, clientEvents[i].data.fd, &event) == -1) {
-                    std::cerr << "Error 10" << std::endl;
+                    std::cerr << _logger->Log(&Logger::LogWarning, "Problem to execute EPOLL_CTL_MOD to client: [", clientEvents[i].data.fd, "].") << std::endl;
+                    clientFD_Server.erase(clientEvents[i].data.fd);
+                    close(clientEvents[i].data.fd);
                 }
+                std::cout << _logger->Log(&Logger::LogInformation, "Client [",  clientEvents[i].data.fd, "] connected on", "localhost", "8081");
             }
 
             // ESCREVO PARA O CLIENTE, DELETO FD DO EPOLL E FECHO O FD 
@@ -128,11 +149,13 @@ void Http::Process(void) {
                 IHttpResponse* res = clientFD_Server[clientEvents[i].data.fd]->ProcessResponse(clientEvents[i].data.fd);
                 std::vector<char> response = res->CreateResponse();
                 send(clientEvents[i].data.fd, &response[0], sizeof(char) * response.size(), 0);
-                printf("Resposta enviada!\n");
 			    delete res;
                 if (epoll_ctl(epollFD, EPOLL_CTL_DEL, clientEvents[i].data.fd, NULL) == -1) {
-                    std::cerr << "Error 10" << std::endl;
+                    std::cerr << _logger->Log(&Logger::LogWarning, "Problem to execute EPOLL_CTL_DEL to client: [", clientEvents[i].data.fd, "].") << std::endl;
+                    clientFD_Server.erase(clientEvents[i].data.fd);
+                    close(clientEvents[i].data.fd);
                 }
+                std::cout << _logger->Log(&Logger::LogInformation, "Client [",  clientEvents[i].data.fd, "] on", "localhost", "8081");
                 clientFD_Server.erase(clientEvents[i].data.fd);
                 close(clientEvents[i].data.fd);
             }
