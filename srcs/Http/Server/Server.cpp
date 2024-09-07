@@ -29,12 +29,20 @@ _actualClientFD(-1)
 Server::~Server(void) {
     if (this->result != NULL) {
         freeaddrinfo(this->result);
+        this->result = NULL;
     }
-    std::map<std::string, IRoute *>::iterator it = _routes.begin();
-    for ( ; it != _routes.end(); ++it) {
-        delete it->second;
+    if (!_routes.empty()) {
+        std::map<std::string, IRoute*>::iterator it = _routes.begin();
+        for (; it != _routes.end(); ++it) {
+            if (it->second != NULL && !it->first.empty() && it->first[it->first.size() - 1] == '/') {
+                delete it->second;
+                it->second = NULL;
+            }
+        }
     }
-    std::cerr << _logger->Log(&Logger::LogDebug, "Deleted Server Class.");
+    if (_logger != NULL) {
+        std::cerr << _logger->Log(&Logger::LogDebug, "Deleted Server Class.");
+    }
 }
 
 /* Server Methods

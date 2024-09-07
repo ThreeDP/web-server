@@ -13,17 +13,22 @@ Parser::Parser(ILogger *logger, IHandler *handler, IBuilderServer *builder) :
 }
 
 Parser::~Parser(void) {
-    if (_builder != NULL)
+    if (_builder != NULL) {
         delete _builder;
-    if (_file != NULL) {
-        _file->close();
-        delete _file;
+        _builder = NULL;
     }
-    if (_handler != NULL)
+
+    if (_handler != NULL) {
         delete _handler;
-    if (_logger != NULL)
+        _handler = NULL;
+    }
+
+    if (_logger != NULL) {
         delete _logger;
+        _logger = NULL;
+    }
 }
+
 
 int	Parser::ConfigHttp(Http &http, std::string fileName) {
     std::pair<bool, std::string> line;

@@ -364,8 +364,11 @@ Http::Http(ILogger *logger) {
 
 Http::~Http(void) {
     std::cout << _logger->Log(&Logger::LogTrace, "Destruction Http.");
-    std::vector<IServer *>::iterator it = _serversPointer.begin();
-    for ( ; it != _serversPointer.end(); ++it) {
-        delete *it;
+    if (!_serversPointer.empty()) {
+        std::vector<IServer*>::iterator it = _serversPointer.begin();
+        for (; it != _serversPointer.end(); ++it) {
+          
+            delete *it;
+        }
     }
 }
