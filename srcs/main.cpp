@@ -6,14 +6,14 @@
 /*   By: rleslie- <rleslie-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/03 17:50:41 by dapaulin          #+#    #+#             */
-/*   Updated: 2024/09/02 22:20:08 by rleslie-         ###   ########.fr       */
+/*   Updated: 2024/09/07 12:03:19 by rleslie-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include "Http.hpp"
 # include "Parser.hpp"
 # include "BuilderServer.hpp"
-# include "signalHandler.cpp"
+
 #include <iostream>
 #include <csignal>
 #include <cstdlib>
@@ -23,13 +23,11 @@ Parser *parser = NULL;
 
 void signalHandler(int signum) {
     if(signum == SIGINT){
-        close(Http::GetEPollFD());
+        // close(Http::GetEPollFD());
         if (http != NULL)
             delete http;
         if (parser != NULL)
             delete parser;
-        std::cout << "\nChegou o signal" << std::endl;
-        // Limpeza antes de sair (se necessário)
     }
     exit(signum);
 }
@@ -52,7 +50,7 @@ int main(int ac, char *av[]) {
         std::cout << logger->Log(&Logger::LogInformation, "Starting Parser.");
         parser->ConfigHttp(*http, fileName);
         std::cout << logger->Log(&Logger::LogInformation, "Finished Parser.");
-        http.Process();
+        http->Process();
     } catch (const std::exception &e) {
         std::cout << e.what();
     }
