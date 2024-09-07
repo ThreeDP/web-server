@@ -541,6 +541,7 @@ Route::Route(
     // _httpMethods["GET"] = &Route::Get;
     // _httpMethods["POST"] = &Route::Post;
     // _httpMethods["DELETE"] = &Route::Delete;
+
     _builder = new BuilderResponse(_logger, _handler);
     if (_logger->Env()) {
         std::cerr << _logger->Log(&Logger::LogDebug, "Created Route Class: ");
@@ -549,5 +550,10 @@ Route::Route(
 }
 
 Route::~Route(void) {
-    std::cerr << _logger->Log(&Logger::LogDebug, "Deleted Route Class.");
+    if (_builder){
+        delete _builder;
+        _builder = NULL;
+    }
+    if (_logger != NULL)
+        std::cerr << _logger->Log(&Logger::LogDebug, "Deleted Route Class.");
 }
