@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   define.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dapaulin <dapaulin@student.42sp.org.br>    +#+  +:+       +#+        */
+/*   By: rleslie- <rleslie-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/09/09 18:07:16 by dapaulin          #+#    #+#             */
-/*   Updated: 2024/06/04 21:20:29 by dapaulin         ###   ########.fr       */
+/*   Updated: 2024/09/07 19:47:26 by rleslie-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -96,6 +96,10 @@
 # include <fstream>
 # include <sstream>
 # include <cstring>
+# include <iostream>
+# include <unistd.h>   
+# include <string>
+# include <cstdlib> 
 
 // Handle Time
 # include <ctype.h>

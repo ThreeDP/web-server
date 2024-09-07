@@ -39,7 +39,7 @@ class Route : public IRoute {
          * Seters
          * 
          */
-
+        HttpStatusCode::Code            HandlePath(const std::string &path);
         void                            SetRouteName(std::string routeName);
         void                            SetBodyLimit(int size);
         void                            SetAllowMethods(std::set<std::string> methods);

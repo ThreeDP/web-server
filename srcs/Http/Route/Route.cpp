@@ -246,6 +246,76 @@ HttpStatusCode::Code Route::Post(HttpRequest &request, std::string absPath, int*
  * 
  */
 
+HttpStatusCode::Code Route::HandlePath(const std::string &path) {
+    struct stat info;
+    std::string currentPath;
+    size_t pos = 0;
+
+    // Percorre cada diretório no caminho separadamente
+    while ((pos = path.find('/', pos)) != std::string::npos) {
+        currentPath = path.substr(0, pos + 1); // Extrai até a próxima barra "/"
+        pos++;
+
+        // Verifica se o diretório atual existe
+        if (stat(currentPath.c_str(), &info) != 0) {
+            _builder
+                ->SetupResponse()
+                .WithStatusCode(HttpStatusCode::_NOT_FOUND)
+                .WithDefaultPage();
+            std::cout << _logger->Log(&Logger::LogInformation, "Directory does not exist", HttpStatusCode::_NOT_FOUND);
+            return (HttpStatusCode::_NOT_FOUND);
+        }
+
+        // Verifica se é realmente um diretório
+        if (!(info.st_mode & S_IFDIR)) {
+            _builder
+                ->SetupResponse()
+                .WithStatusCode(HttpStatusCode::_NOT_FOUND)
+                .WithDefaultPage();
+            std::cout << _logger->Log(&Logger::LogInformation, "Directory does not exist", HttpStatusCode::_NOT_FOUND);
+            return (HttpStatusCode::_NOT_FOUND);
+        }
+
+        // Verifica se o diretório tem permissão de execução (navegar pelo diretório)
+        if (access(currentPath.c_str(), X_OK) != 0) {
+            _builder
+                ->SetupResponse()
+                .WithStatusCode(HttpStatusCode::_FORBIDDEN)
+                .WithDefaultPage();
+            std::cout << _logger->Log(&Logger::LogInformation, "Directory does not exist", HttpStatusCode::_FORBIDDEN);
+            return (HttpStatusCode::_FORBIDDEN);
+        }
+    }
+    // Verifica se o arquivo final existe
+    if (stat(path.c_str(), &info) != 0) {
+        _builder
+                ->SetupResponse()
+                .WithStatusCode(HttpStatusCode::_NOT_FOUND)
+                .WithDefaultPage();
+            std::cout << _logger->Log(&Logger::LogInformation, "Directory does not exist", HttpStatusCode::_NOT_FOUND);
+            return (HttpStatusCode::_NOT_FOUND);
+    }
+    // Verifica permissões no arquivo final (pode ser diretório ou arquivo)
+    if (access(path.c_str(), R_OK) != 0) {
+        _builder
+                ->SetupResponse()
+                .WithStatusCode(HttpStatusCode::_FORBIDDEN)
+                .WithDefaultPage();
+            std::cout << _logger->Log(&Logger::LogInformation, "Directory does not exist", HttpStatusCode::_FORBIDDEN);
+            return (HttpStatusCode::_FORBIDDEN);
+    }
+    
+    return HttpStatusCode::_OK;
+}
+
+
+bool    HandleDelete(std::string path){
+    //preciso ver as permissões dos arquivos
+    //se ele existe
+    //se ele não existir retornar um erro talvz 202 
+    //se não tiver permissão também retornar 202 talvez
+}
+
 HttpStatusCode::Code Route::Delete(HttpRequest &request, std::string absPath, int* cgifd, int epoll) {
     HttpStatusCode::Code result = HttpStatusCode::_DO_NOTHING;
     if ((result = this->_checkBodyLimit(request.GetBodySize()))) { return result; }
@@ -281,6 +351,16 @@ HttpStatusCode::Code Route::Delete(HttpRequest &request, std::string absPath, in
  * 
  */
 
+bool is_executable(const std::string &path) {
+    // Verifica se o arquivo existe e se é executável
+    return access(path.c_str(), X_OK) == 0;
+}
+
+bool set_executable(const std::string &path) {
+    std::cout << "Dando permissão..." << std::endl;
+    return chmod(path.c_str(), S_IRWXU | S_IRWXG | S_IRWXO) == 0;  // Define permissões de leitura, escrita e execução para todos
+}
+
 void Route::cgiAction(HttpRequest &req, int epollFD, std::string absPath, int* cgifd) {
     // Deve adicionar o GetEnvp no envp do server em todo request.
 	std::vector<std::string> ev = req.GetEnvp();
@@ -297,6 +377,11 @@ void Route::cgiAction(HttpRequest &req, int epollFD, std::string absPath, int* c
 	const char *phpInterpreter = "/usr/bin/python3";
     const char *scriptPath = absPath.c_str();
 	const char *argv[] = {phpInterpreter, scriptPath, NULL};
+
+    if (!is_executable(scriptPath)){
+        std::cout << "Não é executal!" << std::endl;
+        set_executable(scriptPath);
+    }
 
 	pid_t pid = fork();
 	if (pid == 0) {
@@ -338,7 +423,7 @@ void Route::cgiAction(HttpRequest &req, int epollFD, std::string absPath, int* c
             // Trate o erro conforme necessário.
             exit(EXIT_FAILURE);
         }
-
+        
         struct epoll_event event;
         memset(&event, 0, sizeof(struct epoll_event));
         event.events = EPOLLIN;
@@ -349,6 +434,11 @@ void Route::cgiAction(HttpRequest &req, int epollFD, std::string absPath, int* c
             // Trate o erro conforme necessário, como fechando o socket e/ou liberando recursos.
             exit(EXIT_FAILURE);
         }
+
+        // for (size_t i = 0; i < ev.size(); ++i) {
+        //     delete[] envp[i];
+        // }
+        // delete[] envp;
 	}
 }
 

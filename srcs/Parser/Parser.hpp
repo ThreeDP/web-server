@@ -35,8 +35,6 @@ class Parser {
 		int				_line;
 		std::ifstream	*_file;
 
-
-
 	public:
 		Parser(ILogger *logger, IHandler *handler, IBuilderServer *builder);
 		~Parser(void);
