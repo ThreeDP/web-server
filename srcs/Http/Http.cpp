@@ -88,13 +88,13 @@ void Http::Process(void) {
 	while (true) {
         // ESPERA NOVOS CLIENTES
 		struct epoll_event  clientEvents[100];
-		int number_of_ready_fds = epoll_wait(epollFD, clientEvents, 100, -1);
+		int number_of_ready_fds = epoll_wait(epollFD, clientEvents, 100, 2000);
 		if (number_of_ready_fds == -1) {
             close(listener);
             close(epollFD);
             throw std::runtime_error(_logger->Log(&Logger::LogCaution, "Error: Problem to handle epoll clients."));
 		}
-
+        std::cout << _logger->Log(&Logger::LogInformation, "Check Status...");
 		for (int i = 0; i < number_of_ready_fds; i++) {
 			int new_socket = -1;
 			socklen_t                   addrlen;
