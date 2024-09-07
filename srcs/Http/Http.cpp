@@ -129,6 +129,7 @@ void Http::Process(void) {
                 memset(request, '\0', sizeof(char) * BUFFER_SIZE);
                 recv(clientEvents[i].data.fd, request, sizeof(char) * BUFFER_SIZE, 0);
                 std::cout << _logger->Log(&Logger::LogTrace, request);
+                std::cout << _logger->Log(&Logger::LogInformation, "Request received from client [",  clientEvents[i].data.fd, "] connected on", "localhost", "8081");
                 req.ParserRequest(request);
                 clientFD_Server[clientEvents[i].data.fd]->ProcessRequest(req, clientEvents[i].data.fd, 0, epollFD);
 
@@ -149,13 +150,15 @@ void Http::Process(void) {
                 IHttpResponse* res = clientFD_Server[clientEvents[i].data.fd]->ProcessResponse(clientEvents[i].data.fd);
                 std::vector<char> response = res->CreateResponse();
                 send(clientEvents[i].data.fd, &response[0], sizeof(char) * response.size(), 0);
+                std::cout << _logger->Log(&Logger::LogInformation, "Send Response to client [",  clientEvents[i].data.fd, "] connected on", "localhost", "8081");
 			    delete res;
+
                 if (epoll_ctl(epollFD, EPOLL_CTL_DEL, clientEvents[i].data.fd, NULL) == -1) {
                     std::cerr << _logger->Log(&Logger::LogWarning, "Problem to execute EPOLL_CTL_DEL to client: [", clientEvents[i].data.fd, "].") << std::endl;
                     clientFD_Server.erase(clientEvents[i].data.fd);
                     close(clientEvents[i].data.fd);
                 }
-                std::cout << _logger->Log(&Logger::LogInformation, "Client [",  clientEvents[i].data.fd, "] on", "localhost", "8081");
+                std::cout << _logger->Log(&Logger::LogInformation, "Client [",  clientEvents[i].data.fd, "] disconnected from", "localhost", "8081");
                 clientFD_Server.erase(clientEvents[i].data.fd);
                 close(clientEvents[i].data.fd);
             }

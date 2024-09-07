@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rleslie- <rleslie-@student.42.fr>          +#+  +:+       +#+        */
+/*   By: user42 <user42@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/03 17:50:41 by dapaulin          #+#    #+#             */
-/*   Updated: 2024/09/02 22:20:08 by rleslie-         ###   ########.fr       */
+/*   Updated: 2024/09/07 11:08:50 by user42           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,7 +52,7 @@ int main(int ac, char *av[]) {
         std::cout << logger->Log(&Logger::LogInformation, "Starting Parser.");
         parser->ConfigHttp(*http, fileName);
         std::cout << logger->Log(&Logger::LogInformation, "Finished Parser.");
-        http.Process();
+        http->Process();
     } catch (const std::exception &e) {
         std::cout << e.what();
     }
