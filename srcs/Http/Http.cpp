@@ -132,10 +132,10 @@ void Http::Process(void) {
         throw std::runtime_error(_logger->Log(&Logger::LogCaution, "Error: Unable to Start Server Listen."));
     }
 
-		struct epoll_event  clientEvents[10];
+		struct epoll_event  clientEvents[100];
 	while (true) {
         // ESPERA NOVOS CLIENTES
-		int number_of_ready_fds = epoll_wait(epollFD, clientEvents, 10, 1000);
+		int number_of_ready_fds = epoll_wait(epollFD, clientEvents, 100, 1000);
 		if (number_of_ready_fds == -1) {
             std::map<int, IServer *>::iterator itFD = _serverFDToServer.begin();
             for ( ; itFD != _serverFDToServer.end(); ++itFD) {
@@ -194,11 +194,11 @@ void Http::Process(void) {
                     clientFD_Server.erase(clientEvents[i].data.fd);
                     close(clientEvents[i].data.fd);
                 }
-
+                std::vector<char> vec(request, request + BUFFER_SIZE);
                 std::cout << _logger->Log(&Logger::LogTrace, request);
                 std::cout << _logger->Log(&Logger::LogInformation, "Request received from client [",  clientEvents[i].data.fd, "] connected on", "localhost", "8081");
                 
-                req.ParserRequest(request);
+                req.ParserRequest(vec);
                 
                 int sv[2];
                 memset(&sv, '\0', sizeof(sv));
