@@ -24,7 +24,7 @@ class IServer {
         virtual std::string                 GetRootDirectory(void) = 0;
         virtual std::vector<std::string>    GetPageIndexes(void) = 0;
         virtual bool                        GetAutoIndex(void) = 0;
-        virtual std::vector<std::string>    GetHosts(void) = 0;
+        virtual std::vector<std::string>    &GetListHosts(void) = 0;
         virtual std::string                 GetPort(void) = 0;
         virtual IRoute                      *GetRoute(std::string routeName) = 0;
 

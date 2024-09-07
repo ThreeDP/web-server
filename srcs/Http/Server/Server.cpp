@@ -283,7 +283,7 @@ bool    Server::GetAutoIndex(void) {
     return this->_autoIndex;
 }
 
-std::vector<std::string>    Server::GetHosts(void) {
+std::vector<std::string>    &Server::GetListHosts(void) {
     return this->_hosts;
 }
 
