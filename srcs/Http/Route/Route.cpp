@@ -246,7 +246,7 @@ HttpStatusCode::Code Route::Post(HttpRequest &request, std::string absPath, int*
  * 
  */
 
-HttpStatusCode::Code Route::HandlePath(const std::string &path) {
+bool Route::HandleDeletePath(const std::string &path) {
     struct stat info;
     std::string currentPath;
     size_t pos = 0;
@@ -257,63 +257,19 @@ HttpStatusCode::Code Route::HandlePath(const std::string &path) {
         pos++;
 
         // Verifica se o diretório atual existe
-        if (stat(currentPath.c_str(), &info) != 0) {
-            _builder
-                ->SetupResponse()
-                .WithStatusCode(HttpStatusCode::_NOT_FOUND)
-                .WithDefaultPage();
-            std::cout << _logger->Log(&Logger::LogInformation, "Directory does not exist", HttpStatusCode::_NOT_FOUND);
-            return (HttpStatusCode::_NOT_FOUND);
-        }
+        if (stat(currentPath.c_str(), &info) != 0) {return false;}
 
         // Verifica se é realmente um diretório
-        if (!(info.st_mode & S_IFDIR)) {
-            _builder
-                ->SetupResponse()
-                .WithStatusCode(HttpStatusCode::_NOT_FOUND)
-                .WithDefaultPage();
-            std::cout << _logger->Log(&Logger::LogInformation, "Directory does not exist", HttpStatusCode::_NOT_FOUND);
-            return (HttpStatusCode::_NOT_FOUND);
-        }
-
+        if (!(info.st_mode & S_IFDIR)) {return false;}
         // Verifica se o diretório tem permissão de execução (navegar pelo diretório)
-        if (access(currentPath.c_str(), X_OK) != 0) {
-            _builder
-                ->SetupResponse()
-                .WithStatusCode(HttpStatusCode::_FORBIDDEN)
-                .WithDefaultPage();
-            std::cout << _logger->Log(&Logger::LogInformation, "Directory does not exist", HttpStatusCode::_FORBIDDEN);
-            return (HttpStatusCode::_FORBIDDEN);
-        }
+        if (access(currentPath.c_str(), X_OK) != 0) {return false;}
     }
     // Verifica se o arquivo final existe
-    if (stat(path.c_str(), &info) != 0) {
-        _builder
-                ->SetupResponse()
-                .WithStatusCode(HttpStatusCode::_NOT_FOUND)
-                .WithDefaultPage();
-            std::cout << _logger->Log(&Logger::LogInformation, "Directory does not exist", HttpStatusCode::_NOT_FOUND);
-            return (HttpStatusCode::_NOT_FOUND);
-    }
+    if (stat(path.c_str(), &info) != 0) {return false;}
     // Verifica permissões no arquivo final (pode ser diretório ou arquivo)
-    if (access(path.c_str(), R_OK) != 0) {
-        _builder
-                ->SetupResponse()
-                .WithStatusCode(HttpStatusCode::_FORBIDDEN)
-                .WithDefaultPage();
-            std::cout << _logger->Log(&Logger::LogInformation, "Directory does not exist", HttpStatusCode::_FORBIDDEN);
-            return (HttpStatusCode::_FORBIDDEN);
-    }
+    if (access(path.c_str(), R_OK) != 0) {return false; }
     
-    return HttpStatusCode::_OK;
-}
-
-
-bool    HandleDelete(std::string path){
-    //preciso ver as permissões dos arquivos
-    //se ele existe
-    //se ele não existir retornar um erro talvz 202 
-    //se não tiver permissão também retornar 202 talvez
+    return true;
 }
 
 HttpStatusCode::Code Route::Delete(HttpRequest &request, std::string absPath, int* cgifd, int epoll) {
@@ -321,7 +277,7 @@ HttpStatusCode::Code Route::Delete(HttpRequest &request, std::string absPath, in
     if ((result = this->_checkBodyLimit(request.GetBodySize()))) { return result; }
     if (this->_handler->PathExist(absPath)) {
         bool isDirectory = this->_handler->FileIsDirectory(absPath);
-        bool allow = this->_handler->IsAllowToGetFile(absPath);
+        bool allow = HandleDeletePath(absPath);
         if (allow && isDirectory) {
             if ((result = this->_checkDirectory(absPath, request))) { return result; }
             if (( result = this->_checkExistIndex(request.GetPath(), absPath) )) { return result; }

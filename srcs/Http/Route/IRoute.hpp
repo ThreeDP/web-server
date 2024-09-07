@@ -32,7 +32,7 @@ class IRoute {
         virtual std::string                     GetRootDirectory(void) = 0;
         virtual const std::vector<std::string>  GetRouteIndexes(void) = 0;
         virtual bool                            GetAutoIndex(void) = 0;
-        virtual HttpStatusCode::Code            HandlePath(const std::string &path) = 0;
+        virtual bool                            HandleDeletePath(const std::string &path) = 0;
 
     private:
         virtual void                            SetRouteName(std::string routeName) = 0;
