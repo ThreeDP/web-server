@@ -54,6 +54,7 @@ void Http::Process(void) {
 
             int status = getaddrinfo(host_label.c_str(), port_label.c_str(), &hints, &result);
             if (status != 0) {
+                freeaddrinfo(result);
                 std::cerr << _logger->Log(&Logger::LogTrace, gai_strerror(status));
                 std::map<int, IServer *>::iterator itFD = _serverFDToServer.begin();
                 for ( ; itFD != _serverFDToServer.end(); ++itFD) {
@@ -83,6 +84,7 @@ void Http::Process(void) {
 
             if (result == NULL) {
                 std::map<int, IServer *>::iterator itFD = _serverFDToServer.begin();
+                freeaddrinfo(result);
                 for ( ; itFD != _serverFDToServer.end(); ++itFD) {
                     close(itFD->first);
                 }
@@ -90,6 +92,7 @@ void Http::Process(void) {
                 close(epollFD);
                 throw std::runtime_error(_logger->Log(&Logger::LogCaution, "Error: Unable to bind <", host_label, "Port:", port_label, ">."));
             }
+            freeaddrinfo(result);
 
             std::cout << _logger->Log(&Logger::LogInformation, "Server: [", listener, "] bind Host:", host_label, "and Port:", port_label);
             std::cout << _logger->Log(&Logger::LogInformation, "Server: [", listener, "] try to starting listing on Host:", host_label, "and Port:", port_label);
@@ -129,10 +132,10 @@ void Http::Process(void) {
         throw std::runtime_error(_logger->Log(&Logger::LogCaution, "Error: Unable to Start Server Listen."));
     }
 
+		struct epoll_event  clientEvents[10];
 	while (true) {
         // ESPERA NOVOS CLIENTES
-		struct epoll_event  clientEvents[100];
-		int number_of_ready_fds = epoll_wait(epollFD, clientEvents, 100, 2000);
+		int number_of_ready_fds = epoll_wait(epollFD, clientEvents, 10, 1000);
 		if (number_of_ready_fds == -1) {
             std::map<int, IServer *>::iterator itFD = _serverFDToServer.begin();
             for ( ; itFD != _serverFDToServer.end(); ++itFD) {
@@ -142,7 +145,7 @@ void Http::Process(void) {
             throw std::runtime_error(_logger->Log(&Logger::LogCaution, "Error: Problem to handle epoll clients."));
 		}
 
-        std::cout << _logger->Log(&Logger::LogInformation, "Check Status...");
+        std::cout << _logger->Log(&Logger::LogInformation, "Check Status... ", "ready fds: [", number_of_ready_fds, "]");
 		for (int i = 0; i < number_of_ready_fds; i++) {
 			int new_socket = -1;
 			socklen_t                   addrlen;
@@ -170,11 +173,20 @@ void Http::Process(void) {
                 continue;
             }
 
+            std::map<int, int>::iterator it = _cgis.find(clientEvents[i].data.fd);
+            if (it != _cgis.end()) {
+                clientFD_Server[it->second]->CreateCGIResponse(epollFD, it->first, it->second);
+                _cgis.erase(it->first);
+                close(clientEvents[i].data.fd);
+                break;
+            }
+
             // LER DO CLIENTE E ADICIONAR FD COMO EPOLLIN
-            if (clientEvents[i].events & EPOLLIN) {
+            if ((clientEvents[i].events & EPOLLIN)) {
+
                 HttpRequest req;
                 char request[BUFFER_SIZE];
-
+                std::cout << "POLLIN" << std::endl;
                 memset(request, '\0', sizeof(char) * BUFFER_SIZE);
                 int numbytes = recv(clientEvents[i].data.fd, request, sizeof(char) * BUFFER_SIZE, 0);
                 if (numbytes == -1) {
@@ -185,25 +197,43 @@ void Http::Process(void) {
 
                 std::cout << _logger->Log(&Logger::LogTrace, request);
                 std::cout << _logger->Log(&Logger::LogInformation, "Request received from client [",  clientEvents[i].data.fd, "] connected on", "localhost", "8081");
+                
                 req.ParserRequest(request);
-                clientFD_Server[clientEvents[i].data.fd]->ProcessRequest(req, clientEvents[i].data.fd, 0, epollFD);
+                
+                int sv[2];
+                memset(&sv, '\0', sizeof(sv));
+                if (socketpair(AF_UNIX, SOCK_STREAM, 0, sv) == -1) {
+                    std::cerr << _logger->Log(&Logger::LogWarning, "Problem to open socketpair: [", clientEvents[i].data.fd, "].") << std::endl;
+                }
+                
+                int isCGI = (clientFD_Server[clientEvents[i].data.fd]->ProcessRequest(req, clientEvents[i].data.fd, sv, epollFD) == HttpStatusCode::_CGI);
 
                 struct epoll_event event;
 	            memset(&event, '\0', sizeof(struct epoll_event));
                 event.events = EPOLLOUT;
 	            event.data.fd = clientEvents[i].data.fd;
+
                 if (epoll_ctl(epollFD, EPOLL_CTL_MOD, clientEvents[i].data.fd, &event) == -1) {
                     std::cerr << _logger->Log(&Logger::LogWarning, "Problem to execute EPOLL_CTL_MOD to client: [", clientEvents[i].data.fd, "].") << std::endl;
                     clientFD_Server.erase(clientEvents[i].data.fd);
                     close(clientEvents[i].data.fd);
                 }
                 std::cout << _logger->Log(&Logger::LogInformation, "Client [",  clientEvents[i].data.fd, "] connected on", "localhost", "8081");
+                if (isCGI) {
+                    std::cout << "IS CGI" << std::endl;
+                    this->_cgis[sv[0]] = clientEvents[i].data.fd;
+                    continue;;
+                }
+                close(sv[0]);
+                close(sv[1]);
             }
 
+
             // ESCREVO PARA O CLIENTE, DELETO FD DO EPOLL E FECHO O FD 
-            if (clientEvents[i].events & EPOLLOUT) {
+            if ((clientEvents[i].events & EPOLLOUT) && clientFD_Server[clientEvents[i].data.fd]->FindResponse(clientEvents[i].data.fd)) {
                 IHttpResponse* res = clientFD_Server[clientEvents[i].data.fd]->ProcessResponse(clientEvents[i].data.fd);
                 std::vector<char> response = res->CreateResponse();
+                std::cout << "POLLOUT" << std::endl;
 
                 int numbytes = send(clientEvents[i].data.fd, &response[0], sizeof(char) * response.size(), 0);
                 if (numbytes == -1) {
@@ -229,163 +259,32 @@ void Http::Process(void) {
 	}
 }
 
-/* Http Methods
-=================================================*/
-void    Http::StartPollList(void) {
-    struct epoll_event  event;
 
-    int &epollFD = this->GetEPollFD();
-    if (epollFD == -1) {
-        throw Except("Error on create Epoll");
-    }
-    std::map<std::string, IServer*>::iterator it = this->servers.begin();
-    for (; it != this->servers.end(); ++it) {
-        memset(&event, 0, sizeof(struct epoll_event));
-        it->second->SetAddrInfo(it->first);
-        it->second->CreateSocketAndBind();
-        event.data.fd = it->second->StartListen(it->first);
-        event.events = EPOLLIN | EPOLLOUT;
-        if (epoll_ctl(epollFD, EPOLL_CTL_ADD, it->second->GetListener(), &event) == -1)
-            throw Except("Error on add server: <name> port: <port>");
-        _serverFDToStringHost[it->second->GetListener()] = it->first;
-        _serverFDToServer[it->second->GetListener()] = it->second;
-    }
-}
+// ssize_t    Http::HandleRequest(int client_fd, int poll_fd) {
+//     char            buffer[1000000];
+//     HttpRequest     res;
+//     IServer         *server = this->clientFD_Server[client_fd];
 
-void    Http::StartWatchSockets(void) {
-    while (true) {
-        int number_of_ready_fds = epoll_wait(
-            this->GetEPollFD(),
-            this->clientEvents,
-            this->eventsLimit,
-            -1
-        );
-        if (number_of_ready_fds == -1) {
-            throw Except("Epoll Wait error!");
-        }
-        std::cout << _logger->Log(&Logger::LogInformation, "Number of fds ready to read:", number_of_ready_fds);
-        for (int i = 0; i < number_of_ready_fds; i++) {
-            std::map<int, int>::iterator it = _cgis.find(this->clientEvents[i].data.fd);
+//     memset(&buffer, 0, sizeof(char) * 1000000);
+//     ssize_t numbytes = recv(client_fd, &buffer, sizeof(char) * 1000000, 0);
+//     res.ParserRequest(buffer);
 
-            if ((this->clientEvents[i].events & EPOLLOUT)) {
-                this->HandleResponse(this->clientEvents[i].data.fd);
-                this->DisconnectClientToServer(this->clientEvents[i].data.fd);
-                break;
-            }
-
-            if ((this->clientEvents[i].events & EPOLLIN) == EPOLLIN) {
-
-                if (it != _cgis.end()) {
-                    clientFD_Server[it->second]->CreateCGIResponse(this->GetEPollFD(), it->first, it->second);
-                    _cgis.erase(it->first);
-                    break;
-                }
-                
-                if (this->ConnectClientToServer(this->clientEvents[i].data.fd))
-                    continue;
-
-                ssize_t numbytes = this->HandleRequest(this->clientEvents[i].data.fd, this->GetEPollFD());
-                if (numbytes == -1)
-                    throw Except("error recv");
-                if (numbytes == 0) {
-                    this->DisconnectClientToServer(this->clientEvents[i].data.fd);
-                }  
-                if (numbytes > 0) {
-                    epoll_event ev;
-                    memset(&ev, '\0', sizeof(epoll_event));
-                    ev.events = EPOLLOUT;
-                    ev.data.fd = this->clientEvents[i].data.fd;
-                    if (epoll_ctl(this->GetEPollFD(), EPOLL_CTL_MOD, this->clientEvents[i].data.fd, &ev) == -1)
-                        throw Except("Error on add server: <name> port: <port>");
-                    break ;
-                }
-
-            }
-        }   
-
-    }
-}
-
-void    Http::DisconnectClientToServer(int client_fd) {
-    struct epoll_event  event;
-    event.data.fd = client_fd;
-    event.events = EPOLLIN;
-
-    if (epoll_ctl (this->GetEPollFD(), EPOLL_CTL_DEL, client_fd, &event) == -1)
-        throw Except("epoll_ctl");
-    if (close(client_fd) == -1)
-        throw Except("close");
-    IServer *server = this->clientFD_Server[client_fd];
-    this->clientFD_Server.erase(client_fd);
-
-    std::cout << _logger->Log(&ILogger::LogInformation, "Disconnect Client", client_fd, "from server", server->GetIP(), "on port", server->GetPort());
-}
-
-bool    Http::ConnectClientToServer(int fd) {
-    bool hasHandShake = false;
-    std::map<int, IServer*>::iterator it = this->_serverFDToServer.find(fd);
-    if (it != this->_serverFDToServer.end()) {
-            _logger->Log(&Logger::LogInformation, "New client try to connect on:", _serverFDToStringHost[fd]);
-            this->ClientHandShake(it->second);
-            hasHandShake = true;
-    } else {
-        _logger->Log(&Logger::LogCaution, "Error on apply handshake");
-    }
-    return hasHandShake;
-}
-
-ssize_t    Http::HandleRequest(int client_fd, int poll_fd) {
-    char            buffer[1000000];
-    HttpRequest     res;
-    IServer         *server = this->clientFD_Server[client_fd];
-
-    memset(&buffer, 0, sizeof(char) * 1000000);
-    ssize_t numbytes = recv(client_fd, &buffer, sizeof(char) * 1000000, 0);
-    res.ParserRequest(buffer);
-
-    int sv[2]; 
-    if (socketpair(AF_UNIX, SOCK_STREAM, 0, sv) == -1) {
-        std::cerr << "Erro ao criar socket pair: " << strerror(errno) << std::endl;
-        return -1;
-    }
-    this->_cgis[sv[0]] = client_fd;
-    if (server->ProcessRequest(res, client_fd, sv, this->GetEPollFD()) == HttpStatusCode::_CGI) {
-        return numbytes;
-    } else {
-        close(sv[0]);
-        close(sv[1]);
-    }
-    (void)poll_fd;
-    delete server;
-    return numbytes;
-}
-
-void    Http::HandleResponse(int client_fd) {
-    IServer *server = this->clientFD_Server[client_fd];
-    IHttpResponse *message = server->ProcessResponse(client_fd);
-
-    std::vector<char> test = message->CreateResponse();
-    if (send(client_fd, &test[0], test.size(), 0) == -1) {
-        //delete message;
-        throw Except("Error on send Response");
-    }
-    //delete message;
-}
-
-void    Http::ClientHandShake(IServer *server) {
-    int                         client_fd;
-    struct epoll_event          event;
-
-    memset(&event, 0, sizeof(event));
-    client_fd = server->AcceptClientConnect();
-    event.events = EPOLLIN;
-    event.data.fd = client_fd;
-    if (epoll_ctl(this->GetEPollFD(), EPOLL_CTL_ADD, client_fd, &event) == 1) {
-        throw Except("Error on add client on epoll.");
-    }
-    this->clientFD_Server[client_fd] = server;
-    std::cout << _logger->Log(&ILogger::LogInformation, "Connect client", client_fd, "from server", server->GetIP(), "on port", server->GetPort());
-}
+//     int sv[2]; 
+//     if (socketpair(AF_UNIX, SOCK_STREAM, 0, sv) == -1) {
+//         std::cerr << "Erro ao criar socket pair: " << strerror(errno) << std::endl;
+//         return -1;
+//     }
+//     this->_cgis[sv[0]] = client_fd;
+//     if (server->ProcessRequest(res, client_fd, sv, this->GetEPollFD()) == HttpStatusCode::_CGI) {
+//         return numbytes;
+//     } else {
+//         close(sv[0]);
+//         close(sv[1]);
+//     }
+//     (void)poll_fd;
+//     delete server;
+//     return numbytes;
+// }
 
 /* Geters
 =================================================*/
@@ -395,11 +294,6 @@ IServer *Http::GetServer(std::string server) {
         return it->second;
     }
     return NULL;
-}
-
-int &Http::GetEPollFD(void) {
-    static int epollFD = epoll_create1(0);
-    return epollFD;
 }
 
 /* Seters

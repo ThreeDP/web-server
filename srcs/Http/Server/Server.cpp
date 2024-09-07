@@ -197,6 +197,9 @@ HttpStatusCode::Code                Server::ProcessRequest(HttpRequest &request,
 
 IHttpResponse         *Server::ProcessResponse(int client_fd) {
     IHttpResponse *response = this->ResponsesMap[client_fd];
+    if (response == NULL) {
+        std::cout << "TAMO AQUI!!\n\n";
+    }
     std::cout << _logger->Log(&ILogger::LogInformation, "Response", response->GetStatusCode(), response->GetStatusMessage());
     this->ResponsesMap.erase(client_fd);
 

@@ -77,7 +77,12 @@ class Server : public IServer {
         std::map<int, IHttpResponse *>        ResponsesMap;
 
     public:
-
+        bool FindResponse(int fd) {
+            std::map<int, IHttpResponse *>::iterator it = ResponsesMap.find(fd);
+            if (it != ResponsesMap.end())
+                return true;
+            return false;
+        }
         std::string                 GetPort(void);
         // Server Methods
         void                    SetAddrInfo(std::string host);

@@ -27,20 +27,8 @@ class Http {
         // USED
         void Process(void);
 
-        // NOT USED
-        void                        StartPollList(void);
-        void                        StartWatchSockets(void);
-        void                        ClientHandShake(IServer *server);
-        void                        HandleResponse(int client_fd);
-        bool                        ConnectClientToServer(int i);
-        void                        DisconnectClientToServer(int client_fd);
-        ssize_t                     HandleRequest(int client_fd, int poll_fd);
-
-        
-
         // Geters
         IServer                      *GetServer(std::string server);
-        static int                         &GetEPollFD(void);
 
         // Base Methods
         Http(ILogger *logger);

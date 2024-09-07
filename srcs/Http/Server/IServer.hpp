@@ -15,6 +15,7 @@ class IServer {
         virtual ~IServer(void) {}
 
         // Geters
+        virtual bool FindResponse(int fd) = 0;
         virtual std::set<std::string>
                                             GetAllowMethods(void) = 0;
         virtual std::map<HttpStatusCode::Code, std::string>
