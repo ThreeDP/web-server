@@ -64,7 +64,7 @@ class Server : public IServer {
         std::string                 GetRootDirectory(void);
         std::vector<std::string>    GetPageIndexes(void);
         bool                        GetAutoIndex(void);
-        std::vector<std::string>    GetHosts(void);
+        std::vector<std::string>    &GetListHosts(void);
         IRoute                      *GetRoute(std::string routeName);
 
         // socket config

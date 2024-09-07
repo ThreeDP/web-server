@@ -26,8 +26,6 @@ void Http::Process(void) {
     if (epollFD == -1) {
         throw std::runtime_error(_logger->Log(&Logger::LogCaution, "Error: On start EPOLL."));
     }
-	struct epoll_event event;
-	memset(&event, '\0', sizeof(struct epoll_event));
 
 	struct addrinfo                         hints;
     memset(&hints, 0, sizeof(struct addrinfo));
@@ -35,65 +33,115 @@ void Http::Process(void) {
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_CANONNAME;
 	
-	struct addrinfo                         *result = NULL;
+    // SET SERVERS HOSTS AND PORTS
+    std::cout << _logger->Log(&Logger::LogInformation, "Setup Hosts and Ports.");
 
-	// SET ENDEREÇO E PORTA
-	int status = getaddrinfo("localhost", "8081", &hints, &result);
-	if (status != 0) {
-        close(epollFD);
-        std::cerr << _logger->Log(&Logger::LogTrace, gai_strerror(status));
-        throw std::runtime_error(_logger->Log(&Logger::LogCaution, "Error: Host <", "locahost", "Port", "8081", "> not found."));
+    std::vector<IServer *>::iterator itServer = _serversPointer.begin();
+    for (; itServer != _serversPointer.end(); ++itServer) {
+
+        std::vector<std::string>::iterator host = (*itServer)->GetListHosts().begin();
+        for (; host != (*itServer)->GetListHosts().end(); ++host) {
+            if (host->empty()) {
+                std::cout << "OI" << *host <<std::endl;
+                continue;
+            }
+
+            struct addrinfo                         *result = NULL;
+            // SET ENDEREÇO E PORTA
+            std::string host_label = *host;
+            std::string port_label = (*itServer)->GetListenPort();
+            std::cout << _logger->Log(&Logger::LogInformation, "Set Host:", host_label, "and Port:", port_label);
+
+            int status = getaddrinfo(host_label.c_str(), port_label.c_str(), &hints, &result);
+            if (status != 0) {
+                std::cerr << _logger->Log(&Logger::LogTrace, gai_strerror(status));
+                std::map<int, IServer *>::iterator itFD = _serverFDToServer.begin();
+                for ( ; itFD != _serverFDToServer.end(); ++itFD) {
+                    close(itFD->first);
+                }
+                close(epollFD);
+                throw std::runtime_error(_logger->Log(&Logger::LogCaution, "Error: Host <", host_label, "Port:", port_label, "> not found."));
+            }
+
+            // BIND DA FD DO SERVER COM A PORTA E HOST
+            int optval = 1;
+            int listener = 1;
+            std::cout << _logger->Log(&Logger::LogInformation, "Try to bind Host:", host_label, "and Port:", port_label);
+            for (; result != NULL; result = result->ai_next) {
+                listener = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+                if (listener == -1)
+                    continue;
+                if (setsockopt(listener, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(int)) == -1) {
+                    std::cerr << _logger->Log(&Logger::LogWarning, "setsockopt.") << std::endl;
+                }
+                if (bind(listener, result->ai_addr, result->ai_addrlen) == 0) {
+                    break;
+                }
+                if (close(listener) == -1)
+                    std::cerr << _logger->Log(&Logger::LogWarning, "Problem on close socket.") << std::endl;
+            }
+
+            if (result == NULL) {
+                std::map<int, IServer *>::iterator itFD = _serverFDToServer.begin();
+                for ( ; itFD != _serverFDToServer.end(); ++itFD) {
+                    close(itFD->first);
+                }
+                close(listener);
+                close(epollFD);
+                throw std::runtime_error(_logger->Log(&Logger::LogCaution, "Error: Unable to bind <", host_label, "Port:", port_label, ">."));
+            }
+
+            std::cout << _logger->Log(&Logger::LogInformation, "Server: [", listener, "] bind Host:", host_label, "and Port:", port_label);
+            std::cout << _logger->Log(&Logger::LogInformation, "Server: [", listener, "] try to starting listing on Host:", host_label, "and Port:", port_label);
+
+        	// COMEÇA A OUVIR NO HOST E PORTA
+            if (listen(listener, 10) == -1) {
+                std::map<int, IServer *>::iterator itFD = _serverFDToServer.begin();
+                for ( ; itFD != _serverFDToServer.end(); ++itFD) {
+                    close(itFD->first);
+                }
+                close(listener);
+                close(epollFD);
+                throw std::runtime_error(_logger->Log(&Logger::LogCaution, "Error: Unable to listen <", host_label, "Port:", port_label, ">."));
+            }
+            std::cout << _logger->Log(&Logger::LogInformation, "Server: [", listener, "] listining on Host:", host_label, "and Port:", port_label);
+
+            // ADICIONA O SERVER NO EPOLL
+            struct epoll_event event;
+            memset(&event, '\0', sizeof(struct epoll_event));
+            event.events = EPOLLIN;
+            event.data.fd = listener;
+            if (epoll_ctl(epollFD, EPOLL_CTL_ADD, listener, &event) == -1) {
+                std::map<int, IServer *>::iterator itFD = _serverFDToServer.begin();
+                for ( ; itFD != _serverFDToServer.end(); ++itFD) {
+                    close(itFD->first);
+                }
+                close(listener);
+                close(epollFD);
+                throw std::runtime_error(_logger->Log(&Logger::LogCaution, "Error: Unable to execute EPOLL_CTL_ADD on <", "locahost", "Port", "8081", ">."));
+            }
+            std::cout << _logger->Log(&Logger::LogInformation, "ADD Server: [", listener, "] with EPOLL_CTL_ADD Hosts:", host_label, "and Port:", port_label);
+
+            _serverFDToServer[listener] = *itServer;
+        }
     }
-
-	// BIND DA FD DO SERVER COM A PORTA E HOST
-	int optval = 1;
-	int listener = 1;
-	for (; result != NULL; result = result->ai_next) {
-		listener = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
-		if (listener == -1)
-			continue;
-		if (setsockopt(listener, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(int)) == -1) {
-            std::cerr << _logger->Log(&Logger::LogWarning, "setsockopt.") << std::endl;
-		}
-		if (bind(listener, result->ai_addr, result->ai_addrlen) == 0) {
-			break;
-		}
-		if (close(listener) == -1)
-			std::cerr << _logger->Log(&Logger::LogWarning, "Problem on close socket.") << std::endl;
-	}
-	if (result == NULL) {
-        close(listener);
-        close(epollFD);
-        throw std::runtime_error(_logger->Log(&Logger::LogCaution, "Error: Unable to bind <", "locahost", "Port", "8081", ">."));
+    if (_serverFDToServer.empty()) {
+        throw std::runtime_error(_logger->Log(&Logger::LogCaution, "Error: Unable to Start Server Listen."));
     }
-
-	// COMEÇA A OUVIR NO HOST E PORTA
-	if (listen(listener, 10) == -1) {
-        close(listener);
-        close(epollFD);
-        throw std::runtime_error(_logger->Log(&Logger::LogCaution, "Error: Unable to listen <", "locahost", "Port", "8081", ">."));
-	}
-
-	// ADICIONA O SERVER NO EPOLL
-	event.events = EPOLLIN;
-	event.data.fd = listener;
-	if (epoll_ctl(epollFD, EPOLL_CTL_ADD, listener, &event) == -1) {
-        close(listener);
-        close(epollFD);
-        throw std::runtime_error(_logger->Log(&Logger::LogCaution, "Error: Unable to execute EPOLL_CTL_ADD on <", "locahost", "Port", "8081", ">."));
-	}
-
-    _serverFDToServer[listener] = servers["localhost"];
 
 	while (true) {
         // ESPERA NOVOS CLIENTES
 		struct epoll_event  clientEvents[100];
 		int number_of_ready_fds = epoll_wait(epollFD, clientEvents, 100, 2000);
 		if (number_of_ready_fds == -1) {
-            close(listener);
+            std::map<int, IServer *>::iterator itFD = _serverFDToServer.begin();
+            for ( ; itFD != _serverFDToServer.end(); ++itFD) {
+                close(itFD->first);
+            }
             close(epollFD);
             throw std::runtime_error(_logger->Log(&Logger::LogCaution, "Error: Problem to handle epoll clients."));
 		}
+
         std::cout << _logger->Log(&Logger::LogInformation, "Check Status...");
 		for (int i = 0; i < number_of_ready_fds; i++) {
 			int new_socket = -1;
@@ -102,9 +150,10 @@ void Http::Process(void) {
 
             // HANDSHAKE
 			addrlen = sizeof(struct sockaddr_storage);
-            if (clientEvents[i].data.fd == listener) {
+            std::map<int, IServer *>::iterator itListener = _serverFDToServer.find(clientEvents[i].data.fd);
+            if (itListener != _serverFDToServer.end()) {
 
-                if ((new_socket = accept(listener, (struct sockaddr *) &client_saddr, &addrlen)) < 0) {
+                if ((new_socket = accept(itListener->first, (struct sockaddr *) &client_saddr, &addrlen)) < 0) {
                     std::cerr << _logger->Log(&Logger::LogWarning, "Problem to accept client.") << std::endl;
                 }
 
@@ -116,7 +165,7 @@ void Http::Process(void) {
                     close(new_socket);
                     std::cerr << _logger->Log(&Logger::LogWarning, "Problem to execute EPOLL_CTL_ADD to client: [", new_socket, "].") << std::endl;
                 }
-                clientFD_Server[new_socket] = _serverFDToServer[listener];
+                clientFD_Server[new_socket] = _serverFDToServer[itListener->first];
                 std::cout << _logger->Log(&Logger::LogInformation, "HandShake client [",  new_socket, "] connected on", "localhost", "8081");
                 continue;
             }
@@ -127,7 +176,13 @@ void Http::Process(void) {
                 char request[BUFFER_SIZE];
 
                 memset(request, '\0', sizeof(char) * BUFFER_SIZE);
-                recv(clientEvents[i].data.fd, request, sizeof(char) * BUFFER_SIZE, 0);
+                int numbytes = recv(clientEvents[i].data.fd, request, sizeof(char) * BUFFER_SIZE, 0);
+                if (numbytes == -1) {
+                    std::cerr << _logger->Log(&Logger::LogWarning, "Problem to RECV request of client: [", clientEvents[i].data.fd, "].") << std::endl;
+                    clientFD_Server.erase(clientEvents[i].data.fd);
+                    close(clientEvents[i].data.fd);
+                }
+
                 std::cout << _logger->Log(&Logger::LogTrace, request);
                 std::cout << _logger->Log(&Logger::LogInformation, "Request received from client [",  clientEvents[i].data.fd, "] connected on", "localhost", "8081");
                 req.ParserRequest(request);
@@ -149,7 +204,14 @@ void Http::Process(void) {
             if (clientEvents[i].events & EPOLLOUT) {
                 IHttpResponse* res = clientFD_Server[clientEvents[i].data.fd]->ProcessResponse(clientEvents[i].data.fd);
                 std::vector<char> response = res->CreateResponse();
-                send(clientEvents[i].data.fd, &response[0], sizeof(char) * response.size(), 0);
+
+                int numbytes = send(clientEvents[i].data.fd, &response[0], sizeof(char) * response.size(), 0);
+                if (numbytes == -1) {
+                    std::cerr << _logger->Log(&Logger::LogWarning, "Problem to SEND response of client: [", clientEvents[i].data.fd, "].") << std::endl;
+                    clientFD_Server.erase(clientEvents[i].data.fd);
+                    close(clientEvents[i].data.fd);
+                }
+
                 std::cout << _logger->Log(&Logger::LogInformation, "Send Response to client [",  clientEvents[i].data.fd, "] connected on", "localhost", "8081");
 			    delete res;
 
@@ -347,7 +409,7 @@ void Http::SetServer(std::string serverName, IServer *server) {
 }
 
 void Http::SetServer(IServer *server) {
-    std::vector<std::string> hosts = server->GetHosts();
+    std::vector<std::string> hosts = server->GetListHosts();
     std::vector<std::string>::iterator it = hosts.begin();
     for ( ; it != hosts.end(); ++it) {
         this->servers[*it] = server;
@@ -359,6 +421,7 @@ void Http::SetServer(IServer *server) {
 =================================================*/
 Http::Http(ILogger *logger) {
     HttpResponse::SetDefaultHTTPResponse();
+    _serversPointer.clear();
     _logger = logger;
 }
 
