@@ -16,6 +16,7 @@ class HttpRequest {
         std::string                         _HTTPVersion;
         std::string                         _body;
         size_t                              _bodySize;
+        std::vector<char>                   _bodyBinary;
 
     public:
         // AllowMethod:          GET
@@ -46,51 +47,53 @@ class HttpRequest {
             return vec;
         }
 
-        void    HttpRequest::ParserRequest(std::vector<char> request) {
-            int                 i = 0;
-            std::string         line;
-            std::string         str(request.begin(), request.end());
-            ssize_t             found = str.find("\r\n\r\n");
+        void    ParserRequest(std::vector<char> request) {
+            std::string str(request.begin(), request.end());
 
-            std::stringstream   srequest(str.substr(0, found + 4));
-            bool                isBody = false;
+            // Find the end of the headers section
+            size_t found = str.find("\r\n\r\n");
+            // if (found == std::string::npos) {
+            //      // Handle error: headers section not found
+            //      return;
+            // }
+            found += 4; // Move past "\r\n\r\n"
 
-            while (std::getline(srequest, line)) {
-                ++i;
-                std::stringstream swords(line);
-                if (i == 1) {
-                    std::getline(swords, this->_method, ' ');
-                    std::getline(swords, this->_path, ' ');
-                    std::getline(swords, this->_HTTPVersion, '\r');
-                    continue;
-                }
-                size_t pos = this->_path.find_first_of('?');
+            // Extract headers part
+            std::string headers = str.substr(0, found);
+
+            // Parse request line
+            std::stringstream srequest(str.substr(0, headers.length()));
+            std::string line;
+
+            // Read the request line
+            if (std::getline(srequest, line)) {
+                std::stringstream requestLine(line);
+                std::getline(requestLine, _method, ' ');
+                std::getline(requestLine, _path, ' ');
+                std::getline(requestLine, _HTTPVersion, '\r');
+                
+                // Handle query strings
+                size_t pos = _path.find_first_of('?');
                 if (pos != std::string::npos) {
-                    _queryStrings = this->_path.substr(pos + 1, this->_path.size());
-                    this->_path = this->_path.substr(0, pos);
+                    _queryStrings = _path.substr(pos + 1);
+                    _path = _path.substr(0, pos);
                 }
-                // bool isSlashRFirst = std::strncmp(swords.str().c_str(), "\r", 2) == 0;
-                // if (isBody || isSlashRFirst) {
-                //     if (!isBody && isSlashRFirst) {
-                //         isBody = true;
-                //         continue;
-                //     } else if (isBody && !isSlashRFirst) {
-                //         std::string body;
-                //         std::getline(swords, body, '\r');
-                //         this->_body += body;
-                //         this->_bodySize += this->_body.length();
-                //         continue;
-                //     } else {
-                //         this->_bodySize += 2;
-                //         break;
-                //     }
-                // }
+            }
+
+            // Parse headers
+            std::stringstream headerStream(headers);
+            while (std::getline(headerStream, line) && !line.empty()) {
                 std::string key;
                 std::string value;
-                std::getline(swords, key, ' ');
-                std::getline(swords, value, '\r');
-                this->_payload[key] = value;
+                std::stringstream headerLine(line);
+                if (std::getline(std::getline(headerLine, key, ':'), value)) {
+                    // Trim leading spaces from the value
+                    value.erase(0, value.find_first_not_of(" \t"));
+                    _payload[key + ":"] = value;
+                }
             }
+            // Extract body
+            _bodyBinary.assign(request.begin() + found, request.end());
         }
 
         // Base Methods

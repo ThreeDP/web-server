@@ -189,11 +189,25 @@ void Http::Process(void) {
                 std::cout << "POLLIN" << std::endl;
                 memset(request, '\0', sizeof(char) * BUFFER_SIZE);
                 int numbytes = recv(clientEvents[i].data.fd, request, sizeof(char) * BUFFER_SIZE, 0);
+                
+                // QUANDO OCORRE UM PROBLEMA AO EXECUTAR O RECV
                 if (numbytes == -1) {
                     std::cerr << _logger->Log(&Logger::LogWarning, "Problem to RECV request of client: [", clientEvents[i].data.fd, "].") << std::endl;
                     clientFD_Server.erase(clientEvents[i].data.fd);
                     close(clientEvents[i].data.fd);
                 }
+
+                // QUANDO CLIENT FECHA NO MEIO DO REQUEST
+                if (numbytes == 0) {
+                    std::cerr << _logger->Log(&Logger::LogWarning, "Client: [", clientEvents[i].data.fd, "] close connection.") << std::endl;
+                    if (epoll_ctl(epollFD, EPOLL_CTL_DEL, clientEvents[i].data.fd, NULL) == -1) {
+                        std::cerr << _logger->Log(&Logger::LogWarning, "Problem to execute EPOLL_CTL_DEL to client: [", clientEvents[i].data.fd, "].") << std::endl;
+                    }
+                    clientFD_Server.erase(clientEvents[i].data.fd);
+                    close(clientEvents[i].data.fd);
+                    break;
+                }
+
                 std::vector<char> vec(request, request + BUFFER_SIZE);
                 std::cout << _logger->Log(&Logger::LogTrace, request);
                 std::cout << _logger->Log(&Logger::LogInformation, "Request received from client [",  clientEvents[i].data.fd, "] connected on", "localhost", "8081");
