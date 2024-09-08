@@ -58,26 +58,27 @@ std::vector<char> HttpResponse::CreateResponse(void) {
     std::stringstream ss;
     std::stringstream bodySize;
 
-    bodySize << this->_body.size() + 2;
+    bodySize << (this->_body.size() > 0) ? this->_body.size() + 2 : 0;
     this->_headers["Content-Length:"] = bodySize.str();
     this->_headers["Date:"] = Utils::getCurrentTimeInGMT();
     ss << this->_HTTPVersion << " " << this->_statusCode << " " << this->_statusMessage << "\r\n";
     std::map<std::string, std::string>::iterator it = this->_headers.begin();
-    for (; it != this->_headers.end(); ++it) {
+    for (; it != this->_headers.end() && this->_statusCode != "100"; ++it) {
         ss << it->first << " " << it->second << "\r\n";
     }
     ss << "\r\n";
     std::string headers = ss.str();
-    std::vector<char> payload(headers.begin(), headers.end());
-    payload.insert(payload.end(), this->_body.begin(), this->_body.end());
-    std::string endend = "\r\n";
-    payload.insert(payload.end(), endend.begin(), endend.end());
-    return payload;
+   std::vector<char> payload;
+    if (headers.size() > 0)
+        payload.insert(payload.end(), headers.begin(), headers.end());
+    if (this->_body.size() > 0)
+        payload.insert(payload.end(), this->_body.begin(), this->_body.end());
 
     if (_logger->Env()) {
         std::cerr << _logger->Log(&Logger::LogDebug, "Create Response Payload: ");
         std::cerr << _logger->Log(&Logger::LogTrace, "Response Payload {\n", this->_toString() , "\n}");
     }
+    return payload;
 }
 
 void HttpResponse::_defaultErrorPage(void) {

@@ -7,6 +7,7 @@
 # include <string>
 # include <cstring>
 # include <vector>
+# include "define.hpp"
 
 class HttpRequest {
     public:
@@ -49,14 +50,11 @@ class HttpRequest {
 
         void    ParserRequest(std::vector<char> request) {
             std::string str(request.begin(), request.end());
-
             // Find the end of the headers section
             size_t found = str.find("\r\n\r\n");
-            // if (found == std::string::npos) {
-            //      // Handle error: headers section not found
-            //      return;
-            // }
-            found += 4; // Move past "\r\n\r\n"
+            if (found != std::string::npos) {
+                found += 4;
+            }
 
             // Extract headers part
             std::string headers = str.substr(0, found);

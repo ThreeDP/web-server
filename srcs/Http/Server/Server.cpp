@@ -148,8 +148,8 @@ void Server::CreateCGIResponse(int epollfd, int cgifd, int clientfd) {
     char                buffer[__SIZE_BUFF__];
     ssize_t             responseSize = 0;
     std::vector<char>   responseBody;
-
     ssize_t numbytes;
+
     do {
         numbytes = 0;
         memset(&buffer, 0, sizeof(char) * __SIZE_BUFF__);
@@ -197,9 +197,6 @@ HttpStatusCode::Code                Server::ProcessRequest(HttpRequest &request,
 
 IHttpResponse         *Server::ProcessResponse(int client_fd) {
     IHttpResponse *response = this->ResponsesMap[client_fd];
-    if (response == NULL) {
-        std::cout << "TAMO AQUI!!\n\n";
-    }
     std::cout << _logger->Log(&ILogger::LogInformation, "Response", response->GetStatusCode(), response->GetStatusMessage());
     this->ResponsesMap.erase(client_fd);
 

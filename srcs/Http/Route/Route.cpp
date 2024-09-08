@@ -223,6 +223,13 @@ HttpStatusCode::Code Route::Post(HttpRequest &request, std::string absPath, int*
             if (( result = this->_checkAutoIndex(absPath) )) { return result; }
         }
         else if (allow && Utils::GetFileExtension(absPath) == ".py") {
+            if (request._payload.find("Expect:") != request._payload.end()) {
+                _builder
+                    ->SetupResponse()
+                    .WithContentType(".txt")
+                    .WithStatusCode(HttpStatusCode::_CONTINUE);
+                return HttpStatusCode::_CONTINUE; 
+            }
             this->cgiAction(request, epoll, absPath, cgifd);
             return HttpStatusCode::_CGI;
         }
@@ -346,16 +353,7 @@ void Route::cgiAction(HttpRequest &req, int epollFD, std::string absPath, int* c
         } else {
             std::cerr << "O processo filho terminou de maneira inesperada." << std::endl;
         }
-
-        struct epoll_event event;
-        memset(&event, 0, sizeof(struct epoll_event));
-        event.events = EPOLLIN;
-        event.data.fd = cgifd[0];
-
-        if (epoll_ctl(epollFD, EPOLL_CTL_ADD, cgifd[0], &event) == -1) {
-            perror("Erro ao adicionar o descritor ao epoll");
-            exit(EXIT_FAILURE);
-        }
+(void)epollFD;
     }
 
     // Liberar memória alocada para o ambiente
@@ -364,6 +362,77 @@ void Route::cgiAction(HttpRequest &req, int epollFD, std::string absPath, int* c
     }
     delete[] envp;
 }
+
+// void Route::cgiAction(HttpRequest &req, int epollFD, std::string absPath, int* cgifd) {
+//     // Deve adicionar o GetEnvp no envp do server em todo request.
+// 	std::vector<std::string> ev = req.GetEnvp();
+// 	char **envp = new char*[ev.size() + 1];
+
+// 	for (size_t i = 0; i < ev.size(); ++i) {
+// 		envp[i] = new char[ev[i].size() + 1];  
+// 		std::strcpy(envp[i], ev[i].c_str());
+// 	}
+    
+
+// 	envp[ev.size()] = NULL;
+
+// 	const char *phpInterpreter = "/usr/bin/python3";
+//     const char *scriptPath = absPath.c_str();
+// 	const char *argv[] = {phpInterpreter, scriptPath, NULL};
+
+// 	pid_t pid = fork();
+// 	if (pid == 0) {
+//         close(cgifd[0]);
+
+//         dup2(cgifd[1], STDOUT_FILENO);
+//         dup2(cgifd[1], STDERR_FILENO);
+
+//         close(cgifd[1]);
+
+// 		execve(phpInterpreter, (char**)argv, envp);
+//         exit(1);
+// 	} else {
+//         int status;
+//         if (waitpid(pid, &status, 0) == -1) {
+//             perror("Erro ao esperar pelo processo filho com waitpid");
+//             // Trate o erro conforme necessário, talvez com uma saída antecipada ou tentativa de recuperação.
+//             exit(EXIT_FAILURE);
+//         }
+
+//         // Verifica se o processo filho terminou normalmente.
+//         if (WIFEXITED(status)) {
+//             int exitStatus = WEXITSTATUS(status);
+//             if (exitStatus != 0) {
+//                 std::cerr << "O processo filho terminou com status de erro: " << exitStatus << std::endl;
+//                 // Trate o erro conforme necessário.
+//             }
+//         } else if (WIFSIGNALED(status)) {
+//             int signal = WTERMSIG(status);
+//             std::cerr << "O processo filho foi terminado por um sinal: " << signal << std::endl;
+//             // Trate o erro conforme necessário.
+//         } else {
+//             std::cerr << "O processo filho terminou de maneira inesperada." << std::endl;
+//             // Trate o erro conforme necessário.
+//         }
+
+//         if (close(cgifd[1]) == -1) {
+//             perror("Erro ao fechar o socket no processo pai");
+//             // Trate o erro conforme necessário.
+//             exit(EXIT_FAILURE);
+//         }
+
+//         struct epoll_event event;
+//         memset(&event, 0, sizeof(struct epoll_event));
+//         event.events = EPOLLIN;
+//         event.data.fd = cgifd[0];
+
+//         if (epoll_ctl(epollFD, EPOLL_CTL_ADD, cgifd[0], &event) == -1) {
+//             perror("Erro ao adicionar o descritor ao epoll");
+//             // Trate o erro conforme necessário, como fechando o socket e/ou liberando recursos.
+//             exit(EXIT_FAILURE);
+//         }
+// 	}
+// }
 
 HttpStatusCode::Code Route::Get(HttpRequest &request, std::string absPath, int* cgifd, int epoll) {
     HttpStatusCode::Code result = HttpStatusCode::_DO_NOTHING;
