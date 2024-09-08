@@ -77,8 +77,9 @@ HttpRequest::HttpRequest(void) :
     _queryStrings(""),
     _HTTPVersion(""),
     _body(""),
-    _bodySize(0) {
-
+    _bodySize(0),
+    _continue(false) {
+    _bodyBinary.clear();
 }
 
 HttpRequest::~HttpRequest(void) {

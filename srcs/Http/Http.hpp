@@ -3,7 +3,7 @@
 
 # include "Server.hpp"
 
-# define BUFFER_SIZE 10000
+# define BUFFER_SIZE 2048
 
 class Http {
     // USED
@@ -12,6 +12,7 @@ class Http {
     std::map<int, IServer *>            clientFD_Server;
     std::vector<IServer *>              _serversPointer;
     std::map<int, IServer *>            _serverFDToServer;
+    std::map<int, HttpRequest>    _clientFDToRequest;
 
     // Parser Response
     std::map<int, int>            _cgis;

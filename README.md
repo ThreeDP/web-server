@@ -353,3 +353,12 @@ Processo->>Server: sv[0] para que o Server Leia.
 Server->>Server: Deve passar pelo epoll
 Server->>Client Request: Responde o cliente 
 ```
+
+```mermaid
+sequenceDiagram
+Cliente->>Server: Envia os headers sem corpo com Header (Expect: continue-100)
+Server->>Cliente: Envia resposta status 100
+Cliente->>Server: Envia corpo do request
+Server->>Server: Processa parte da mensagem e guarda no buffer
+
+```
