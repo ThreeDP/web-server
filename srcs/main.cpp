@@ -6,7 +6,7 @@
 /*   By: user42 <user42@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/03 17:50:41 by dapaulin          #+#    #+#             */
-/*   Updated: 2024/09/07 12:31:05 by user42           ###   ########.fr       */
+/*   Updated: 2024/09/08 22:51:04 by user42           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,6 +52,8 @@ int main(int ac, char *av[]) {
         std::cout << logger->Log(&Logger::LogInformation, "Finished Parser.");
         http->Process();
     } catch (const std::exception &e) {
+        delete http;
+        delete parser;
         std::cout << e.what();
     }
     return (0);

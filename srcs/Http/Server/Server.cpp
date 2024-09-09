@@ -9,7 +9,8 @@ _ip("127.0.0.1"),
 _ipVersion("IPV4"),
 _handler(handler),
 _logger(logger),
-_actualClientFD(-1)
+_actualClientFD(-1),
+setPort(false)
 {
     _hosts.push_back("localhost");
     _allowMethods.insert("GET");
@@ -350,7 +351,9 @@ void    Server::SetHosts(std::vector<std::string> hosts) {
 }
 
 void    Server::SetPort(std::string port) {
+    if (setPort) { throw std::invalid_argument(_logger->Log(&Logger::LogCaution, "cannot define two ports for the same server")); }
     this->_port = port;
+    setPort = true;
 }
 
 void    Server::SetRoute(std::string routeName, IRoute *route) {

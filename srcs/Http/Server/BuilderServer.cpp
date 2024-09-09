@@ -58,7 +58,7 @@ IBuilderServer      &BuilderServer::WithPort(std::string port) {
     std::stringstream ss(port);
     ss >> num;
     if (num < 1 || num > USHRT_MAX)
-        throw std::invalid_argument("Out of band for port.");
+        throw std::invalid_argument(_logger->Log(&Logger::LogCaution, "Port Out of band for port."));
     _server->SetPort(port);
     return *this;
 }

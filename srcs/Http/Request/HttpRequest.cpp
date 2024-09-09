@@ -67,7 +67,7 @@ std::string         HttpRequest::GetBody(void) const {
 }
 
 int              HttpRequest::GetBodySize(void) const {
-    return this->_bodySize;
+    return this->_bodyBinary.size();
 }
 
 // Base Methods

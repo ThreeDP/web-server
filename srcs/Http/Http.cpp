@@ -47,7 +47,7 @@ void Http::Process(void) {
                 listener = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
                 if (listener == -1)
                     continue;
-                if (setsockopt(listener, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(int)) == -1) {
+                if (setsockopt(listener, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &optval, sizeof(int)) == -1) {
                     std::cerr << _logger->Log(&Logger::LogWarning, "setsockopt.") << std::endl;
                 }
                 if (bind(listener, result->ai_addr, result->ai_addrlen) == 0) {
