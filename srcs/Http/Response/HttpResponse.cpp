@@ -58,7 +58,7 @@ std::vector<char> HttpResponse::CreateResponse(void) {
     std::stringstream ss;
     std::stringstream bodySize;
 
-    bodySize << (this->_body.size() > 0) ? this->_body.size() + 2 : 0;
+    bodySize << this->_body.size(); // > 0) ? this->_body.size() + 2 : 0;
     this->_headers["Content-Length:"] = bodySize.str();
     this->_headers["Date:"] = Utils::getCurrentTimeInGMT();
     ss << this->_HTTPVersion << " " << this->_statusCode << " " << this->_statusMessage << "\r\n";

@@ -97,6 +97,8 @@ class Route : public IRoute {
          * 
          */
 
+        HttpStatusCode::Code _errorHandler(HttpStatusCode::Code code);
+
         /// @brief Check if method of request
         /// is not allow in the route.
         /// @param method 
@@ -170,7 +172,7 @@ class Route : public IRoute {
          * Use in Post for produces they rules.
          * 
          */
-        void        cgiAction(HttpRequest &req, int epollFD, std::string absPath, int* cgifd);
+        HttpStatusCode::Code        cgiAction(HttpRequest &req, std::string absPath, int* cgifd);
 
         // HttpStatusCode::Code Get(HttpRequest &request, std::string absPath);
         HttpStatusCode::Code Get(HttpRequest &request, std::string absPath, int* cgifd, int epoll);

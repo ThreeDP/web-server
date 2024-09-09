@@ -3,7 +3,7 @@
 
 # include "Server.hpp"
 
-# define BUFFER_SIZE 10000
+# define BUFFER_SIZE 2048
 
 class Http {
     // USED

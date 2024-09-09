@@ -24,6 +24,7 @@ class HttpRequest {
         std::map<std::string, std::string>  _payload;
         
         void                ParserRequest(std::string request);
+
         std::vector<std::string>             GetEnvp(void) {
             std::vector<std::string> vec;
             std::stringstream str(_queryStrings);
@@ -40,27 +41,47 @@ class HttpRequest {
                 std::cout << it->first << "     " << it->second << std::endl;
                 vec.push_back(key + "=" + it->second);
             }
-            std::string line;
-            std::stringstream ss(_body);
-            while (std::getline(ss, line, '&')) {
-                vec.push_back(line);
-            }
+            // std::string line;
+            // std::stringstream ss(_body);
+            // while (std::getline(ss, line, '&')) {
+            //     vec.push_back(line);
+            // }
             return vec;
         }
 
         void    ParserRequest(std::vector<char> request) {
             std::string str(request.begin(), request.end());
             // Find the end of the headers section
-            size_t found = str.find("\r\n\r\n");
-            if (found != std::string::npos) {
-                found += 4;
-            }
+            // Encontrar o primeiro delimitador \r\n\r\n
+                size_t firstHeaderEnd = str.find("\r\n\r\n");
+                if (firstHeaderEnd == std::string::npos) {
+                    std::cerr << "Formato de solicitação HTTP inválido: cabeçalhos não encontrados" << std::endl;
+                    return;
+                }
 
-            // Extract headers part
-            std::string headers = str.substr(0, found);
+                // Encontrar o segundo delimitador \r\n\r\n (se existir)
+                size_t secondHeaderStart = str.find("\r\n\r\n", firstHeaderEnd + 4);
+                if (secondHeaderStart == std::string::npos) {
+                    secondHeaderStart = str.size(); // Se não houver um segundo delimitador, trate como o final do corpo
+                }
 
+                // Extrair a primeira parte dos cabeçalhos
+                std::string firstHeaders = str.substr(0, firstHeaderEnd + 4);
+                std::cout << "Primeira parte dos cabeçalhos: " << std::endl << firstHeaders << std::endl;
+
+                // Extrair a segunda parte dos cabeçalhos (se existir)
+                std::string secondHeaders;
+                if (secondHeaderStart > firstHeaderEnd + 4) {
+                    secondHeaders = str.substr(firstHeaderEnd + 4, secondHeaderStart - (firstHeaderEnd + 4));
+                    std::cout << "Segunda parte dos cabeçalhos: " << std::endl << secondHeaders << std::endl;
+                    firstHeaderEnd = secondHeaderStart + 4;
+                }
+
+
+            _bodyBinary.clear();
+            _bodyBinary.assign(request.begin() + firstHeaderEnd, request.end());
             // Parse request line
-            std::stringstream srequest(str.substr(0, headers.length()));
+            std::stringstream srequest(str.substr(0, firstHeaderEnd));
             std::string line;
 
             // Read the request line
@@ -79,7 +100,7 @@ class HttpRequest {
             }
 
             // Parse headers
-            std::stringstream headerStream(headers);
+            std::stringstream headerStream(str);
             while (std::getline(headerStream, line) && !line.empty()) {
                 std::string key;
                 std::string value;
@@ -91,7 +112,6 @@ class HttpRequest {
                 }
             }
             // Extract body
-            _bodyBinary.assign(request.begin() + found, request.end());
         }
 
         // Base Methods

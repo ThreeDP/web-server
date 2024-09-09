@@ -230,18 +230,16 @@ HttpStatusCode::Code Route::Post(HttpRequest &request, std::string absPath, int*
                     .WithStatusCode(HttpStatusCode::_CONTINUE);
                 return HttpStatusCode::_CONTINUE; 
             }
-            this->cgiAction(request, epoll, absPath, cgifd);
-            return HttpStatusCode::_CGI;
+            return this->cgiAction(request, absPath, cgifd);
         }
         else if (allow){
-            if ((result = this->_errorHandlerWithFile(HttpStatusCode::_BAD_REQUEST))) { return result; }
-            return this->_errorHandlerDefault(HttpStatusCode::_BAD_REQUEST);
+            return this->_errorHandler(HttpStatusCode::_BAD_REQUEST);
         }
         else if (!allow) {
-            if ((result = this->_errorHandlerWithFile(HttpStatusCode::_FORBIDDEN))) { return result; }
-            return this->_errorHandlerDefault(HttpStatusCode::_FORBIDDEN);
+            return this->_errorHandler(HttpStatusCode::_FORBIDDEN);
         }
     }
+    (void)epoll;
     return this->_notFound();
 }
 
@@ -265,19 +263,24 @@ HttpStatusCode::Code Route::Delete(HttpRequest &request, std::string absPath, in
             if (( result = this->_checkAutoIndex(absPath) )) { return result; }
         }
         else if (allow && Utils::GetFileExtension(absPath) == ".py") {
-            this->cgiAction(request, epoll, absPath, cgifd);
+            this->cgiAction(request, absPath, cgifd);
             return HttpStatusCode::_CGI;
         }
         else if (allow){
-            if ((result = this->_errorHandlerWithFile(HttpStatusCode::_BAD_REQUEST))) { return result; }
-            return this->_errorHandlerDefault(HttpStatusCode::_BAD_REQUEST);
+            return this->_errorHandler(HttpStatusCode::_BAD_REQUEST);
         }
         else if (!allow) {
-            if ((result = this->_errorHandlerWithFile(HttpStatusCode::_FORBIDDEN))) { return result; }
-            return this->_errorHandlerDefault(HttpStatusCode::_FORBIDDEN);
+            return this->_errorHandler(HttpStatusCode::_FORBIDDEN);
         }
     }
+    (void)epoll;
     return this->_notFound();
+}
+
+HttpStatusCode::Code Route::_errorHandler(HttpStatusCode::Code code) {
+    HttpStatusCode::Code result = HttpStatusCode::_DO_NOTHING;
+    if ((result = this->_errorHandlerWithFile(code))) { return result; }
+    return this->_errorHandlerDefault(code);
 }
 
 
@@ -288,17 +291,16 @@ HttpStatusCode::Code Route::Delete(HttpRequest &request, std::string absPath, in
  * 
  */
 
-void Route::cgiAction(HttpRequest &req, int epollFD, std::string absPath, int* cgifd) {
+HttpStatusCode::Code Route::cgiAction(HttpRequest &req, std::string absPath, int* cgifd) {
  // Criação de um pipe para enviar o corpo da requisição
     int pipefd[2];
     if (pipe(pipefd) == -1) {
-        perror("Erro ao criar pipe");
-        exit(EXIT_FAILURE);
+        return _errorHandler(HttpStatusCode::_INTERNAL_SERVER_ERROR);
     }
 
     // Obtenha o corpo da requisição (imagem)
     std::vector<char> requestBody = req._bodyBinary;  // Supondo que você tenha um método GetBody() que retorna o corpo da requisição
-    size_t bodySize = requestBody.size();
+    //size_t bodySize = requestBody.size();
 
     // Criar o ambiente para o CGI
     std::vector<std::string> ev = req.GetEnvp();
@@ -332,7 +334,7 @@ void Route::cgiAction(HttpRequest &req, int epollFD, std::string absPath, int* c
         close(cgifd[1]);
 
         // Envia o corpo da requisição (imagem) para o pipe
-        ssize_t test = write(pipefd[1], &requestBody[0], bodySize);
+        ssize_t test = write(pipefd[1], &req._bodyBinary[0], req._bodyBinary.size());
         (void)test;
         close(pipefd[1]);  // Fecha a extremidade de escrita do pipe após o envio
 
@@ -353,7 +355,6 @@ void Route::cgiAction(HttpRequest &req, int epollFD, std::string absPath, int* c
         } else {
             std::cerr << "O processo filho terminou de maneira inesperada." << std::endl;
         }
-(void)epollFD;
     }
 
     // Liberar memória alocada para o ambiente
@@ -361,6 +362,7 @@ void Route::cgiAction(HttpRequest &req, int epollFD, std::string absPath, int* c
         delete[] envp[i];
     }
     delete[] envp;
+    return HttpStatusCode::_CGI;
 }
 
 // void Route::cgiAction(HttpRequest &req, int epollFD, std::string absPath, int* cgifd) {
@@ -446,7 +448,7 @@ HttpStatusCode::Code Route::Get(HttpRequest &request, std::string absPath, int* 
             if (( result = this->_checkAutoIndex(absPath) )) { return result; }
         }
         else if (allow && Utils::GetFileExtension(absPath) == ".py") {
-            this->cgiAction(request, epoll, absPath, cgifd);
+            this->cgiAction(request, absPath, cgifd);
             return HttpStatusCode::_CGI;
         }
         else if (allow && (result = this->_checkActionInFile(absPath)) ) { return result; }
@@ -455,6 +457,7 @@ HttpStatusCode::Code Route::Get(HttpRequest &request, std::string absPath, int* 
             return this->_errorHandlerDefault(HttpStatusCode::_FORBIDDEN);
         }
     }
+    (void)epoll;
     return this->_notFound();
 }
 

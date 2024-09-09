@@ -1,26 +1,5 @@
 # include "Http.hpp"
 
-
- 
-void modify_epoll_event(int epoll_fd, int sock_fd, uint32_t new_events) {
-    // Remove o socket atual do epoll
-    struct epoll_event event;
-    memset(&event, '\0', sizeof(struct epoll_event));
-    if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, sock_fd, NULL) == -1) {
-        std::cerr << "Erro ao remover o socket do epoll: " << strerror(errno) << std::endl;
-        return;
-    }
-
-    // Configura o novo evento
-    event.events = new_events;
-    event.data.fd = sock_fd;
-
-    // Adiciona o socket de volta ao epoll com o novo evento
-    if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, sock_fd, &event) == -1) {
-        std::cerr << "Erro ao adicionar o socket ao epoll: " << strerror(errno) << std::endl;
-    }
-}
-
 void Http::Process(void) {
     int epollFD = epoll_create(1);
     if (epollFD == -1) {
@@ -88,6 +67,7 @@ void Http::Process(void) {
                 close(epollFD);
                 throw std::runtime_error(_logger->Log(&Logger::LogCaution, "Error: Unable to bind <", host_label, "Port:", port_label, ">."));
             }
+
             freeaddrinfo(result);
 
             std::cout << _logger->Log(&Logger::LogInformation, "Server: [", listener, "] bind Host:", host_label, "and Port:", port_label);
@@ -169,7 +149,6 @@ void Http::Process(void) {
                 continue;
             }
 
-
             std::map<int, int>::iterator it = _cgis.find(clientEvents[i].data.fd);
             if (it != _cgis.end()) {
                 clientFD_Server[it->second]->CreateCGIResponse(epollFD, it->first, it->second);
@@ -178,10 +157,9 @@ void Http::Process(void) {
                 break;
             }
 
-
             // LER DO CLIENTE E ADICIONAR FD COMO EPOLLIN
             if ((clientEvents[i].events & EPOLLIN)) {
-                std::cout << _logger->Log(&Logger::LogInformation, "Entered pollin");
+                std::cout << _logger->Log(&Logger::LogInformation, "Entered pollin: [", clientEvents[i].data.fd, "].");
                 HttpRequest req;
                 char request[BUFFER_SIZE];
                 memset(request, '\0', sizeof(char) * BUFFER_SIZE);
@@ -208,11 +186,11 @@ void Http::Process(void) {
                     break;
                 }
 
-                std::vector<char> vec(request, request + BUFFER_SIZE);
+                std::vector<char> vec(request, request + numbytes);
 
                 bool Continue;
                 Continue = (_clientFDToRequest.find(clientEvents[i].data.fd) != _clientFDToRequest.end()) ? true : false;
-                _clientFDToRequest[clientEvents[i].data.fd].insert(_clientFDToRequest[clientEvents[i].data.fd].end(), request, request + BUFFER_SIZE);
+                _clientFDToRequest[clientEvents[i].data.fd].insert(_clientFDToRequest[clientEvents[i].data.fd].end(), request, request + numbytes);
                 req.ParserRequest(_clientFDToRequest[clientEvents[i].data.fd]);
 
                 std::cout << _logger->Log(&Logger::LogTrace, request);
@@ -291,6 +269,7 @@ void Http::Process(void) {
                     if (epoll_ctl(epollFD, EPOLL_CTL_MOD, clientEvents[i].data.fd, &event) == -1) {
                         std::cerr << _logger->Log(&Logger::LogWarning, "Problem to execute EPOLL_CTL_MOD to client: [", clientEvents[i].data.fd, "].") << std::endl;
                         _clientFDToRequest.erase(clientEvents[i].data.fd);
+                        _clientFDToRequest.erase(clientEvents[i].data.fd);
                         clientFD_Server.erase(clientEvents[i].data.fd);
                         close(clientEvents[i].data.fd);
                     }
@@ -307,7 +286,6 @@ void Http::Process(void) {
                 clientFD_Server.erase(clientEvents[i].data.fd);
                 close(clientEvents[i].data.fd);
             }
-
 		}
 	}
 }
