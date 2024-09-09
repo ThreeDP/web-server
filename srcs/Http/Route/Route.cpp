@@ -223,18 +223,23 @@ HttpStatusCode::Code Route::Post(HttpRequest &request, std::string absPath, int*
             if (( result = this->_checkAutoIndex(absPath) )) { return result; }
         }
         else if (allow && Utils::GetFileExtension(absPath) == ".py") {
-            this->cgiAction(request, epoll, absPath, cgifd);
-            return HttpStatusCode::_CGI;
+            if (request._payload.find("Expect:") != request._payload.end()) {
+                _builder
+                    ->SetupResponse()
+                    .WithContentType(".txt")
+                    .WithStatusCode(HttpStatusCode::_CONTINUE);
+                return HttpStatusCode::_CONTINUE; 
+            }
+            return this->cgiAction(request, absPath, cgifd);
         }
         else if (allow){
-            if ((result = this->_errorHandlerWithFile(HttpStatusCode::_BAD_REQUEST))) { return result; }
-            return this->_errorHandlerDefault(HttpStatusCode::_BAD_REQUEST);
+            return this->_errorHandler(HttpStatusCode::_BAD_REQUEST);
         }
         else if (!allow) {
-            if ((result = this->_errorHandlerWithFile(HttpStatusCode::_FORBIDDEN))) { return result; }
-            return this->_errorHandlerDefault(HttpStatusCode::_FORBIDDEN);
+            return this->_errorHandler(HttpStatusCode::_FORBIDDEN);
         }
     }
+    (void)epoll;
     return this->_notFound();
 }
 
@@ -258,19 +263,24 @@ HttpStatusCode::Code Route::Delete(HttpRequest &request, std::string absPath, in
             if (( result = this->_checkAutoIndex(absPath) )) { return result; }
         }
         else if (allow && Utils::GetFileExtension(absPath) == ".py") {
-            this->cgiAction(request, epoll, absPath, cgifd);
+            this->cgiAction(request, absPath, cgifd);
             return HttpStatusCode::_CGI;
         }
         else if (allow){
-            if ((result = this->_errorHandlerWithFile(HttpStatusCode::_BAD_REQUEST))) { return result; }
-            return this->_errorHandlerDefault(HttpStatusCode::_BAD_REQUEST);
+            return this->_errorHandler(HttpStatusCode::_BAD_REQUEST);
         }
         else if (!allow) {
-            if ((result = this->_errorHandlerWithFile(HttpStatusCode::_FORBIDDEN))) { return result; }
-            return this->_errorHandlerDefault(HttpStatusCode::_FORBIDDEN);
+            return this->_errorHandler(HttpStatusCode::_FORBIDDEN);
         }
     }
+    (void)epoll;
     return this->_notFound();
+}
+
+HttpStatusCode::Code Route::_errorHandler(HttpStatusCode::Code code) {
+    HttpStatusCode::Code result = HttpStatusCode::_DO_NOTHING;
+    if ((result = this->_errorHandlerWithFile(code))) { return result; }
+    return this->_errorHandlerDefault(code);
 }
 
 
@@ -281,76 +291,150 @@ HttpStatusCode::Code Route::Delete(HttpRequest &request, std::string absPath, in
  * 
  */
 
-void Route::cgiAction(HttpRequest &req, int epollFD, std::string absPath, int* cgifd) {
-    // Deve adicionar o GetEnvp no envp do server em todo request.
-	std::vector<std::string> ev = req.GetEnvp();
-	char **envp = new char*[ev.size() + 1];
+HttpStatusCode::Code Route::cgiAction(HttpRequest &req, std::string absPath, int* cgifd) {
+ // Criação de um pipe para enviar o corpo da requisição
+    int pipefd[2];
+    if (pipe(pipefd) == -1) {
+        return _errorHandler(HttpStatusCode::_INTERNAL_SERVER_ERROR);
+    }
 
-	for (size_t i = 0; i < ev.size(); ++i) {
-		envp[i] = new char[ev[i].size() + 1];  
-		std::strcpy(envp[i], ev[i].c_str());
-	}
-    
+    // Obtenha o corpo da requisição (imagem)
+    std::vector<char> requestBody = req._bodyBinary;  // Supondo que você tenha um método GetBody() que retorna o corpo da requisição
+    //size_t bodySize = requestBody.size();
 
-	envp[ev.size()] = NULL;
+    // Criar o ambiente para o CGI
+    std::vector<std::string> ev = req.GetEnvp();
+    char **envp = new char*[ev.size() + 1];
+    for (size_t i = 0; i < ev.size(); ++i) {
+        envp[i] = new char[ev[i].size() + 1];
+        std::strcpy(envp[i], ev[i].c_str());
+    }
+    envp[ev.size()] = NULL;
 
-	const char *phpInterpreter = "/usr/bin/python3";
+    const char *phpInterpreter = "/usr/bin/python3";
     const char *scriptPath = absPath.c_str();
-	const char *argv[] = {phpInterpreter, scriptPath, NULL};
+    const char *argv[] = {phpInterpreter, scriptPath, NULL};
 
-	pid_t pid = fork();
-	if (pid == 0) {
-        close(cgifd[0]);
+    pid_t pid = fork();
+    if (pid == 0) {  // Processo filho
+        close(pipefd[1]);  // Fecha a extremidade de escrita do pipe no filho
 
-        dup2(cgifd[1], STDOUT_FILENO);
-        dup2(cgifd[1], STDERR_FILENO);
+        dup2(pipefd[0], STDIN_FILENO);  // Redireciona a entrada padrão para o pipe
+        dup2(cgifd[1], STDOUT_FILENO);  // Redireciona a saída padrão para o pipe CGI
+        dup2(cgifd[1], STDERR_FILENO);  // Redireciona a saída de erro padrão para o pipe CGI
 
+        close(pipefd[0]);  // Fecha a extremidade de leitura do pipe
         close(cgifd[1]);
 
-		execve(phpInterpreter, (char**)argv, envp);
-        exit(1);
-	} else {
+        execve(phpInterpreter, (char**)argv, envp);
+        perror("execve falhou");
+        exit(EXIT_FAILURE);
+    } else {  // Processo pai
+        close(pipefd[0]);  // Fecha a extremidade de leitura do pipe no pai
+        close(cgifd[1]);
+
+        // Envia o corpo da requisição (imagem) para o pipe
+        ssize_t test = write(pipefd[1], &req._bodyBinary[0], req._bodyBinary.size());
+        (void)test;
+        close(pipefd[1]);  // Fecha a extremidade de escrita do pipe após o envio
+
         int status;
         if (waitpid(pid, &status, 0) == -1) {
             perror("Erro ao esperar pelo processo filho com waitpid");
-            // Trate o erro conforme necessário, talvez com uma saída antecipada ou tentativa de recuperação.
             exit(EXIT_FAILURE);
         }
 
-        // Verifica se o processo filho terminou normalmente.
         if (WIFEXITED(status)) {
             int exitStatus = WEXITSTATUS(status);
             if (exitStatus != 0) {
                 std::cerr << "O processo filho terminou com status de erro: " << exitStatus << std::endl;
-                // Trate o erro conforme necessário.
             }
         } else if (WIFSIGNALED(status)) {
             int signal = WTERMSIG(status);
             std::cerr << "O processo filho foi terminado por um sinal: " << signal << std::endl;
-            // Trate o erro conforme necessário.
         } else {
             std::cerr << "O processo filho terminou de maneira inesperada." << std::endl;
-            // Trate o erro conforme necessário.
         }
+    }
 
-        if (close(cgifd[1]) == -1) {
-            perror("Erro ao fechar o socket no processo pai");
-            // Trate o erro conforme necessário.
-            exit(EXIT_FAILURE);
-        }
-
-        struct epoll_event event;
-        memset(&event, 0, sizeof(struct epoll_event));
-        event.events = EPOLLIN;
-        event.data.fd = cgifd[0];
-
-        if (epoll_ctl(epollFD, EPOLL_CTL_ADD, cgifd[0], &event) == -1) {
-            perror("Erro ao adicionar o descritor ao epoll");
-            // Trate o erro conforme necessário, como fechando o socket e/ou liberando recursos.
-            exit(EXIT_FAILURE);
-        }
-	}
+    // Liberar memória alocada para o ambiente
+    for (size_t i = 0; i < ev.size(); ++i) {
+        delete[] envp[i];
+    }
+    delete[] envp;
+    return HttpStatusCode::_CGI;
 }
+
+// void Route::cgiAction(HttpRequest &req, int epollFD, std::string absPath, int* cgifd) {
+//     // Deve adicionar o GetEnvp no envp do server em todo request.
+// 	std::vector<std::string> ev = req.GetEnvp();
+// 	char **envp = new char*[ev.size() + 1];
+
+// 	for (size_t i = 0; i < ev.size(); ++i) {
+// 		envp[i] = new char[ev[i].size() + 1];  
+// 		std::strcpy(envp[i], ev[i].c_str());
+// 	}
+    
+
+// 	envp[ev.size()] = NULL;
+
+// 	const char *phpInterpreter = "/usr/bin/python3";
+//     const char *scriptPath = absPath.c_str();
+// 	const char *argv[] = {phpInterpreter, scriptPath, NULL};
+
+// 	pid_t pid = fork();
+// 	if (pid == 0) {
+//         close(cgifd[0]);
+
+//         dup2(cgifd[1], STDOUT_FILENO);
+//         dup2(cgifd[1], STDERR_FILENO);
+
+//         close(cgifd[1]);
+
+// 		execve(phpInterpreter, (char**)argv, envp);
+//         exit(1);
+// 	} else {
+//         int status;
+//         if (waitpid(pid, &status, 0) == -1) {
+//             perror("Erro ao esperar pelo processo filho com waitpid");
+//             // Trate o erro conforme necessário, talvez com uma saída antecipada ou tentativa de recuperação.
+//             exit(EXIT_FAILURE);
+//         }
+
+//         // Verifica se o processo filho terminou normalmente.
+//         if (WIFEXITED(status)) {
+//             int exitStatus = WEXITSTATUS(status);
+//             if (exitStatus != 0) {
+//                 std::cerr << "O processo filho terminou com status de erro: " << exitStatus << std::endl;
+//                 // Trate o erro conforme necessário.
+//             }
+//         } else if (WIFSIGNALED(status)) {
+//             int signal = WTERMSIG(status);
+//             std::cerr << "O processo filho foi terminado por um sinal: " << signal << std::endl;
+//             // Trate o erro conforme necessário.
+//         } else {
+//             std::cerr << "O processo filho terminou de maneira inesperada." << std::endl;
+//             // Trate o erro conforme necessário.
+//         }
+
+//         if (close(cgifd[1]) == -1) {
+//             perror("Erro ao fechar o socket no processo pai");
+//             // Trate o erro conforme necessário.
+//             exit(EXIT_FAILURE);
+//         }
+
+//         struct epoll_event event;
+//         memset(&event, 0, sizeof(struct epoll_event));
+//         event.events = EPOLLIN;
+//         event.data.fd = cgifd[0];
+
+//         if (epoll_ctl(epollFD, EPOLL_CTL_ADD, cgifd[0], &event) == -1) {
+//             perror("Erro ao adicionar o descritor ao epoll");
+//             // Trate o erro conforme necessário, como fechando o socket e/ou liberando recursos.
+//             exit(EXIT_FAILURE);
+//         }
+// 	}
+// }
 
 HttpStatusCode::Code Route::Get(HttpRequest &request, std::string absPath, int* cgifd, int epoll) {
     HttpStatusCode::Code result = HttpStatusCode::_DO_NOTHING;
@@ -364,7 +448,7 @@ HttpStatusCode::Code Route::Get(HttpRequest &request, std::string absPath, int* 
             if (( result = this->_checkAutoIndex(absPath) )) { return result; }
         }
         else if (allow && Utils::GetFileExtension(absPath) == ".py") {
-            this->cgiAction(request, epoll, absPath, cgifd);
+            this->cgiAction(request, absPath, cgifd);
             return HttpStatusCode::_CGI;
         }
         else if (allow && (result = this->_checkActionInFile(absPath)) ) { return result; }
@@ -373,6 +457,7 @@ HttpStatusCode::Code Route::Get(HttpRequest &request, std::string absPath, int* 
             return this->_errorHandlerDefault(HttpStatusCode::_FORBIDDEN);
         }
     }
+    (void)epoll;
     return this->_notFound();
 }
 

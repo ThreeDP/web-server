@@ -9,7 +9,7 @@
 # include <vector>
 # include <sstream>
 
-# define BUFFER_SIZE 10000
+//# define BUFFER_SIZE 10000
 
 std::vector<char> defaultPage(void) {
     std::vector<char> _body;

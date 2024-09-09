@@ -68,6 +68,7 @@ class HttpResponse : public IHttpResponse {
         }
 
         static void    _setMapStatusCode(void) {
+            _mapStatusCode[HttpStatusCode::_CONTINUE] = "Continue";
             _mapStatusCode[HttpStatusCode::_OK] = "OK";
             _mapStatusCode[HttpStatusCode::_CREATED] = "Created";
             _mapStatusCode[HttpStatusCode::_ACCEPTED] = "Accepted";

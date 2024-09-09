@@ -1,48 +1,48 @@
 # include "HttpRequest.hpp"
 
-void    HttpRequest::ParserRequest(std::string request) {
-    int                 i = 0;
-    std::string         line;
-    std::stringstream   srequest(request);
-    bool                isBody = false;
+// void    HttpRequest::ParserRequest(std::string request) {
+//     int                 i = 0;
+//     std::string         line;
+//     std::stringstream   srequest(request);
+//     bool                isBody = false;
 
-    while (std::getline(srequest, line)) {
-        ++i;
-        std::stringstream swords(line);
-        if (i == 1) {
-            std::getline(swords, this->_method, ' ');
-            std::getline(swords, this->_path, ' ');
-            std::getline(swords, this->_HTTPVersion, '\r');
-            continue;
-        }
-        size_t pos = this->_path.find_first_of('?');
-        if (pos != std::string::npos) {
-            _queryStrings = this->_path.substr(pos + 1, this->_path.size());
-            this->_path = this->_path.substr(0, pos);
-        }
-        bool isSlashRFirst = std::strncmp(swords.str().c_str(), "\r", 2) == 0;
-        if (isBody || isSlashRFirst) {
-            if (!isBody && isSlashRFirst) {
-                isBody = true;
-                continue;
-            } else if (isBody && !isSlashRFirst) {
-                std::string body;
-                std::getline(swords, body, '\r');
-                this->_body += body;
-                this->_bodySize += this->_body.length();
-                continue;
-            } else {
-                this->_bodySize += 2;
-                break;
-            }
-        }
-        std::string key;
-        std::string value;
-        std::getline(swords, key, ' ');
-        std::getline(swords, value, '\r');
-        this->_payload[key] = value;
-    }
-}
+//     while (std::getline(srequest, line)) {
+//         ++i;
+//         std::stringstream swords(line);
+//         if (i == 1) {
+//             std::getline(swords, this->_method, ' ');
+//             std::getline(swords, this->_path, ' ');
+//             std::getline(swords, this->_HTTPVersion, '\r');
+//             continue;
+//         }
+//         size_t pos = this->_path.find_first_of('?');
+//         if (pos != std::string::npos) {
+//             _queryStrings = this->_path.substr(pos + 1, this->_path.size());
+//             this->_path = this->_path.substr(0, pos);
+//         }
+//         bool isSlashRFirst = std::strncmp(swords.str().c_str(), "\r", 2) == 0;
+//         if (isBody || isSlashRFirst) {
+//             if (!isBody && isSlashRFirst) {
+//                 isBody = true;
+//                 continue;
+//             } else if (isBody && !isSlashRFirst) {
+//                 std::string body;
+//                 std::getline(swords, body, '\r');
+//                 this->_body += body;
+//                 this->_bodySize += this->_body.length();
+//                 continue;
+//             } else {
+//                 this->_bodySize += 2;
+//                 break;
+//             }
+//         }
+//         std::string key;
+//         std::string value;
+//         std::getline(swords, key, ' ');
+//         std::getline(swords, value, '\r');
+//         this->_payload[key] = value;
+//     }
+// }
 
 // Geters
 

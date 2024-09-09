@@ -3,7 +3,7 @@
 
 # include "Server.hpp"
 
-# define BUFFER_SIZE 10000
+# define BUFFER_SIZE 2048
 
 class Http {
     // USED
@@ -12,6 +12,7 @@ class Http {
     std::map<int, IServer *>            clientFD_Server;
     std::vector<IServer *>              _serversPointer;
     std::map<int, IServer *>            _serverFDToServer;
+    std::map<int, std::vector<char> >          _clientFDToRequest;
 
     // Parser Response
     std::map<int, int>            _cgis;
@@ -19,8 +20,6 @@ class Http {
     
     // epoll config
     //NOT USED
-    const static int                    eventsLimit = 10;
-    struct epoll_event                  clientEvents[eventsLimit];
     std::map<int, std::string>          _serverFDToStringHost;
 
     public:

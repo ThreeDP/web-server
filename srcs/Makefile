@@ -6,7 +6,7 @@
 #    By: user42 <user42@student.42.fr>              +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/11/03 15:04:07 by dapaulin          #+#    #+#              #
-#    Updated: 2024/09/07 17:46:10 by user42           ###   ########.fr        #
+#    Updated: 2024/09/08 17:47:35 by user42           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -28,11 +28,11 @@ HEADERS										=	Http/ \
 												Http/Route 	\
 												Signal
 # Parser/
-INCLUDE_FLAGS 								:= 	-g3 -O3 -MMD -MP $(addprefix -I, $(HEADERS))
+INCLUDE_FLAGS 								:= 	-g $(addprefix -I, $(HEADERS))
 VPATH										=	Http:Parser:Logging:Http/Server/:Utils/:Http/Response:HandlerFileSystem:Http/Route:Http/Request
 
 ######################## FLAGS ###############################
-FLAGS										= 	-Wall -Wextra -Werror -std=c++98
+FLAGS										= 	-Wall -Wextra -Werror -std=c++98 -ggdb
 ######################## SOURCES #############################
 SRC_RESPONSE								=	HttpResponse.cpp BuilderResponse.cpp
 SRC_ROUTE									=	Route.cpp BuilderRoute.cpp
@@ -73,7 +73,7 @@ CONFIG_HOST:
 $(OBJS_PATH)%.o: %.cpp $(HEADER)
 
 #	@			echo $(INCLUDE_FLAGS)
-				c++ $(FLAGS) -I $(INCLUDE_FLAGS) -c $< -o $@
+				c++ -I $(INCLUDE_FLAGS) $(FLAGS) -c $< -o $@
 	@			printf "$(GREEN).$(RC)"
 
 $(OBJS_PATH):
