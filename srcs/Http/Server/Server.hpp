@@ -38,6 +38,7 @@ class Server : public IServer {
         ILogger         *_logger;
 
         int             _actualClientFD;
+        bool setPort;
 
         // Seters
         void                        SetAllowMethods(std::set<std::string> methods);
