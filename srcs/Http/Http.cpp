@@ -21,15 +21,16 @@ void Http::Process(void) {
         std::vector<std::string>::iterator host = (*itServer)->GetListHosts().begin();
         for (; host != (*itServer)->GetListHosts().end(); ++host) {
 
-            struct addrinfo                         *result = NULL;
+            _result = NULL;
             // SET ENDEREÇO E PORTA
             std::string host_label = *host;
             std::string port_label = (*itServer)->GetListenPort();
             std::cout << _logger->Log(&Logger::LogInformation, "Set Host:", host_label, "and Port:", port_label);
 
-            int status = getaddrinfo(host_label.c_str(), port_label.c_str(), &hints, &result);
+            int status = getaddrinfo(host_label.c_str(), port_label.c_str(), &hints, &_result);
             if (status != 0) {
-                freeaddrinfo(result);
+                freeaddrinfo(_result);
+                _result = NULL;
                 std::cerr << _logger->Log(&Logger::LogTrace, gai_strerror(status));
                 std::map<int, IServer *>::iterator itFD = _serverFDToServer.begin();
                 for ( ; itFD != _serverFDToServer.end(); ++itFD) {
@@ -43,23 +44,24 @@ void Http::Process(void) {
             int optval = 1;
             int listener = 1;
             std::cout << _logger->Log(&Logger::LogInformation, "Try to bind Host:", host_label, "and Port:", port_label);
-            for (; result != NULL; result = result->ai_next) {
-                listener = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+            for (; _result != NULL; _result = _result->ai_next) {
+                listener = socket(_result->ai_family, _result->ai_socktype, _result->ai_protocol);
                 if (listener == -1)
                     continue;
                 if (setsockopt(listener, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &optval, sizeof(int)) == -1) {
                     std::cerr << _logger->Log(&Logger::LogWarning, "setsockopt.") << std::endl;
                 }
-                if (bind(listener, result->ai_addr, result->ai_addrlen) == 0) {
+                if (bind(listener, _result->ai_addr, _result->ai_addrlen) == 0) {
                     break;
                 }
                 if (close(listener) == -1)
                     std::cerr << _logger->Log(&Logger::LogWarning, "Problem on close socket.") << std::endl;
             }
 
-            if (result == NULL) {
+            if (_result == NULL) {
                 std::map<int, IServer *>::iterator itFD = _serverFDToServer.begin();
-                freeaddrinfo(result);
+                freeaddrinfo(_result);
+                _result = NULL;
                 for ( ; itFD != _serverFDToServer.end(); ++itFD) {
                     close(itFD->first);
                 }
@@ -67,8 +69,8 @@ void Http::Process(void) {
                 close(epollFD);
                 throw std::runtime_error(_logger->Log(&Logger::LogCaution, "Error: Unable to bind <", host_label, "Port:", port_label, ">."));
             }
-
-            freeaddrinfo(result);
+            freeaddrinfo(_result);
+            _result = NULL;
 
             std::cout << _logger->Log(&Logger::LogInformation, "Server: [", listener, "] bind Host:", host_label, "and Port:", port_label);
             std::cout << _logger->Log(&Logger::LogInformation, "Server: [", listener, "] try to starting listing on Host:", host_label, "and Port:", port_label);
@@ -108,10 +110,10 @@ void Http::Process(void) {
         throw std::runtime_error(_logger->Log(&Logger::LogCaution, "Error: Unable to Start Server Listen."));
     }
 
-    struct epoll_event  clientEvents[100];
+    struct epoll_event  clientEvents[10];
 	while (true) {
         // ESPERA NOVOS CLIENTES
-		int number_of_ready_fds = epoll_wait(epollFD, clientEvents, 100, 1000);
+		int number_of_ready_fds = epoll_wait(epollFD, clientEvents, 10, 1000);
 		if (number_of_ready_fds == -1) {
             std::map<int, IServer *>::iterator itFD = _serverFDToServer.begin();
             for ( ; itFD != _serverFDToServer.end(); ++itFD) {
@@ -350,6 +352,7 @@ Http::Http(ILogger *logger) {
     _clientFDToRequest.clear();
     _cgis.clear();
     _logger = logger;
+    _result = NULL;
 }
 
 Http::~Http(void) {
@@ -360,5 +363,9 @@ Http::~Http(void) {
           
             delete *it;
         }
+    }
+    if (_result != NULL) {
+        freeaddrinfo(_result);
+        _result = NULL;
     }
 }

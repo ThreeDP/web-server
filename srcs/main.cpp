@@ -26,8 +26,9 @@ void signalHandler(int signum) {
         // close(Http::GetEPollFD());
         if (http != NULL)
             delete http;
-        if (parser != NULL)
+        if (parser != NULL) {
             delete parser;
+        }
     }
     exit(signum);
 }
@@ -39,7 +40,7 @@ int main(int ac, char *av[]) {
     IBuilderServer  *builder = new BuilderServer(handler, logger);
     parser = new Parser(logger, handler, builder);
 
-    std::string     fileName = "./config/ravy.conf";
+    const char*     fileName = "./config/ravy.conf";
     
     if (ac > 1) {
         fileName = av[1];

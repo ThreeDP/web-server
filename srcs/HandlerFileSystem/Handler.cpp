@@ -4,6 +4,7 @@ std::ifstream *Handler::OpenFile(std::string path) {
     std::ifstream *file = new std::ifstream(path.c_str());
     if (file->is_open())
         return file;
+    delete file;
     return NULL;
 }
 

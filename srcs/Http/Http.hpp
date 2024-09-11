@@ -17,7 +17,7 @@ class Http {
     // Parser Response
     std::map<int, int>            _cgis;
 
-    
+    struct addrinfo                         *_result;
     // epoll config
     //NOT USED
     std::map<int, std::string>          _serverFDToStringHost;

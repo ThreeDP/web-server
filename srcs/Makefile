@@ -74,11 +74,11 @@ $(NAME): $(OBJS_PATH) $(OBJ)
 	@			c++ $(FLAGS) $(OBJ) $(INCLUDE_FLAGS) -o $(NAME)
 	@			printf "$(GREEN)$(NAME) created$(RC)\n"
 	@			echo "Configure Hosts"	
-	@			sudo chmod a+w /etc/hosts
-	@			sudo cat /etc/hosts | grep dapaulin.42.fr || echo "127.0.0.1 dapaulin.42.fr" >> /etc/hosts
-	@			sudo cat /etc/hosts | grep rleslie.42.fr || echo "127.0.0.1 rleslie.42.fr" >> /etc/hosts
-	@			sudo mkdir -p $(WEB_DIR)
-	@			sudo tar -xpf $(TAR_FILE) -C $(WEB_DIR)
+#	@			sudo chmod a+w /etc/hosts
+#	@			sudo cat /etc/hosts | grep dapaulin.42.fr || echo "127.0.0.1 dapaulin.42.fr" >> /etc/hosts
+#	@			sudo cat /etc/hosts | grep rleslie.42.fr || echo "127.0.0.1 rleslie.42.fr" >> /etc/hosts
+#	@			sudo mkdir -p $(WEB_DIR)
+#	@			sudo tar -xpf $(TAR_FILE) -C $(WEB_DIR)
 
 -include $(DEP)
 

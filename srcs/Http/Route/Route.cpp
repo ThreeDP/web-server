@@ -340,8 +340,7 @@ HttpStatusCode::Code Route::cgiAction(HttpRequest &req, std::string absPath, int
 
         int status;
         if (waitpid(pid, &status, 0) == -1) {
-            perror("Erro ao esperar pelo processo filho com waitpid");
-            exit(EXIT_FAILURE);
+            return _errorHandler(HttpStatusCode::_INTERNAL_SERVER_ERROR);
         }
 
         if (WIFEXITED(status)) {
