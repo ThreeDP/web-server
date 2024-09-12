@@ -138,14 +138,7 @@ void Http::Process(void) {
                     std::cerr << _logger->Log(&Logger::LogWarning, "Problem to accept client.") << std::endl;
                 }
 
-                struct epoll_event event;
-	            memset(&event, '\0', sizeof(struct epoll_event));
-                event.events = EPOLLIN;
-	            event.data.fd = new_socket;
-                if (epoll_ctl(epollFD, EPOLL_CTL_ADD, new_socket, &event) == -1) {
-                    close(new_socket);
-                    std::cerr << _logger->Log(&Logger::LogWarning, "Problem to execute EPOLL_CTL_ADD to client: [", new_socket, "].") << std::endl;
-                }
+                AddConnection(epollFD, new_socket);
                 clientFD_Server[new_socket] = _serverFDToServer[itListener->first];
                 std::cout << _logger->Log(&Logger::LogInformation, "HandShake client [",  new_socket, "] connected on", "localhost", "8081");
                 continue;
@@ -170,21 +163,14 @@ void Http::Process(void) {
                 // QUANDO OCORRE UM PROBLEMA AO EXECUTAR O RECV
                 if (numbytes == -1) {
                     std::cerr << _logger->Log(&Logger::LogWarning, "Problem to RECV request of client: [", clientEvents[i].data.fd, "].") << std::endl;
-                    _clientFDToRequest.erase(clientEvents[i].data.fd);
-                    clientFD_Server.erase(clientEvents[i].data.fd);
-                    close(clientEvents[i].data.fd);
+                    CloseConnection(epollFD, clientEvents[i].data.fd);
                     break;
                 }
 
                 // QUANDO CLIENT FECHA NO MEIO DO REQUEST
                 if (numbytes == 0) {
                     std::cerr << _logger->Log(&Logger::LogWarning, "Client: [", clientEvents[i].data.fd, "] close connection.") << std::endl;
-                    if (epoll_ctl(epollFD, EPOLL_CTL_DEL, clientEvents[i].data.fd, NULL) == -1) {
-                        std::cerr << _logger->Log(&Logger::LogWarning, "Problem to execute EPOLL_CTL_DEL to client: [", clientEvents[i].data.fd, "].") << std::endl;
-                    }
-                    _clientFDToRequest.erase(clientEvents[i].data.fd);
-                    clientFD_Server.erase(clientEvents[i].data.fd);
-                    close(clientEvents[i].data.fd);
+                    CloseConnection(epollFD, clientEvents[i].data.fd);
                     break;
                 }
 
@@ -212,30 +198,13 @@ void Http::Process(void) {
                     
                     int isCGI = (clientFD_Server[clientEvents[i].data.fd]->ProcessRequest(req, clientEvents[i].data.fd, sv, epollFD) == HttpStatusCode::_CGI);
 
-                    struct epoll_event event;
-                    memset(&event, '\0', sizeof(struct epoll_event));
-                    event.events = EPOLLOUT;
-                    event.data.fd = clientEvents[i].data.fd;
+                    // MODIFICA PARA EPOLLOUT
+                    ModifyClientFDState(epollFD, clientEvents[i].data.fd, EPOLLOUT);
 
-                    if (epoll_ctl(epollFD, EPOLL_CTL_MOD, clientEvents[i].data.fd, &event) == -1) {
-                        std::cerr << _logger->Log(&Logger::LogWarning, "Problem to execute EPOLL_CTL_MOD to client: [", clientEvents[i].data.fd, "].") << std::endl;
-                        _clientFDToRequest.erase(clientEvents[i].data.fd);
-                        clientFD_Server.erase(clientEvents[i].data.fd);
-                        close(clientEvents[i].data.fd);
-                    }
                     std::cout << _logger->Log(&Logger::LogInformation, "Client [",  clientEvents[i].data.fd, "] connected on", "localhost", "8081");
                     if (isCGI) {
+                        AddConnection(epollFD, sv[0]);
                         this->_cgis[sv[0]] = clientEvents[i].data.fd;
-
-                        struct epoll_event event;
-                        memset(&event, 0, sizeof(struct epoll_event));
-                        event.events = EPOLLIN;
-                        event.data.fd = sv[0];
-
-                        if (epoll_ctl(epollFD, EPOLL_CTL_ADD, sv[0], &event) == -1) {
-                            perror("Erro ao adicionar o descritor ao epoll");
-                            exit(EXIT_FAILURE);
-                        }
                         continue;
                     }
                     close(sv[0]);
@@ -249,49 +218,76 @@ void Http::Process(void) {
                 IHttpResponse* res = clientFD_Server[clientEvents[i].data.fd]->ProcessResponse(clientEvents[i].data.fd);
                 
                 std::vector<char> response = res->CreateResponse();
-
+                // TRY TO SEND MESSAGE
                 int numbytes = send(clientEvents[i].data.fd, &response[0], sizeof(char) * response.size(), 0);
                 if (numbytes == -1) {
                     std::cerr << _logger->Log(&Logger::LogWarning, "Problem to SEND response of client: [", clientEvents[i].data.fd, "].") << std::endl;
-                    _clientFDToRequest.erase(clientEvents[i].data.fd);
-                    clientFD_Server.erase(clientEvents[i].data.fd);
-                    close(clientEvents[i].data.fd);
+                    CloseConnection(epollFD, clientEvents[i].data.fd);
 			        delete res;
                 }
 
                 std::cout << _logger->Log(&Logger::LogInformation, "Send Response to client [",  clientEvents[i].data.fd, "] connected on", "localhost", "8081");
-
-                if (res->GetStatusCode() == "100") {
-
-                    struct epoll_event event;
-                    memset(&event, '\0', sizeof(struct epoll_event));
-                    event.events = EPOLLIN;
-                    event.data.fd = clientEvents[i].data.fd;
-
-                    if (epoll_ctl(epollFD, EPOLL_CTL_MOD, clientEvents[i].data.fd, &event) == -1) {
-                        std::cerr << _logger->Log(&Logger::LogWarning, "Problem to execute EPOLL_CTL_MOD to client: [", clientEvents[i].data.fd, "].") << std::endl;
-                        _clientFDToRequest.erase(clientEvents[i].data.fd);
-                        _clientFDToRequest.erase(clientEvents[i].data.fd);
-                        clientFD_Server.erase(clientEvents[i].data.fd);
-                        close(clientEvents[i].data.fd);
-                    }
-			        delete res;
+                std::string StatusCode = res->GetStatusCode();
+                delete res;
+                if (StatusCode == "100") {
+                    // MODIFICA PARA EPOLLIN
+                    ModifyClientFDState(epollFD, clientEvents[i].data.fd, EPOLLIN);
                     break;
                 }
-			    delete res;
-
-                if (epoll_ctl(epollFD, EPOLL_CTL_DEL, clientEvents[i].data.fd, NULL) == -1) {
-                    std::cerr << _logger->Log(&Logger::LogWarning, "Problem to execute EPOLL_CTL_DEL to client: [", clientEvents[i].data.fd, "].") << std::endl;
-                }
+                // CLOSE CONNECTION
+                CloseConnection(epollFD, clientEvents[i].data.fd);
                 std::cout << _logger->Log(&Logger::LogInformation, "Client [",  clientEvents[i].data.fd, "] disconnected from", "localhost", "8081");
-                _clientFDToRequest.erase(clientEvents[i].data.fd);
-                clientFD_Server.erase(clientEvents[i].data.fd);
-                close(clientEvents[i].data.fd);
             }
 		}
 	}
 }
 
+
+void Http::CloseConnection(int EpollFD, int clientEvents_fd) {
+    if (epoll_ctl(EpollFD, EPOLL_CTL_DEL, clientEvents_fd, NULL) == -1) {
+        std::cerr << _logger->Log(&Logger::LogWarning, "Problem to execute EPOLL_CTL_DEL to client: [", clientEvents_fd, "].") << std::endl;
+    }
+
+    _clientFDToRequest.erase(clientEvents_fd);
+    clientFD_Server.erase(clientEvents_fd);
+    close(clientEvents_fd);
+}
+
+void Http::AddConnection(int EpollFD, int client_fd) {
+    struct epoll_event event;
+    memset(&event, '\0', sizeof(struct epoll_event));
+    event.events = EPOLLIN;
+    event.data.fd = client_fd;
+
+    if (epoll_ctl(EpollFD, EPOLL_CTL_ADD, client_fd, &event) == -1) {
+        close(client_fd);
+        std::cerr << _logger->Log(&Logger::LogWarning, "Problem to execute EPOLL_CTL_ADD to client: [", client_fd, "].") << std::endl;
+    }
+}
+
+void Http::ModifyClientFDState(int EpollFD, int clientEvents_fd, uint32_t epollState) {
+    struct epoll_event event;
+    memset(&event, '\0', sizeof(struct epoll_event));
+    event.events = epollState;
+    event.data.fd = clientEvents_fd;
+
+    if (epoll_ctl(EpollFD, EPOLL_CTL_MOD, clientEvents_fd, &event) == -1) {
+        std::cerr << _logger->Log(&Logger::LogWarning, "Problem to execute EPOLL_CTL_MOD to client: [", clientEvents_fd, "].") << std::endl;
+        CloseConnection(EpollFD, clientEvents_fd);
+    }
+}
+
+void    Http::CheckTimeout(void)
+{
+    for(std::map<int, Client>::iterator it = _clientFDToClient.begin() ; it != _clientFDToClient.end(); ++it)
+    {
+        if (it->second.CheckIfExpire())
+        {
+            std::cerr << _logger->Log(&Logger::LogWarning, "Client: [", it->first, "] has close by timeout.");
+
+        }
+    }
+}
 
 // ssize_t    Http::HandleRequest(int clientEvents[i].data.fd, int poll_fd) {
 //     char            buffer[1000000];

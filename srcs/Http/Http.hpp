@@ -2,6 +2,7 @@
 # define __HTTP_HPP__
 
 # include "Server.hpp"
+# include "Client.hpp"
 
 # define BUFFER_SIZE 2048
 
@@ -13,6 +14,7 @@ class Http {
     std::vector<IServer *>              _serversPointer;
     std::map<int, IServer *>            _serverFDToServer;
     std::map<int, std::vector<char> >          _clientFDToRequest;
+    std::map<int, Client>               _clientFDToClient;
 
     // Parser Response
     std::map<int, int>            _cgis;
@@ -47,7 +49,10 @@ class Http {
         void SetServer(IServer *server);
 
     private:
-
+        void    CheckTimeout(void);
+        void    CloseConnection(int EpollFD, int clientEvents_fd);
+        void    AddConnection(int EpollFD, int client_fd);
+        void    ModifyClientFDState(int EpollFD, int clientEvents_fd, uint32_t epollState);
 };
 
 

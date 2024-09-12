@@ -20,6 +20,7 @@ HEADERS										=	Http/ \
 												HandlerFileSystem/ \
 												Utils/  \
 												Logging \
+												Http/Client \
 												Parser \
 												Http/Server \
 												Http/Response \
@@ -28,7 +29,7 @@ HEADERS										=	Http/ \
 												Signal
 # Parser/
 INCLUDE_FLAGS 								:= 	-g $(addprefix -I, $(HEADERS))
-VPATH										=	Http:Parser:Logging:Http/Server/:Utils/:Http/Response:HandlerFileSystem:Http/Route:Http/Request
+VPATH										=	Http:Parser:Logging:Http/Client:Http/Server/:Utils/:Http/Response:HandlerFileSystem:Http/Route:Http/Request
 
 ######################## FLAGS ###############################
 FLAGS										= 	-Wall -Wextra -Werror -std=c++98 -ggdb
