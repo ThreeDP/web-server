@@ -125,68 +125,39 @@ void Http::Process(void) {
 
         std::cout << _logger->Log(&Logger::LogInformation, "Check Status... ", "ready fds: [", number_of_ready_fds, "]");
 		for (int i = 0; i < number_of_ready_fds; i++) {
-			int new_socket = -1;
-			socklen_t                   addrlen;
-			struct sockaddr_storage     client_saddr;
 
-            // HANDSHAKE
-			addrlen = sizeof(struct sockaddr_storage);
-            std::map<int, IServer *>::iterator itListener = _serverFDToServer.find(clientEvents[i].data.fd);
-            if (itListener != _serverFDToServer.end()) {
-
-                if ((new_socket = accept(itListener->first, (struct sockaddr *) &client_saddr, &addrlen)) < 0) {
-                    std::cerr << _logger->Log(&Logger::LogWarning, "Problem to accept client.") << std::endl;
-                }
-
-                AddConnection(epollFD, new_socket);
-                clientFD_Server[new_socket] = _serverFDToServer[itListener->first];
-                std::cout << _logger->Log(&Logger::LogInformation, "HandShake client [",  new_socket, "] connected on", "localhost", "8081");
+            if (HandShake(epollFD, clientEvents[i]) == true) {
                 continue;
             }
 
-            std::map<int, int>::iterator it = _cgis.find(clientEvents[i].data.fd);
-            if (it != _cgis.end()) {
-                clientFD_Server[it->second]->CreateCGIResponse(epollFD, it->first, it->second);
-                _cgis.erase(clientEvents[i].data.fd);
-                close(clientEvents[i].data.fd);
+            if (CGIReadResponse(epollFD, clientEvents[i]) == true) {
+                continue;
+            }
+
+            if (CGIWriteRequest(epollFD, clientEvents[i]) == true) {
                 break;
             }
 
+
+
             // LER DO CLIENTE E ADICIONAR FD COMO EPOLLIN
             if ((clientEvents[i].events & EPOLLIN)) {
-                std::cout << _logger->Log(&Logger::LogInformation, "Entered pollin: [", clientEvents[i].data.fd, "].");
-                HttpRequest req;
-                char request[BUFFER_SIZE];
-                memset(request, '\0', sizeof(char) * BUFFER_SIZE);
-                int numbytes = recv(clientEvents[i].data.fd, request, sizeof(char) * BUFFER_SIZE, 0);
                 
-                // QUANDO OCORRE UM PROBLEMA AO EXECUTAR O RECV
-                if (numbytes == -1) {
-                    std::cerr << _logger->Log(&Logger::LogWarning, "Problem to RECV request of client: [", clientEvents[i].data.fd, "].") << std::endl;
-                    CloseConnection(epollFD, clientEvents[i].data.fd);
+                bool Continue = (_clientFDToRequest.find(clientEvents[i].data.fd) != _clientFDToRequest.end()) ? true : false;
+                std::vector<char> requestBytes = ReadRequest(epollFD, clientEvents[i]);
+                if (requestBytes.empty()) {
                     break;
                 }
 
-                // QUANDO CLIENT FECHA NO MEIO DO REQUEST
-                if (numbytes == 0) {
-                    std::cerr << _logger->Log(&Logger::LogWarning, "Client: [", clientEvents[i].data.fd, "] close connection.") << std::endl;
-                    CloseConnection(epollFD, clientEvents[i].data.fd);
-                    break;
-                }
-
-                std::vector<char> vec(request, request + numbytes);
-
-                bool Continue;
-                Continue = (_clientFDToRequest.find(clientEvents[i].data.fd) != _clientFDToRequest.end()) ? true : false;
-                _clientFDToRequest[clientEvents[i].data.fd].insert(_clientFDToRequest[clientEvents[i].data.fd].end(), request, request + numbytes);
+                HttpRequest req;
+                _clientFDToRequest[clientEvents[i].data.fd].insert(_clientFDToRequest[clientEvents[i].data.fd].end(), requestBytes.begin(), requestBytes.end());
                 req.ParserRequest(_clientFDToRequest[clientEvents[i].data.fd]);
 
-                std::cout << _logger->Log(&Logger::LogTrace, request);
                 std::cout << _logger->Log(&Logger::LogInformation, "Request received from client [",  clientEvents[i].data.fd, "] connected on", "localhost", "8081");
 
                 int sv[2];
                 memset(&sv, '\0', sizeof(sv));
-                if (numbytes < BUFFER_SIZE) {
+                if (requestBytes.size() < BUFFER_SIZE) {
 
                     if (Continue && req._payload.find("Expect:") != req._payload.end()) {
                         req._payload.erase("Expect:");
@@ -212,36 +183,105 @@ void Http::Process(void) {
                 }
             }
 
-
-            // ESCREVO PARA O CLIENTE, DELETO FD DO EPOLL E FECHO O FD 
-            if ((clientEvents[i].events & EPOLLOUT) && clientFD_Server[clientEvents[i].data.fd]->FindResponse(clientEvents[i].data.fd)) {
-                IHttpResponse* res = clientFD_Server[clientEvents[i].data.fd]->ProcessResponse(clientEvents[i].data.fd);
-                
-                std::vector<char> response = res->CreateResponse();
-                // TRY TO SEND MESSAGE
-                int numbytes = send(clientEvents[i].data.fd, &response[0], sizeof(char) * response.size(), 0);
-                if (numbytes == -1) {
-                    std::cerr << _logger->Log(&Logger::LogWarning, "Problem to SEND response of client: [", clientEvents[i].data.fd, "].") << std::endl;
-                    CloseConnection(epollFD, clientEvents[i].data.fd);
-			        delete res;
-                }
-
-                std::cout << _logger->Log(&Logger::LogInformation, "Send Response to client [",  clientEvents[i].data.fd, "] connected on", "localhost", "8081");
-                std::string StatusCode = res->GetStatusCode();
-                delete res;
-                if (StatusCode == "100") {
-                    // MODIFICA PARA EPOLLIN
-                    ModifyClientFDState(epollFD, clientEvents[i].data.fd, EPOLLIN);
-                    break;
-                }
-                // CLOSE CONNECTION
-                CloseConnection(epollFD, clientEvents[i].data.fd);
-                std::cout << _logger->Log(&Logger::LogInformation, "Client [",  clientEvents[i].data.fd, "] disconnected from", "localhost", "8081");
+            if (WriteResponse(epollFD, clientEvents[i]) == true) {
+                break;
             }
 		}
+        CheckTimeout(epollFD);
 	}
 }
 
+bool Http::HandShake(int EpollFD, struct epoll_event &clientEvent) {
+    int new_socket = -1;
+    socklen_t                   addrlen;
+    struct sockaddr_storage     client_saddr;
+
+    // HANDSHAKE
+    addrlen = sizeof(struct sockaddr_storage);
+    std::map<int, IServer *>::iterator itListener = _serverFDToServer.find(clientEvent.data.fd);
+    if (itListener != _serverFDToServer.end()) {
+
+        if ((new_socket = accept(itListener->first, (struct sockaddr *) &client_saddr, &addrlen)) > 0) {
+            AddConnection(EpollFD, new_socket);
+            clientFD_Server[new_socket] = _serverFDToServer[itListener->first];
+            std::cout << _logger->Log(&Logger::LogInformation, "HandShake client [",  new_socket, "] connected on", "localhost", "8081");
+            return true;
+        }
+        std::cerr << _logger->Log(&Logger::LogWarning, "Problem to accept client.") << std::endl;
+    }
+    return false;
+}
+
+bool Http::CGIReadResponse(int EpollFD, struct epoll_event &clientEvent) {
+    return false;
+}
+
+bool Http::CGIWriteRequest(int EpollFD, struct epoll_event &clientEvent) {
+    std::map<int, int>::iterator it = _cgis.find(clientEvent.data.fd);
+    if (it != _cgis.end()) {
+        clientFD_Server[it->second]->CreateCGIResponse(EpollFD, it->first, it->second);
+        _cgis.erase(clientEvent.data.fd);
+        close(clientEvent.data.fd);
+        return true;
+    }
+    return false;
+}
+
+std::vector<char> Http::ReadRequest(int EpollFD, struct epoll_event &clientEvent) {
+    HttpRequest req;
+    char request[BUFFER_SIZE];
+    memset(request, '\0', sizeof(char) * BUFFER_SIZE);
+    
+    std::cout << _logger->Log(&Logger::LogInformation, "Entered pollin: [", clientEvent.data.fd, "].");
+    int numbytes = recv(clientEvent.data.fd, request, sizeof(char) * BUFFER_SIZE, 0);
+    std::cout << _logger->Log(&Logger::LogTrace, request);
+    
+    // QUANDO OCORRE UM PROBLEMA AO EXECUTAR O RECV
+    if (numbytes == -1) {
+        std::cerr << _logger->Log(&Logger::LogWarning, "Problem to RECV request of client: [", clientEvent.data.fd, "].") << std::endl;
+        CloseConnection(EpollFD, clientEvent.data.fd);
+        return std::vector<char>();
+    }
+
+    // QUANDO CLIENT FECHA NO MEIO DO REQUEST
+    if (numbytes == 0) {
+        std::cerr << _logger->Log(&Logger::LogWarning, "Client: [", clientEvent.data.fd, "] close connection.") << std::endl;
+        CloseConnection(EpollFD, clientEvent.data.fd);
+        return std::vector<char>();
+    }
+    if (numbytes >= 0)
+        return std::vector<char>(request, request + numbytes);
+    return std::vector<char>(request, request + numbytes);
+}
+
+bool Http::WriteResponse(int EpollFD, struct epoll_event &clientEvent) {
+    // ESCREVO PARA O CLIENTE, DELETO FD DO EPOLL E FECHO O FD 
+    if ((clientEvent.events & EPOLLOUT) && clientFD_Server[clientEvent.data.fd]->FindResponse(clientEvent.data.fd)) {
+        IHttpResponse* res = clientFD_Server[clientEvent.data.fd]->ProcessResponse(clientEvent.data.fd);
+        
+        std::vector<char> response = res->CreateResponse();
+        // TRY TO SEND MESSAGE
+        int numbytes = send(clientEvent.data.fd, &response[0], sizeof(char) * response.size(), 0);
+        if (numbytes == -1) {
+            std::cerr << _logger->Log(&Logger::LogWarning, "Problem to SEND response of client: [", clientEvent.data.fd, "].") << std::endl;
+            CloseConnection(EAI_AGAIN, clientEvent.data.fd);
+            delete res;
+        }
+
+        std::cout << _logger->Log(&Logger::LogInformation, "Send Response to client [",  clientEvent.data.fd, "] connected on", "localhost", "8081");
+        std::string StatusCode = res->GetStatusCode();
+        delete res;
+        if (StatusCode == "100") {
+            // MODIFICA PARA EPOLLIN
+            ModifyClientFDState(EpollFD, clientEvent.data.fd, EPOLLIN);
+            return true;
+        }
+        // CLOSE CONNECTION
+        CloseConnection(EpollFD, clientEvent.data.fd);
+        std::cout << _logger->Log(&Logger::LogInformation, "Client [",  clientEvent.data.fd, "] disconnected from", "localhost", "8081");
+    }
+    return false;
+}
 
 void Http::CloseConnection(int EpollFD, int clientEvents_fd) {
     if (epoll_ctl(EpollFD, EPOLL_CTL_DEL, clientEvents_fd, NULL) == -1) {
@@ -277,14 +317,14 @@ void Http::ModifyClientFDState(int EpollFD, int clientEvents_fd, uint32_t epollS
     }
 }
 
-void    Http::CheckTimeout(void)
+void    Http::CheckTimeout(int EpollFD)
 {
     for(std::map<int, Client>::iterator it = _clientFDToClient.begin() ; it != _clientFDToClient.end(); ++it)
     {
         if (it->second.CheckIfExpire())
         {
             std::cerr << _logger->Log(&Logger::LogWarning, "Client: [", it->first, "] has close by timeout.");
-
+            CloseConnection(EpollFD, it->first);
         }
     }
 }
