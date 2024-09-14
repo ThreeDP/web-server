@@ -10,10 +10,12 @@ class Client {
     public:
         std::vector<char>   Request;
         IServer             *Server;
+        int                 cgiPair[2];
 
     Client(void) : 
         _lastUpdate(time(NULL))
     {
+        memset(&this->cgiPair, '\0', sizeof(this->cgiPair));
         Request.clear();
         Server = NULL;
     }
@@ -32,7 +34,6 @@ class Client {
         }
         return false;
     }
-
 };
 
 #endif
