@@ -116,7 +116,9 @@ sequenceDiagram
     end
 ```
 
-````mermaid
+# Delete
+
+```mermaid
 sequenceDiagram
     Server->>Route: Send Request
     alt Payload Too Large
@@ -135,6 +137,7 @@ sequenceDiagram
 ```
 
 # Post
+
 ```mermaid
 sequenceDiagram
     Server->>Route: Send Request
