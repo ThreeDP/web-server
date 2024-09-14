@@ -214,6 +214,8 @@ bool Http::HandShake(int EpollFD, struct epoll_event &clientEvent) {
 
 bool Http::CGIReadResponse(int EpollFD, struct epoll_event &clientEvent) {
     return false;
+    (void)EpollFD;
+    (void)clientEvent;
 }
 
 bool Http::CGIWriteRequest(int EpollFD, struct epoll_event &clientEvent) {
