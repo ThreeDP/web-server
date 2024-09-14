@@ -24,6 +24,7 @@ class BuilderRoute : public IBuilderRoute {
         IBuilderRoute &WithErrorPage(std::set<HttpStatusCode::Code> statusCodes, std::string filePath);
         IBuilderRoute &WithRedirectPath(std::string redirectPath);
         IBuilderRoute &WithRootDirectory(std::string root);
+        IBuilderRoute &WithUploadLocation(std::string route);
         IBuilderRoute &WithPageIndexes(std::vector<std::string> indexes);
         IBuilderRoute &WithAutoIndex(bool flag);
 

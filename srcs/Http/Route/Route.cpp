@@ -58,7 +58,7 @@ IHttpResponse *Route::ProcessRequest(
         }
         return _builder->GetResult();
     } else if (request.GetMethod() == "DELETE") {
-        if (this->Delete( request, absolutePath, cgifd, epoll ) == HttpStatusCode::_CGI) {
+        if (this->Delete( request, absolutePath, epoll ) == HttpStatusCode::_CGI) {
             return NULL;
         }
         return _builder->GetResult();
@@ -251,7 +251,7 @@ HttpStatusCode::Code Route::Post(HttpRequest &request, std::string absPath, int*
  * 
  */
 
-HttpStatusCode::Code Route::Delete(HttpRequest &request, std::string absPath, int* cgifd, int epoll) {
+HttpStatusCode::Code Route::Delete(HttpRequest &request, std::string absPath, int epoll) {
     HttpStatusCode::Code result = HttpStatusCode::_DO_NOTHING;
     if ((result = this->_checkBodyLimit(request.GetBodySize()))) { return result; }
     if (this->_handler->PathExist(absPath)) {
@@ -458,8 +458,9 @@ void        Route::SetAutoIndex(bool flag) {
     this->_autoIndex = flag;
 }
 
-
-
+void    Route::SetUploadOn(std::string route) {
+    this->_upload_on = route;
+}
 
 /**!
  * 
@@ -507,6 +508,10 @@ bool Route::GetAutoIndex(void) {
     return this->_autoIndex;
 }
 
+std::string Route::GetUploadOn(void) {
+    return this->_upload_on;
+}
+
 std::string Route::_toString(void) {
     std::stringstream ss;
     ss << "\t\tRoute Name: " << _route_name << std::endl;
@@ -544,12 +549,9 @@ Route::Route(
     _autoIndex(server->GetAutoIndex()),
     _indexes(server->GetPageIndexes()),
     _logger(logger),
-    _handler(handler)
+    _handler(handler),
+    _upload_on(route_name)
 {
-    // _httpMethods["GET"] = &Route::Get;
-    // _httpMethods["POST"] = &Route::Post;
-    // _httpMethods["DELETE"] = &Route::Delete;
-
     _builder = new BuilderResponse(_logger, _handler);
     if (_logger->Env()) {
         std::cerr << _logger->Log(&Logger::LogDebug, "Created Route Class: ");

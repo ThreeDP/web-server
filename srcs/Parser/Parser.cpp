@@ -136,6 +136,9 @@ bool    Parser::SetParamIntoRoute(EnumParams::Param p, std::vector<std::string> 
                 case EnumParams::_ROOT:
                     _builder->GetBuilderRoute()->WithRootDirectory(this->GetStringParam(params, ";"));
                     break;
+                case EnumParams::_UPLOAD_ON:
+                    _builder->GetBuilderRoute()->WithUploadLocation(this->GetStringParam(params, ";"));
+                    break;
                 case EnumParams::_ERROR_PAGE:
                     code = this->GetPairCodeParams(params, ";");
                     _builder->GetBuilderRoute()->WithErrorPage(code.first, code.second);
@@ -229,6 +232,7 @@ EnumParams::Param Parser::IdentifiesParameter(std::string input) {
     map["autoindex"] = EnumParams::_AUTOINDEX;
     map["index"] = EnumParams::_INDEX;
     map["location"] = EnumParams::_ROUTE;
+    map["upload_on"] = EnumParams::_UPLOAD_ON;
 
     std::map<std::string, EnumParams::Param>::iterator it = map.find(input);
     if (it != map.end())

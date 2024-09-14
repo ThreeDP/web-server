@@ -57,6 +57,11 @@ IBuilderRoute &BuilderRoute::WithRootDirectory(std::string root) {
     return *this;
 }
 
+IBuilderRoute &BuilderRoute::WithUploadLocation(std::string route) {
+    _route->SetUploadOn(route);
+    return *this;
+}
+
 IBuilderRoute &BuilderRoute::WithPageIndexes(std::vector<std::string> indexes) {
     _route->SetRouteIndexes(indexes);
     return *this;

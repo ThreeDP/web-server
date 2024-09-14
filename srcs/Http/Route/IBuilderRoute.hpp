@@ -17,6 +17,7 @@ class IBuilderRoute {
         virtual IBuilderRoute &WithErrorPage(std::set<HttpStatusCode::Code> statusCodes, std::string filePath) = 0;
         virtual IBuilderRoute &WithRedirectPath(std::string redirectPath) = 0;
         virtual IBuilderRoute &WithRootDirectory(std::string root) = 0;
+        virtual IBuilderRoute &WithUploadLocation(std::string route) = 0;
         virtual IBuilderRoute &WithPageIndexes(std::vector<std::string> indexes) = 0;
         virtual IBuilderRoute &WithAutoIndex(bool flag) = 0;
         virtual IRoute        *GetResult(void) = 0;
