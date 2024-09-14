@@ -232,7 +232,7 @@ HttpStatusCode::Code Route::Post(HttpRequest &request, std::string absPath, int*
             }
             return this->cgiAction(request, absPath, cgifd);
         }
-        else if (allow){
+        else if (allow) {
             return this->_errorHandler(HttpStatusCode::_BAD_REQUEST);
         }
         else if (!allow) {
@@ -256,17 +256,12 @@ HttpStatusCode::Code Route::Delete(HttpRequest &request, std::string absPath, in
     if ((result = this->_checkBodyLimit(request.GetBodySize()))) { return result; }
     if (this->_handler->PathExist(absPath)) {
         bool isDirectory = this->_handler->FileIsDirectory(absPath);
-        bool allow = this->_handler->IsAllowToGetFile(absPath);
+        bool allow = this->_handler->IsAllowToGetFile(absPath); // ToDelete
         if (allow && isDirectory) {
-            if ((result = this->_checkDirectory(absPath, request))) { return result; }
-            if (( result = this->_checkExistIndex(request.GetPath(), absPath) )) { return result; }
-            if (( result = this->_checkAutoIndex(absPath) )) { return result; }
-        }
-        else if (allow && Utils::GetFileExtension(absPath) == ".py") {
-            this->cgiAction(request, absPath, cgifd);
-            return HttpStatusCode::_CGI;
+            // Delete directory recursion
         }
         else if (allow){
+            // Delete file
             return this->_errorHandler(HttpStatusCode::_BAD_REQUEST);
         }
         else if (!allow) {

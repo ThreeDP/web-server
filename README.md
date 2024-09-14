@@ -1,6 +1,179 @@
 # web-server
 
 
+# TODO
+
+- [x] Check [0, -1] for recv and send
+- [x] Ignore signals before Parser
+- [] Definir para que quando o server não for encontrado seja o primeiro server configurado.
+- [] Definir para que quando o route não for encontrado seja o primeiro route configurado.
+- [] Ajustar Variaveis a parametros CGI
+- [] Check Possible status code
+- [] Check DELETE Status Code Flow
+- [] Check POST Status Code Flow
+- [] Check GET Status Code Flow
+- [] Add path download to the parser
+- [] Check UNKNOWN Method
+- [] Upload a File in the server and get back
+- [] Set CGI in the correct path
+- [] Test A CGI with a infinite loop
+- [] Test a CGI with crash script
+- [] Adjust the hostname part
+- [] Add timeout function in the correct form.
+- [] Check Problem in image render
+- [] Add CGI Write in epoll
+- [] Check Leaks
+
+
+# Request Before Method
+
+```mermaid
+sequenceDiagram
+    Client->>Http: Send Request to connect
+    alt Connection Accepted
+        Http->>Client: Accept Connection
+        Http->>Http: Add fd to epoll
+    else Connection Refused
+        Http->>Client: Refuse Connection
+    end
+    Client->>Http: Send HTTP Request
+    Http->>Http: recv Parser Request
+
+    alt Error on Parser
+        Http->>Http: Set Parser with <br>flag error
+        Http->>Server: send request
+        Server->>Route: send request
+        Route->>Server: 400 Bad Request
+    else Parser is Correct
+        Http->>Server: send request
+        Server->>Route: send request
+        alt Http Version is Not 1.1
+            Route->>Server: 505 HTTP Version Not Supported
+        else Method Not Implemented
+            Route->>Server: 501 Not Implemented
+        else Not allow method
+            Route->>Server: 405 Method Not Allowed
+        else Without Content-Length
+            Route->>Server: 411 Length Required
+        else Too larger URI
+            Route->>Server: 414 URI Too Long
+        else As Redirect
+            Route->>Server: 308 Permanent Redirect
+        else Call Methods
+            alt Call Get
+                Route->>Server: Process and Response
+            else Call Post
+                Route->>Server: Process and Response
+            else Call Delete
+                Route->>Server: Process and Response
+            end        
+        end
+    end
+    Server->>Http: return response
+    Http->>Http : Add fd In EpollOUT mode
+    alt Is CGI
+        Http-->>Http: Process CGI
+        Http-->>Http: Check if the exist and try again
+    end
+    Http->>Client: return response
+    alt Is status 100
+        Http->>Http: keep client open
+        Http->>Http : Add fd In EpollIN mode
+    else
+        Http->>Http: Close connection <br>and remove from epoll
+    end
+```
+
+# GET
+```mermaid
+sequenceDiagram
+    Server->>Route: Send Request
+    alt AsBody
+        Route->>Server: 400 Bad request
+    else Path don't Exist
+        Route->>Server: 404 Not Found
+    else
+        alt Read/Execute Permission and is a directory
+            alt Without Slash in the end
+                Route->>Server: 307 Temporary Redirect
+            else Has a Valid Index
+                Route->>Server: 307 Temporary redirect
+            else Autoindex is On
+                Route->>Server: 200 OK
+            end
+        else Read/Execute Permission and CGI
+            Route->>Route: Execute Children Process
+            Route->>Server: Is CGI
+        else Read/Execute Permission and is a Normal File
+            alt As Content
+                Route->>Server: 200 OK
+            else
+                Route->>Server: 204 No Content
+            end
+        else Without Read Or Execute Permission
+            Route->>Server: 403 Forbidden
+        end
+    end
+```
+
+````mermaid
+sequenceDiagram
+    Server->>Route: Send Request
+    alt Payload Too Large
+        Route->>Server: 413 Payload Too Large
+    else Path don't Exist
+        Route->>Server: 404 Not Found
+    else Write/Execute Permission and is A Directory
+        Route->Route: Delete Directory
+        Route->>Server: 200 OK
+    else Write/Excute Permission
+        Route->Route: Delete File
+        Route->>Server: 200 OK
+    else Without Write/Excute Permission
+        Route->>Server: 403 Forbidden
+    end
+```
+
+# Post
+```mermaid
+sequenceDiagram
+    Server->>Route: Send Request
+    alt Payload Too Large
+        Route->>Server: 413 Payload Too Large
+    else Path don't Exist
+        Route->>Server: 404 Not Found
+    else
+        alt Read/Execute Permission and is a directory
+            alt Without Slash in the end
+                Route->>Server: 307 Temporary Redirect
+            else Has a Valid Index
+                Route->>Server: 307 Temporary redirect
+            else
+                Route->>Server: 404 Not Found
+            end
+        else Read/Execute Permission and CGI
+            alt Has Expect Header
+                Route->>Server: 100 Continue
+            else
+                Route->>Route: Execute Children Process
+                Route->>Server: Is CGI
+            end
+        else Read/Execute Permission and is a Normal File
+            alt As Content
+                Route->>Server: 200 OK
+            else
+                Route->>Server: 204 No Content
+            end
+        else Without Read Or Execute Permission
+            Route->>Server: 403 Forbidden
+        end
+    end
+```
+
+408 Request Timeout
+502 Bad Gateway: O servidor atuando como um gateway ou proxy recebeu uma resposta inválida do servidor upstream.
+
+
 ## Arquivo de configuração
 
 ### Server Name

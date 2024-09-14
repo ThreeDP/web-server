@@ -46,9 +46,9 @@
 
 void    HttpRequest::ParserRequest(std::vector<char> &request) {
     std::string str(request.begin(), request.end());
-    std::cout << "'" << str << "'" << std::endl; 
     size_t firstHeaderEnd = str.find("\r\n\r\n");
     if (firstHeaderEnd == std::string::npos) {
+        // Bad Request Return
         std::cerr << "Formato de solicitação HTTP inválido: cabeçalhos não encontrados" << std::endl;
         return;
     }
@@ -69,7 +69,7 @@ void    HttpRequest::ParserRequest(std::vector<char> &request) {
     std::string line;
 
     // Read the request line
-    if (std::getline(srequest, line)) {
+    if (std::getline(srequest, line, '\n')) {
         firstSizeLine = line.size();
         std::stringstream requestLine(line);
         std::getline(requestLine, _method, ' ');
@@ -85,20 +85,27 @@ void    HttpRequest::ParserRequest(std::vector<char> &request) {
     }
 
     std::stringstream headers(str.substr(firstSizeLine, firstHeaderEnd));
-    while (std::getline(headers, line) && !line.empty()) {
+    while (std::getline(headers, line, '\n')) {
         std::string key;
         std::string value;
         std::stringstream headerLine(line);
         if (std::getline(std::getline(headerLine, key, ':'), value)) {
-            // Trim leading spaces from the value
-            value.erase(0, value.find_first_not_of(" \t"));
+            value.erase(0, value.find_first_not_of(" \r"));
             _payload[key + ":"] = value;
         }
     }
-    
+    std::cout << *this << std::endl;
     _bodyBinary.clear();
     if (request.size() > firstHeaderEnd)
         _bodyBinary.assign(request.begin() + firstHeaderEnd, request.end());
+    if (_payload.find("Content-Length:") == _payload.end()) {
+        // Bad Request Return
+    }
+    std::istringstream iss(_payload["Content-Length:"]);
+    if (!(iss >> _bodySize)) {
+        // Bad Request return
+    }
+
 }
 
 // Geters
@@ -124,7 +131,7 @@ std::string         HttpRequest::GetBody(void) const {
 }
 
 int              HttpRequest::GetBodySize(void) const {
-    return this->_bodyBinary.size();
+    return this->_bodySize;
 }
 
 // Base Methods
@@ -160,7 +167,7 @@ bool HttpRequest::operator==(const HttpRequest &other) {
 }
 
 std::ostream &operator<<(std::ostream &os, HttpRequest const &request) {
-    os << request.GetMethod() << " " << request.GetPath() << " (" << request.GetQueryParams() << ") " << " " << request.GetHTTPVersion() << "\r\n";
+    os << request.GetMethod() << " " << request.GetPath() << " QueryParams: (" << request.GetQueryParams() << ") " << " " << request.GetHTTPVersion() << "\r\n";
     std::map<std::string, std::string> headers = request.GetHeaders(); 
     std::map<std::string, std::string>::iterator it = headers.begin();
     for ( ; it != headers.end(); ++it) {

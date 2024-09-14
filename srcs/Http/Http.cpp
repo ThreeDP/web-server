@@ -111,21 +111,21 @@ void Http::Process(void) {
             if (CGIWriteRequest(epollFD, clientEvents[i]) == true)
                 break;
             if ((clientEvents[i].events & EPOLLIN)) {
-                //bool Continue = (!_clientFDToClient[clientEvents[i].data.fd].Request.empty()) ? true : false;
-                bool Continue = (_clientFDToRequest.find(clientEvents[i].data.fd) != _clientFDToRequest.end()) ? true : false;
+                bool Continue = (!_clientFDToClient[clientEvents[i].data.fd].Request.empty()) ? true : false;
+                //bool Continue = (_clientFDToRequest.find(clientEvents[i].data.fd) != _clientFDToRequest.end()) ? true : false;
                 std::vector<char> requestBytes = ReadRequest(epollFD, clientEvents[i]);
                 if (requestBytes.empty())
                     break;
-                
                 HttpRequest req;
-                // _clientFDToClient[clientEvents[i].data.fd].Request.insert(
-                //     _clientFDToClient[clientEvents[i].data.fd].Request.end(),
-                //     requestBytes.begin(),
-                //     requestBytes.end()
-                // );
-                _clientFDToRequest[clientEvents[i].data.fd].insert(_clientFDToRequest[clientEvents[i].data.fd].end(), requestBytes.begin(), requestBytes.end());
-                //req.ParserRequest(_clientFDToClient[clientEvents[i].data.fd].Request);
-                req.ParserRequest(_clientFDToRequest[clientEvents[i].data.fd]);
+                _clientFDToClient[clientEvents[i].data.fd].Request.insert(
+                    _clientFDToClient[clientEvents[i].data.fd].Request.end(),
+                    requestBytes.begin(),
+                    requestBytes.end()
+                );
+                // _clientFDToRequest[clientEvents[i].data.fd].insert(_clientFDToRequest[clientEvents[i].data.fd].end(), requestBytes.begin(), requestBytes.end());
+                req.ParserRequest(_clientFDToClient[clientEvents[i].data.fd].Request);
+                // req.ParserRequest(_clientFDToRequest[clientEvents[i].data.fd]);
+                
                 std::cout << _logger->Log(&Logger::LogInformation, "Request received from client [",  clientEvents[i].data.fd, "] connected on", "localhost", "8081");
                 if (ProcessResponse(epollFD, clientEvents[i], requestBytes.size(), req, Continue) == true)
                     continue;
@@ -133,7 +133,7 @@ void Http::Process(void) {
             if (WriteResponse(epollFD, clientEvents[i]) == true)
                 break;
 		}
-        CheckTimeout(epollFD);
+        //CheckTimeout(epollFD);
 	}
 }
 
@@ -157,8 +157,8 @@ bool Http::HandShake(int EpollFD, struct epoll_event &clientEvent) {
 
         if ((new_socket = accept(itListener->first, (struct sockaddr *) &client_saddr, &addrlen)) > 0) {
             AddConnection(EpollFD, new_socket);
-            // _clientFDToClient[new_socket].Server = _serverFDToServer[itListener->first];
-            clientFD_Server[new_socket] = _serverFDToServer[itListener->first];
+            _clientFDToClient[new_socket].Server = _serverFDToServer[itListener->first];
+            // clientFD_Server[new_socket] = _serverFDToServer[itListener->first];
             std::cout << _logger->Log(&Logger::LogInformation, "HandShake client [",  new_socket, "] connected on", "localhost", "8081");
             return true;
         }
@@ -176,8 +176,8 @@ bool Http::CGIReadResponse(int EpollFD, struct epoll_event &clientEvent) {
 bool Http::CGIWriteRequest(int EpollFD, struct epoll_event &clientEvent) {
     std::map<int, int>::iterator it = _cgis.find(clientEvent.data.fd);
     if (it != _cgis.end()) {
-        // _clientFDToClient[it->second].Server->CreateCGIResponse(EpollFD, it->first, it->second);
-        clientFD_Server[it->second]->CreateCGIResponse(EpollFD, it->first, it->second);
+        _clientFDToClient[it->second].Server->CreateCGIResponse(EpollFD, it->first, it->second);
+        //clientFD_Server[it->second]->CreateCGIResponse(EpollFD, it->first, it->second);
         _cgis.erase(clientEvent.data.fd);
         close(clientEvent.data.fd);
         return true;
@@ -212,11 +212,10 @@ std::vector<char> Http::ReadRequest(int EpollFD, struct epoll_event &clientEvent
     return std::vector<char>();
 }
 
-bool Http::ProcessResponse(int EpollFD, struct epoll_event &clientEvent, size_t numbytes, HttpRequest Req, bool Continue) {
+bool Http::ProcessResponse(int EpollFD, struct epoll_event &clientEvent, size_t numbytes, HttpRequest &Req, bool Continue) {
     int sv[2];
     memset(&sv, '\0', sizeof(sv));
     if (numbytes < BUFFER_SIZE) {
-
         if (Continue && Req._payload.find("Expect:") != Req._payload.end()) {
             Req._payload.erase("Expect:");
         }
@@ -225,8 +224,8 @@ bool Http::ProcessResponse(int EpollFD, struct epoll_event &clientEvent, size_t 
             std::cerr << _logger->Log(&Logger::LogWarning, "Problem to open socketpair: [", clientEvent.data.fd, "].") << std::endl;
         }
         
-        // int isCGI = (_clientFDToClient[clientEvent.data.fd].Server->ProcessRequest(Req, clientEvent.data.fd, sv, EpollFD) == HttpStatusCode::_CGI);
-        int isCGI = (clientFD_Server[clientEvent.data.fd]->ProcessRequest(Req, clientEvent.data.fd, sv, EpollFD) == HttpStatusCode::_CGI);
+        int isCGI = (_clientFDToClient[clientEvent.data.fd].Server->ProcessRequest(Req, clientEvent.data.fd, sv, EpollFD) == HttpStatusCode::_CGI);
+        // int isCGI = (clientFD_Server[clientEvent.data.fd]->ProcessRequest(Req, clientEvent.data.fd, sv, EpollFD) == HttpStatusCode::_CGI);
 
         // MODIFICA PARA EPOLLOUT
         ModifyClientFDState(EpollFD, clientEvent.data.fd, EPOLLOUT);
@@ -245,24 +244,26 @@ bool Http::ProcessResponse(int EpollFD, struct epoll_event &clientEvent, size_t 
 
 bool Http::WriteResponse(int EpollFD, struct epoll_event &clientEvent) {
     // ESCREVO PARA O CLIENTE, DELETO FD DO EPOLL E FECHO O FD 
-    if ((clientEvent.events & EPOLLOUT) && clientFD_Server[clientEvent.data.fd]->FindResponse(clientEvent.data.fd)) {
-    //if ((clientEvent.events & EPOLLOUT) )//&& _clientFDToClient[clientEvent.data.fd].Server->FindResponse(clientEvent.data.fd)) {
-        // IHttpResponse* res = _clientFDToClient[clientEvent.data.fd].Server->ProcessResponse(clientEvent.data.fd);
-        IHttpResponse* res = clientFD_Server[clientEvent.data.fd]->ProcessResponse(clientEvent.data.fd);
+    // if ((clientEvent.events & EPOLLOUT) && clientFD_Server[clientEvent.data.fd]->FindResponse(clientEvent.data.fd)) {
+    if ((clientEvent.events & EPOLLOUT) && _clientFDToClient[clientEvent.data.fd].Server->FindResponse(clientEvent.data.fd)) {
+        IHttpResponse* res = _clientFDToClient[clientEvent.data.fd].Server->ProcessResponse(clientEvent.data.fd);
+        // IHttpResponse* res = clientFD_Server[clientEvent.data.fd]->ProcessResponse(clientEvent.data.fd);
         
         std::vector<char> response = res->CreateResponse();
         // TRY TO SEND MESSAGE
         int numbytes = send(clientEvent.data.fd, &response[0], sizeof(char) * response.size(), 0);
-        if (numbytes == -1) {
+        if (numbytes == -1 || numbytes == 0) {
             std::cerr << _logger->Log(&Logger::LogWarning, "Problem to SEND response of client: [", clientEvent.data.fd, "].") << std::endl;
             CloseConnection(EpollFD, clientEvent.data.fd);
             delete res;
+            return true;
         }
 
-        std::cout << _logger->Log(&Logger::LogInformation, "Send Response to client [",  clientEvent.data.fd, "] connected on", "localhost", "8081");
+        std::cout << _logger->Log(&Logger::LogInformation, "Send Response to client [", clientEvent.data.fd, "] connected on", "localhost", "8081");
         std::string StatusCode = res->GetStatusCode();
         delete res;
         if (StatusCode == "100") {
+            std::cout << _logger->Log(&Logger::LogInformation, "100-Continue Confirmation [",  clientEvent.data.fd, "]", "localhost", "8081");
             // MODIFICA PARA EPOLLIN
             ModifyClientFDState(EpollFD, clientEvent.data.fd, EPOLLIN);
             return true;
@@ -278,9 +279,9 @@ void Http::CloseConnection(int EpollFD, int clientEvents_fd) {
     if (epoll_ctl(EpollFD, EPOLL_CTL_DEL, clientEvents_fd, NULL) == -1) {
         std::cerr << _logger->Log(&Logger::LogWarning, "Problem to execute EPOLL_CTL_DEL to client: [", clientEvents_fd, "].") << std::endl;
     }
-    //_clientFDToClient.erase(clientEvents_fd);
-    _clientFDToRequest.erase(clientEvents_fd);
-    clientFD_Server.erase(clientEvents_fd);
+    _clientFDToClient.erase(clientEvents_fd);
+    //_clientFDToRequest.erase(clientEvents_fd);
+    //clientFD_Server.erase(clientEvents_fd);
     close(clientEvents_fd);
 }
 
@@ -376,8 +377,8 @@ void Http::SetServer(IServer *server) {
 Http::Http(ILogger *logger) {
     HttpResponse::SetDefaultHTTPResponse();
     _serversPointer.clear();
-    //_clientFDToClient.clear();
-    _clientFDToRequest.clear();
+    _clientFDToClient.clear();
+    // _clientFDToRequest.clear();
     _cgis.clear();
     _logger = logger;
     _result = NULL;

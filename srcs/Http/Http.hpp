@@ -62,7 +62,7 @@ class Http {
         bool                CGIWriteRequest(int EpollFD, struct epoll_event &clientEvent);
         bool                CGIReadResponse(int EpollFD, struct epoll_event &clientEvent);
         bool                HandShake(int EpollFD, struct epoll_event &clientEvent);
-        bool                ProcessResponse(int EpollFD, struct epoll_event &clientEvent, size_t numbytes, HttpRequest Req, bool Continue);
+        bool                ProcessResponse(int EpollFD, struct epoll_event &clientEvent, size_t numbytes, HttpRequest &Req, bool Continue);
 };
 
 #endif

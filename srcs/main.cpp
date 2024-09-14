@@ -33,15 +33,32 @@ void signalHandler(int signum) {
     exit(signum);
 }
 
+static void	setupSignal(void) {
+	signal(SIGINT, signalHandler);
+	signal(SIGTERM, signalHandler);
+	signal(SIGQUIT, signalHandler);
+	signal(SIGPIPE, SIG_IGN);
+}
+
+void setupNegation(void) {
+    struct sigaction sa;
+    sa.sa_handler = SIG_IGN;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+
+    sigaction(SIGINT, &sa, NULL);   // Ignora Ctrl+C
+    sigaction(SIGTERM, &sa, NULL);  // Ignora pedido de término
+    sigaction(SIGQUIT, &sa, NULL);  // Ignora Ctrl+
+}
+
 int main(int ac, char *av[]) {
-    signal(SIGINT, signalHandler);
+    setupSignal();
     ILogger         *logger = new Logger();
     IHandler        *handler = new Handler();
     IBuilderServer  *builder = new BuilderServer(handler, logger);
     parser = new Parser(logger, handler, builder);
 
     const char*     fileName = "./config/ravy.conf";
-    
     if (ac > 1) {
         fileName = av[1];
     }
@@ -49,8 +66,10 @@ int main(int ac, char *av[]) {
         
         http = new Http(logger);
         std::cout << logger->Log(&Logger::LogInformation, "Starting Parser.");
+        setupNegation();
         parser->ConfigHttp(*http, fileName);
         std::cout << logger->Log(&Logger::LogInformation, "Finished Parser.");
+        setupSignal();
         http->Process();
     } catch (const std::exception &e) {
         delete http;
