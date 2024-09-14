@@ -28,6 +28,7 @@ class Route : public IRoute {
         std::string                                 _redirectPath;
         std::string                                 _root;
         bool                                        _autoIndex;
+        std::string                                 _upload_on;
         std::vector<std::string>                    _indexes;
         ILogger                                     *_logger;
         IHandler                                    *_handler;
@@ -48,6 +49,7 @@ class Route : public IRoute {
         void                            SetRootDirectory(std::string root);
         void                            SetRouteIndexes(std::vector<std::string> indexes);
         void                            SetAutoIndex(bool flag);
+        void                            SetUploadOn(std::string route);
 
         std::string _toString(void);
 
@@ -87,6 +89,7 @@ class Route : public IRoute {
         std::string                     GetRootDirectory(void);
         const std::vector<std::string>  GetRouteIndexes(void);
         bool                            GetAutoIndex(void);
+        std::string                     GetUploadOn(void);
 
     private:
 
@@ -163,7 +166,7 @@ class Route : public IRoute {
          */
 
         // HttpStatusCode::Code Delete(HttpRequest &request, std::string absPath);
-        HttpStatusCode::Code Delete(HttpRequest &request, std::string absPath, int* cgifd, int epoll);
+        HttpStatusCode::Code Delete(HttpRequest &request, std::string absPath, int epoll);
 
 
         /**!

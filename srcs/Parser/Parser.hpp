@@ -20,7 +20,8 @@ namespace EnumParams {
 		_ALLOW_METHODS,
 		_AUTOINDEX,
 		_INDEX,
-		_ROUTE
+		_ROUTE,
+		_UPLOAD_ON
 	};
 }
 

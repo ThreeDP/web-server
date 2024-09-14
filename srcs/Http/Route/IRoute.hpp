@@ -32,6 +32,7 @@ class IRoute {
         virtual std::string                     GetRootDirectory(void) = 0;
         virtual const std::vector<std::string>  GetRouteIndexes(void) = 0;
         virtual bool                            GetAutoIndex(void) = 0;
+        virtual std::string                     GetUploadOn(void) = 0;
 
     private:
         virtual void                            SetRouteName(std::string routeName) = 0;
@@ -42,6 +43,7 @@ class IRoute {
         virtual void                            SetRootDirectory(std::string root) = 0;
         virtual void                            SetRouteIndexes(std::vector<std::string> indexes) = 0;
         virtual void                            SetAutoIndex(bool flag) = 0;
+        virtual void                            SetUploadOn(std::string route) = 0;
 
         friend class BuilderRoute;
         friend class IBuilderRoute;
