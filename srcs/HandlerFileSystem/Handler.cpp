@@ -43,7 +43,7 @@ bool Handler::FileIsRegular(std::string path) {
     }
     return false;
 }
-//verificar permissão de execução
+
 bool Handler::IsAllowToGetFile(std::string path) {
     struct stat file;
     std::stringstream ss(path);
@@ -59,6 +59,29 @@ bool Handler::IsAllowToGetFile(std::string path) {
         if (stat(path.c_str(), &file) != 0
             || (!(file.st_mode & S_IRUSR)
             && !(file.st_mode & S_IRGRP))
+            || (!(file.st_mode & S_IXUSR)
+            && !(file.st_mode & S_IXGRP))) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool Handler::IsAllowToDeleteFile(std::string path) {
+    struct stat file;
+    std::stringstream ss(path);
+    std::string pathPiece;
+
+    path = "";
+    while (std::getline(ss, pathPiece, '/'))
+    {
+        path += pathPiece;
+        memset(&file, 0, sizeof(struct stat));
+        if (this->FileIsDirectory(path))
+            path += "/";
+        if (stat(path.c_str(), &file) != 0
+            || (!(file.st_mode & S_IWUSR)
+            && !(file.st_mode & S_IWGRP))
             || (!(file.st_mode & S_IXUSR)
             && !(file.st_mode & S_IXGRP))) {
             return false;

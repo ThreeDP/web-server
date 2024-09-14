@@ -167,6 +167,7 @@ class Route : public IRoute {
 
         // HttpStatusCode::Code Delete(HttpRequest &request, std::string absPath);
         HttpStatusCode::Code Delete(HttpRequest &request, std::string absPath, int epoll);
+        bool	removeDirectory(std::string dirPath);
 
 
         /**!

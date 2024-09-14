@@ -17,7 +17,7 @@ namespace HttpStatusCode {
         _PERMANENT_REDIRECT = 308,
         _BAD_REQUEST = 400,
         _UNAUTHORIZED = 401,
-        _FORBIDDEN = 303,
+        _FORBIDDEN = 403,
         _NOT_FOUND = 404,
         _METHOD_NOT_ALLOWED = 405,
         _CONTENT_TOO_LARGE = 413,

@@ -20,6 +20,7 @@ class IHandler {
         virtual bool                            FileIsDirectory(std::string path) = 0;
         virtual bool                            FileIsRegular(std::string path) = 0;
         virtual bool                            IsAllowToGetFile(std::string path) = 0;
+        virtual bool                            IsAllowToDeleteFile(std::string path) = 0;
         virtual bool                            IsAllowToRunScript(std::string path) = 0;
         virtual bool                            PathExist(std::string path) = 0;
         virtual std::set<std::string>           ReadDirectory(DIR *directory) = 0;
