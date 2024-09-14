@@ -342,45 +342,42 @@ HttpStatusCode::Code Route::cgiAction(HttpRequest &req, std::string absPath, int
         return _errorHandler(HttpStatusCode::_INTERNAL_SERVER_ERROR);
     }
 
-    // Obtenha o corpo da requisição (imagem)
-    std::vector<char> requestBody = req._bodyBinary;  // Supondo que você tenha um método GetBody() que retorna o corpo da requisição
-    //size_t bodySize = requestBody.size();
-
-    // Criar o ambiente para o CGI
-    std::vector<std::string> ev = req.GetEnvp();
-    char **envp = new char*[ev.size() + 1];
-    for (size_t i = 0; i < ev.size(); ++i) {
-        envp[i] = new char[ev[i].size() + 1];
-        std::strcpy(envp[i], ev[i].c_str());
-    }
-    envp[ev.size()] = NULL;
-
+    char **envp = req.GetEnvp(Utils::SanitizePath(_root, _upload_on));
     const char *phpInterpreter = "/usr/bin/python3";
     const char *scriptPath = absPath.c_str();
     const char *argv[] = {phpInterpreter, scriptPath, NULL};
 
     pid_t pid = fork();
     if (pid == 0) {  // Processo filho
-        close(pipefd[1]);  // Fecha a extremidade de escrita do pipe no filho
+        if (chdir(absPath.substr(0, absPath.find_last_of('/')).c_str()) != 0) {
+            close(pipefd[1]);
+            close(pipefd[0]);
+            close(cgifd[1]);
+            exit(EXIT_FAILURE);
+        }
+        
+        close(pipefd[1]);
+        dup2(pipefd[0], STDIN_FILENO);
+        dup2(cgifd[1], STDOUT_FILENO);
+        dup2(cgifd[1], STDERR_FILENO);
 
-        dup2(pipefd[0], STDIN_FILENO);  // Redireciona a entrada padrão para o pipe
-        dup2(cgifd[1], STDOUT_FILENO);  // Redireciona a saída padrão para o pipe CGI
-        dup2(cgifd[1], STDERR_FILENO);  // Redireciona a saída de erro padrão para o pipe CGI
-
-        close(pipefd[0]);  // Fecha a extremidade de leitura do pipe
+        close(pipefd[0]);
         close(cgifd[1]);
 
         execve(phpInterpreter, (char**)argv, envp);
         perror("execve falhou");
         exit(EXIT_FAILURE);
-    } else {  // Processo pai
-        close(pipefd[0]);  // Fecha a extremidade de leitura do pipe no pai
+    } else {
+        Utils::DeleteEnvp(envp);
+        close(pipefd[0]);
         close(cgifd[1]);
 
-        // Envia o corpo da requisição (imagem) para o pipe
-        ssize_t test = write(pipefd[1], &req._bodyBinary[0], req._bodyBinary.size());
-        (void)test;
-        close(pipefd[1]);  // Fecha a extremidade de escrita do pipe após o envio
+        ssize_t numbytes = write(pipefd[1], &req._bodyBinary[0], req._bodyBinary.size());
+        if (numbytes == 0 || numbytes == -1) {
+
+            close(pipefd[1]);
+        }
+        close(pipefd[1]);
 
         int status;
         if (waitpid(pid, &status, 0) == -1) {
@@ -399,12 +396,6 @@ HttpStatusCode::Code Route::cgiAction(HttpRequest &req, std::string absPath, int
             std::cerr << "O processo filho terminou de maneira inesperada." << std::endl;
         }
     }
-
-    // Liberar memória alocada para o ambiente
-    for (size_t i = 0; i < ev.size(); ++i) {
-        delete[] envp[i];
-    }
-    delete[] envp;
     return HttpStatusCode::_CGI;
 }
 

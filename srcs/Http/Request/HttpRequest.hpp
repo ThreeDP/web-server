@@ -25,28 +25,32 @@ class HttpRequest {
         
         void                ParserRequest(std::string request);
 
-        std::vector<std::string>             GetEnvp(void) {
-            std::vector<std::string> vec;
+        char **             GetEnvp(std::string saveon) {
+            std::vector<std::string> ev;
             std::stringstream str(_queryStrings);
             std::string item;
+
             while (std::getline(str, item, '&')) {
-                //std::cout << item << std::endl;
-                vec.push_back(item);
+                ev.push_back(item);
             }
 
             std::map<std::string, std::string>::iterator it = _payload.begin();
-            vec.push_back("REQUEST_METHOD=" + _method);
+            ev.push_back("REQUEST_METHOD=" + _method);
+            size_t fileStart = _path.find_last_of('/');
+            std::cout << "Sring dentro de script file: " << _path.substr(fileStart, _path.size()) << std::endl;
+            ev.push_back("SCRIPT_FILE=" + _path.substr(fileStart, _path.size()));
+            ev.push_back("SAVE_INTO=" + saveon);
             for ( ;  it != _payload.end(); ++it) {
                 std::string key = it->first.substr(0, it->first.size() - 1);
-                //std::cout << it->first << "     " << it->second << std::endl;
-                vec.push_back(key + "=" + it->second);
+                ev.push_back(key + "=" + it->second);
             }
-            // std::string line;
-            // std::stringstream ss(_body);
-            // while (std::getline(ss, line, '&')) {
-            //     vec.push_back(line);
-            // }
-            return vec;
+            char **envp = new char*[ev.size() + 1];
+            for (size_t i = 0; i < ev.size(); ++i) {
+                envp[i] = new char[ev[i].size() + 1];
+                std::strcpy(envp[i], ev[i].c_str());
+            }
+            envp[ev.size()] = NULL;
+            return envp;
         }
 
         void    ParserRequest(std::vector<char> &request);
