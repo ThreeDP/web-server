@@ -251,18 +251,67 @@ HttpStatusCode::Code Route::Post(HttpRequest &request, std::string absPath, int*
  * 
  */
 
+bool	Route::removeDirectory(std::string dirPath)
+{
+	DIR*	dir = opendir(dirPath.c_str());
+	struct dirent*	entry;
+	while ((entry = readdir(dir)) != NULL)
+	{
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+            continue;
+        }
+        std::cout << "d_name: " << entry->d_name << std::endl;
+		std::string	fullPath = dirPath + "/" + entry->d_name;
+		if (entry->d_type == DT_DIR) {
+            if (!removeDirectory(fullPath)) {
+                closedir(dir);
+                return false;
+            }
+        } else {
+            if (remove(fullPath.c_str()) != 0) {
+                closedir(dir);
+                return false;
+            }
+        }
+	}
+	closedir(dir);
+    if (remove(dirPath.c_str()) != 0) {
+        return false;
+    }
+	return true;
+}
+
 HttpStatusCode::Code Route::Delete(HttpRequest &request, std::string absPath, int epoll) {
     HttpStatusCode::Code result = HttpStatusCode::_DO_NOTHING;
     if ((result = this->_checkBodyLimit(request.GetBodySize()))) { return result; }
     if (this->_handler->PathExist(absPath)) {
         bool isDirectory = this->_handler->FileIsDirectory(absPath);
-        bool allow = this->_handler->IsAllowToGetFile(absPath); // ToDelete
+        bool allow = this->_handler->IsAllowToDeleteFile(absPath); // ToDelete
+
         if (allow && isDirectory) {
             // Delete directory recursion
+			std::cout << "Delete directory" << std::endl;
+			if (removeDirectory(absPath))
+            {
+                _builder
+                    ->SetupResponse()
+                    .WithStatusCode(HttpStatusCode::_OK)
+                    .WithDefaultPage();
+				return HttpStatusCode::_OK;
+            }
+			return this->_errorHandler(HttpStatusCode::_INTERNAL_SERVER_ERROR);
         }
         else if (allow){
             // Delete file
-            return this->_errorHandler(HttpStatusCode::_BAD_REQUEST);
+            if (remove(absPath.c_str()) == 0)
+            {
+                _builder
+                    ->SetupResponse()
+                    .WithStatusCode(HttpStatusCode::_OK)
+                    .WithDefaultPage();
+                return HttpStatusCode::_OK;
+            }
+            return this->_errorHandler(HttpStatusCode::_INTERNAL_SERVER_ERROR);
         }
         else if (!allow) {
             return this->_errorHandler(HttpStatusCode::_FORBIDDEN);

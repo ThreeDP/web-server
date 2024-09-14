@@ -17,6 +17,7 @@ class Handler : public IHandler {
 		bool							FileIsRegular(std::string path);
 
 		bool							IsAllowToGetFile(std::string path);
+		bool							IsAllowToDeleteFile(std::string path);
 		bool							IsAllowToRunScript(std::string path);
 
 		std::set<std::string> 			ReadDirectory(DIR *directory);
