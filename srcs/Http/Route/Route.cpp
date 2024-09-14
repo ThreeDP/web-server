@@ -546,11 +546,11 @@ Route::Route(
     _limit_client_body_size(server->GetBodyLimit()),
     _redirectPath(server->GetRedirectPath(route_name)),
     _root(server->GetRootDirectory()),
+    _upload_on(route_name),
     _autoIndex(server->GetAutoIndex()),
     _indexes(server->GetPageIndexes()),
     _logger(logger),
-    _handler(handler),
-    _upload_on(route_name)
+    _handler(handler)
 {
     _builder = new BuilderResponse(_logger, _handler);
     if (_logger->Env()) {
