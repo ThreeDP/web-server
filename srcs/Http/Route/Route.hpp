@@ -27,8 +27,8 @@ class Route : public IRoute {
         size_t                                      _limit_client_body_size;
         std::string                                 _redirectPath;
         std::string                                 _root;
-        bool                                        _autoIndex;
         std::string                                 _upload_on;
+        bool                                        _autoIndex;
         std::vector<std::string>                    _indexes;
         ILogger                                     *_logger;
         IHandler                                    *_handler;
