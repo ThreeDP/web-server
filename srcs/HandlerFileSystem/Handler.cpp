@@ -43,7 +43,7 @@ bool Handler::FileIsRegular(std::string path) {
     }
     return false;
 }
-
+//verificar permissão de execução
 bool Handler::IsAllowToGetFile(std::string path) {
     struct stat file;
     std::stringstream ss(path);
@@ -58,7 +58,9 @@ bool Handler::IsAllowToGetFile(std::string path) {
             path += "/";
         if (stat(path.c_str(), &file) != 0
             || (!(file.st_mode & S_IRUSR)
-            && !(file.st_mode & S_IRGRP))) {
+            && !(file.st_mode & S_IRGRP))
+            || (!(file.st_mode & S_IXUSR)
+            && !(file.st_mode & S_IXGRP))) {
             return false;
         }
     }
