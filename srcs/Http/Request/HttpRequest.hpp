@@ -49,63 +49,7 @@ class HttpRequest {
             return vec;
         }
 
-        void    ParserRequest(std::vector<char> request) {
-            std::string str(request.begin(), request.end());
-
-            size_t firstHeaderEnd = str.find("\r\n\r\n") + 4;
-            if (firstHeaderEnd == std::string::npos) {
-                std::cerr << "Formato de solicitação HTTP inválido: cabeçalhos não encontrados" << std::endl;
-                return;
-            }
-
-            size_t secondHeaderStart = str.find("\r\n\r\n", firstHeaderEnd);
-            if (secondHeaderStart == std::string::npos) {
-                secondHeaderStart = str.size();
-            }
-
-            std::string firstHeaders = str.substr(0, firstHeaderEnd);
-
-            std::string secondHeaders;
-            if (secondHeaderStart > firstHeaderEnd + 4) {
-                secondHeaders = str.substr(firstHeaderEnd + 4, secondHeaderStart - (firstHeaderEnd + 4));
-                firstHeaderEnd = secondHeaderStart + 4;
-            }
-
-            _bodyBinary.clear();
-            _bodyBinary.assign(request.begin() + firstHeaderEnd, request.end());
-            // Parse request line
-            std::stringstream srequest(str.substr(0, firstHeaderEnd));
-            std::string line;
-
-            // Read the request line
-            if (std::getline(srequest, line)) {
-                std::stringstream requestLine(line);
-                std::getline(requestLine, _method, ' ');
-                std::getline(requestLine, _path, ' ');
-                std::getline(requestLine, _HTTPVersion, '\r');
-                
-                // Handle query strings
-                size_t pos = _path.find_first_of('?');
-                if (pos != std::string::npos) {
-                    _queryStrings = _path.substr(pos + 1);
-                    _path = _path.substr(0, pos);
-                }
-            }
-
-            // Parse headers
-            std::stringstream headerStream(str);
-            while (std::getline(headerStream, line) && !line.empty()) {
-                std::string key;
-                std::string value;
-                std::stringstream headerLine(line);
-                if (std::getline(std::getline(headerLine, key, ':'), value)) {
-                    // Trim leading spaces from the value
-                    value.erase(0, value.find_first_not_of(" \t"));
-                    _payload[key + ":"] = value;
-                }
-            }
-            // Extract body
-        }
+        void    ParserRequest(std::vector<char> &request);
 
         // Base Methods
         HttpRequest();

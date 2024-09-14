@@ -13,6 +13,11 @@ Parser::Parser(ILogger *logger, IHandler *handler, IBuilderServer *builder) :
 }
 
 Parser::~Parser(void) {
+    if (_file != NULL) {
+        delete _file;
+        _file = NULL;
+    } 
+
     if (_builder != NULL) {
         delete _builder;
         _builder = NULL;
@@ -80,7 +85,8 @@ int	Parser::ConfigHttp(Http &http, std::string fileName) {
     }
     if (_file != NULL) {
         _file->close();
-         delete _file;
+        delete _file;
+        _file = NULL;
     }
     return 0;
 }
@@ -90,7 +96,7 @@ void    Parser::InsertService(EnumParams::Param p, std::vector<std::string> para
         ExceptionValidation("Syntax error on line", "", "16");
     if (SetParamIntoRoute(p, params)) {return;}
     if (SetParamIntoServer(p, params)) {return;}
-    else if (p == EnumParams::_SERVER && params.size() == 2 && params.back() == "{") {
+    else if (this->_serverOpen == false && p == EnumParams::_SERVER && params.size() == 2 && params.back() == "{") {
         this->_serverOpen = true;
         _builder->SetupServer();
     } else {

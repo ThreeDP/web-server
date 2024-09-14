@@ -17,20 +17,25 @@ BuilderServer::BuilderServer(IHandler *handler, ILogger *logger) :
 }
 
 BuilderServer::~BuilderServer(void) {
-    if (_builderRoute != NULL) {
-         delete _builderRoute;
-        _builderRoute = NULL;
-    }
     if (_server != NULL) {
-         delete _server;
+        delete _server;
         _server = NULL;
+    }
+    if (_builderRoute != NULL) {
+        delete _builderRoute;
+        _builderRoute = NULL;
     }
     std::cerr << _logger->Log(&Logger::LogDebug, "Deleted BuilderServer Class.");
 }
 
 IBuilderServer      &BuilderServer::SetupServer(void) {
     if (_server != NULL) {
+        delete _server;
         _server = NULL;
+    }
+    if (_builderRoute != NULL) {
+        delete _builderRoute;
+        _builderRoute = NULL;
     }
     _server = new Server(_handler, _logger);
     _builderRoute = new BuilderRoute(_logger, _server, _handler);;
@@ -102,6 +107,10 @@ IServer             *BuilderServer::GetResult(void) {
     IServer *res = _server;
     if (_server != NULL) {
         _server = NULL;
+    }
+    if (_builderRoute != NULL) {
+        delete _builderRoute;
+        _builderRoute = NULL;
     }
     if (_logger->Env())
         std::cerr << _logger->Log(&Logger::LogTrace, "GetResult Server: {\n", res->_toString(), "\n}");
