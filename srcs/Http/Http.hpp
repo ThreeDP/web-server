@@ -57,7 +57,7 @@ class Http {
         void    ModifyClientFDState(int EpollFD, int clientEvents_fd, uint32_t epollState);
 
         // Handler Requests and Responses
-        void                Monitoring(int EpollFD, struct epoll_event &clientEvent);
+        HttpStatusCode::Code                WaitProcess(HttpRequest &req, int clientfd);
         std::vector<char>   ReadRequest(int EpollFD, struct epoll_event &clientEvent);
         bool                WriteResponse(int EpollFD, struct epoll_event &clientEvents);
         bool                CGIWriteRequest(int EpollFD, struct epoll_event &clientEvent);

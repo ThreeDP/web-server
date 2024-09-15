@@ -60,7 +60,7 @@ class IServer {
         virtual std::string             GetIPVersion(void) const = 0;
         virtual std::string             GetListenPort(void) const = 0;
 
-
+        virtual void                    GenerateErrorPage(int clientfd, HttpRequest &req, HttpStatusCode::Code code) = 0;
         friend class BuilderServer;
         friend class IBuilderServer;
 };

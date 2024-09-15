@@ -16,9 +16,9 @@
 - [X] Check GET Status Code Flow
 - [X] Check UNKNOWN Method
 - [X] Upload a File in the server and get back
-- [ ] Test A CGI with a infinite loop
-- [ ] Test a CGI with crash script
-- [ ] Add timeout function in the correct form.
+- [X] Test A CGI with a infinite loop
+- [X] Test a CGI with crash script
+- [x] Add timeout function in the correct form.
 - [ ] Check Status Code For Server Error
 - [ ] Check Status For CGI
 - [ ] Add CGI Read in epoll

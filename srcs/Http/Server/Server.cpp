@@ -143,9 +143,6 @@ std::string         Server::FindMatchRoute(HttpRequest &res) {
     return keyPath;
 }
 void Server::CreateCGIResponse(int epollfd, int cgifd, int clientfd) {
-    /*
-    verificar o tamanho do respose do cgi
-    */
     char                buffer[__SIZE_BUFF__];
     ssize_t             responseSize = 0;
     std::vector<char>   responseBody;
@@ -168,7 +165,7 @@ void Server::CreateCGIResponse(int epollfd, int cgifd, int clientfd) {
                                     .WithContentType(".html")
                                     .WithBody(responseBody)
                                     .GetResult();
-    close(cgifd);
+
     (void)epollfd;
 }
 

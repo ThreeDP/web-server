@@ -13,6 +13,7 @@ class Client : public IClient {
         IServer             *Server;
         int                 cgiPair[4];
         pid_t               _pid;
+        HttpStatusCode::Code                status;
 
         void SetPid(pid_t pid) {
             _pid = pid;
@@ -59,6 +60,15 @@ class Client : public IClient {
         Request.clear();
         Server = NULL;
         _pid = -1;
+        status = HttpStatusCode::_DO_NOTHING;
+    }
+
+    void SetStatus(HttpStatusCode::Code code) {
+        status = code;
+    }
+
+    HttpStatusCode::Code GetStatus(void) {
+        return status;
     }
 
     ~Client(void) {
@@ -70,7 +80,7 @@ class Client : public IClient {
     }
 
     bool CheckIfExpire(void) {
-        if (time(NULL) - _lastUpdate > 2) {
+        if (time(NULL) - _lastUpdate > 4) {
             return true;
         }
         return false;
