@@ -132,8 +132,6 @@ bool Utils::SanitizeOneMethod(std::string method) {
     Methods.insert("GET");
     Methods.insert("POST");
     Methods.insert("DELETE");
-    Methods.insert("INFO");
-    Methods.insert("PATH");
     std::set<std::string>::iterator m = Methods.find(method);
     if (m == Methods.end()) {
         return true;

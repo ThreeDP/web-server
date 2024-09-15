@@ -87,7 +87,13 @@ class Route : public IRoute {
         bool                            GetAutoIndex(void);
         std::string                     GetUploadOn(void);
 
+        IHttpResponse *GeterrorHandler(HttpStatusCode::Code code) {
+            _errorHandler(code);
+            return _builder->GetResult();
+        }
+
     private:
+        HttpStatusCode::Code _errorHandler(HttpStatusCode::Code code);
 
         /**!
          * 
@@ -96,7 +102,6 @@ class Route : public IRoute {
          * 
          */
 
-        HttpStatusCode::Code _errorHandler(HttpStatusCode::Code code);
 
         /// @brief Check if method of request
         /// is not allow in the route.

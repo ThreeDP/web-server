@@ -90,6 +90,10 @@ class Server : public IServer {
         void                    CreateSocketAndBind(void);
         int                     StartListen(std::string host);
         int                     AcceptClientConnect(void);
+        void                    GenerateErrorPage(int clientfd, HttpRequest &req, HttpStatusCode::Code code) {
+            std::string keypath = this->FindMatchRoute(req);
+            this->ResponsesMap[clientfd] = this->_routes[keypath]->GeterrorHandler(code);
+        }
 
         // Server Process
 
@@ -97,7 +101,7 @@ class Server : public IServer {
         HttpStatusCode::Code    ProcessRequest(HttpRequest &request, int client_fd);
         std::string             FindMatchRoute(HttpRequest &res);
         
-        void                    CreateCGIResponse(int epoll, int cgifd, int clientfd);
+        void                    CreateCGIResponse(int epoll, int cgifd, int clientfd, HttpRequest &req);
 
         // Geters
 

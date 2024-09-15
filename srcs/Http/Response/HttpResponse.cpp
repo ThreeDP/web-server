@@ -176,6 +176,10 @@ std::string HttpResponse::GetBody(void) const {
     return std::string(this->_body.begin(), this->_body.end());
 }
 
+ssize_t HttpResponse::GetBodySize(void) const {
+    return _body.size();
+}
+
 // Seters
 void    HttpResponse::SetStatusCode(HttpStatusCode::Code statusCode) {
     std::stringstream code;

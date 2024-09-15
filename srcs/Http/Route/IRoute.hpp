@@ -12,10 +12,6 @@ class IRoute {
 
     public:
         virtual ~IRoute(void) { }
-        
-        // virtual IHttpResponse *ProcessRequest(
-        //     HttpRequest &request
-        // ) = 0;
 
         virtual IHttpResponse *ProcessRequest(HttpRequest &request) = 0;
 
@@ -29,6 +25,7 @@ class IRoute {
         virtual const std::vector<std::string>  GetRouteIndexes(void) = 0;
         virtual bool                            GetAutoIndex(void) = 0;
         virtual std::string                     GetUploadOn(void) = 0;
+        virtual IHttpResponse *GeterrorHandler(HttpStatusCode::Code code) = 0;
 
     private:
         virtual void                            SetRouteName(std::string routeName) = 0;

@@ -52,7 +52,7 @@ class IServer {
         virtual IHttpResponse*          ProcessResponse(int client_fd) = 0;
         virtual HttpStatusCode::Code    ProcessRequest(HttpRequest &request, int client_fd) = 0;
         virtual std::string             FindMatchRoute(HttpRequest &res) = 0;
-        virtual void                    CreateCGIResponse(int epollfd, int cgifd, int clientfd) = 0;
+        virtual void                    CreateCGIResponse(int epollfd, int cgifd, int clientfd, HttpRequest &req) = 0;
 
         virtual int                     GetListener(void) const = 0;
         virtual std::string             GetHosts(void) const = 0;
@@ -60,7 +60,7 @@ class IServer {
         virtual std::string             GetIPVersion(void) const = 0;
         virtual std::string             GetListenPort(void) const = 0;
 
-
+        virtual void                    GenerateErrorPage(int clientfd, HttpRequest &req, HttpStatusCode::Code code) = 0;
         friend class BuilderServer;
         friend class IBuilderServer;
 };

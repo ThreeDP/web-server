@@ -13,6 +13,7 @@ class Client : public IClient {
         IServer             *Server;
         int                 cgiPair[4];
         pid_t               _pid;
+        HttpStatusCode::Code                status;
 
         void SetPid(pid_t pid) {
             _pid = pid;
@@ -24,6 +25,13 @@ class Client : public IClient {
 
         bool CreatePair(void) {
             if (pipe(&cgiPair[2]) == -1) {
+                return false;
+            }
+            return true;
+        }
+
+        bool CreatePair2(void) {
+            if (socketpair(AF_UNIX, SOCK_STREAM, 0, this->cgiPair) == -1) {
                 return false;
             }
             return true;
@@ -52,6 +60,15 @@ class Client : public IClient {
         Request.clear();
         Server = NULL;
         _pid = -1;
+        status = HttpStatusCode::_DO_NOTHING;
+    }
+
+    void SetStatus(HttpStatusCode::Code code) {
+        status = code;
+    }
+
+    HttpStatusCode::Code GetStatus(void) {
+        return status;
     }
 
     ~Client(void) {

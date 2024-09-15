@@ -4,7 +4,7 @@
 # include "Server.hpp"
 # include "Client.hpp"
 
-# define BUFFER_SIZE 2048
+# define BUFFER_SIZE 40000
 
 class Http {
     // USED
@@ -57,12 +57,13 @@ class Http {
         void    ModifyClientFDState(int EpollFD, int clientEvents_fd, uint32_t epollState);
 
         // Handler Requests and Responses
+        HttpStatusCode::Code                WaitProcess(HttpRequest &req, int clientfd);
         std::vector<char>   ReadRequest(int EpollFD, struct epoll_event &clientEvent);
         bool                WriteResponse(int EpollFD, struct epoll_event &clientEvents);
         bool                CGIWriteRequest(int EpollFD, struct epoll_event &clientEvent);
         bool                CGIReadResponse(int EpollFD, struct epoll_event &clientEvent);
         bool                HandShake(int EpollFD, struct epoll_event &clientEvent);
-        bool                ProcessResponse(int EpollFD, struct epoll_event &clientEvent, size_t numbytes, HttpRequest &Req, bool Continue);
+        bool                ProcessResponse(int EpollFD, struct epoll_event &clientEvent, ssize_t numbytes, HttpRequest &Req, bool Continue);
 };
 
 #endif

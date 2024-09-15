@@ -20,9 +20,12 @@ namespace HttpStatusCode {
         _FORBIDDEN = 403,
         _NOT_FOUND = 404,
         _METHOD_NOT_ALLOWED = 405,
+        _LENGTH_REQUIRED = 411,
         _CONTENT_TOO_LARGE = 413,
+        _URI_TOO_LONG = 414,
         _UNSUPPORTED_MEDIA_TYPE = 415,
         _INTERNAL_SERVER_ERROR = 500,
+        _NOT_IMPLEMENTED = 501,
         _BAD_GATEWAY = 502,
         _GATEWAY_TIMEOUT = 504,
         _HTTP_VERSION_NOT_SUPPORTED = 505

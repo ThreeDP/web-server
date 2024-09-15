@@ -26,6 +26,7 @@ class IHttpResponse {
     public:
         // Geters
         virtual std::string             GetBody(void) const = 0;
+        virtual ssize_t                 GetBodySize(void) const = 0;
         virtual std::string             GetStatusMessage(void) const = 0;
         virtual std::string             GetStatusCode(void) const = 0;
         virtual std::string             GetTextContent(std::string extension) = 0;

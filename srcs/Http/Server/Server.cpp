@@ -142,10 +142,7 @@ std::string         Server::FindMatchRoute(HttpRequest &res) {
     }
     return keyPath;
 }
-void Server::CreateCGIResponse(int epollfd, int cgifd, int clientfd) {
-    /*
-    verificar o tamanho do respose do cgi
-    */
+void Server::CreateCGIResponse(int epollfd, int cgifd, int clientfd, HttpRequest &req) {
     char                buffer[__SIZE_BUFF__];
     ssize_t             responseSize = 0;
     std::vector<char>   responseBody;
@@ -155,6 +152,9 @@ void Server::CreateCGIResponse(int epollfd, int cgifd, int clientfd) {
         numbytes = 0;
         memset(&buffer, 0, sizeof(char) * __SIZE_BUFF__);
         numbytes = recv(cgifd, &buffer, sizeof(char) * __SIZE_BUFF__, 0);
+        if (numbytes == -1) {
+            this->GenerateErrorPage(clientfd, req, HttpStatusCode::_INTERNAL_SERVER_ERROR);
+        }
         if (numbytes > 0) {
             responseSize += numbytes;
             responseBody.insert(responseBody.end(), buffer, buffer + __SIZE_BUFF__);
@@ -164,11 +164,11 @@ void Server::CreateCGIResponse(int epollfd, int cgifd, int clientfd) {
     BuilderResponse builderResponse(_logger, _handler);
     this->ResponsesMap[clientfd] = builderResponse
                                     .SetupResponse()
-                                    .WithStatusCode(HttpStatusCode::_OK)
+                                    .WithStatusCode(HttpStatusCode::_CREATED)
                                     .WithContentType(".html")
                                     .WithBody(responseBody)
                                     .GetResult();
-    close(cgifd);
+
     (void)epollfd;
 }
 
