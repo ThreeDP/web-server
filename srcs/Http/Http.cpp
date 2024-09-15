@@ -22,7 +22,6 @@ void Http::Process(void) {
         for (; host != (*itServer)->GetListHosts().end(); ++host) {
 
             _result = NULL;
-            // SET ENDEREÇO E PORTA
             std::string host_label = *host;
             std::string port_label = (*itServer)->GetListenPort();
             std::cout << _logger->Log(&Logger::LogInformation, "Set Host:", host_label, "and Port:", port_label);
@@ -297,11 +296,9 @@ bool Http::WriteResponse(int EpollFD, struct epoll_event &clientEvent) {
         delete res;
         if (StatusCode == "100") {
             std::cout << _logger->Log(&Logger::LogInformation, "100-Continue Confirmation [",  clientEvent.data.fd, "]", "localhost", "8081");
-            // MODIFICA PARA EPOLLIN
             ModifyClientFDState(EpollFD, clientEvent.data.fd, EPOLLIN);
             return true;
         }
-        // CLOSE CONNECTION
         CloseConnection(EpollFD, clientEvent.data.fd);
         std::cout << _logger->Log(&Logger::LogInformation, "Client [",  clientEvent.data.fd, "] disconnected from", "localhost", "8081");
     }

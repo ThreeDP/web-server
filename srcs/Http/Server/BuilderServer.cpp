@@ -1,12 +1,6 @@
 # include "BuilderServer.hpp"
 # include "BuilderRoute.hpp"
 
-// BuilderServer::BuilderServer(IHandler *handler, ILogger *logger) {
-//     _handler = handler;
-//     _logger = logger;
-//     _server = NULL;
-// }
-
 BuilderServer::BuilderServer(IHandler *handler, ILogger *logger) :
     _handler(handler),
     _logger(logger)

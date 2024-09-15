@@ -33,7 +33,6 @@ class Route : public IRoute {
         ILogger                                     *_logger;
         IHandler                                    *_handler;
         IBuilderResponse                            *_builder;
-        // std::map<std::string, Method>               _httpMethods;
 
         /**!
          * 
@@ -62,9 +61,6 @@ class Route : public IRoute {
          * 
          */
         
-        // IHttpResponse *ProcessRequest(
-        //     HttpRequest &request
-        // );
         IHttpResponse *ProcessRequest(HttpRequest &request);
     
         Route(void) {}

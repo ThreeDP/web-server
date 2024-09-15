@@ -29,7 +29,6 @@ class BuilderRoute : public IBuilderRoute {
         IBuilderRoute &WithAutoIndex(bool flag);
 
         IRoute        *GetResult(void);
-        // bool          CompareRoutes(IRoute &left, IRoute &right) = 0;
 };
 
 #endif

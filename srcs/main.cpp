@@ -23,7 +23,6 @@ Parser *parser = NULL;
 
 void signalHandler(int signum) {
     if(signum == SIGINT){
-        // close(Http::GetEPollFD());
         if (http != NULL)
             delete http;
         if (parser != NULL) {
@@ -46,9 +45,9 @@ void setupNegation(void) {
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = 0;
 
-    sigaction(SIGINT, &sa, NULL);   // Ignora Ctrl+C
-    sigaction(SIGTERM, &sa, NULL);  // Ignora pedido de término
-    sigaction(SIGQUIT, &sa, NULL);  // Ignora Ctrl+
+    sigaction(SIGINT, &sa, NULL);
+    sigaction(SIGTERM, &sa, NULL);
+    sigaction(SIGQUIT, &sa, NULL);
 }
 
 int main(int ac, char *av[]) {
