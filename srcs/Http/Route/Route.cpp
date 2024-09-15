@@ -310,7 +310,7 @@ HttpStatusCode::Code Route::cgiAction(HttpRequest &req, std::string absPath) {
     const char *argv[] = {bin, scriptPath, NULL};
 
     req.client->SetPid(fork());
-    if (req.client->GetPid() == 0) {  // Processo filho
+    if (req.client->GetPid() == 0) {
         if (chdir(script.c_str()) != 0) {
             Utils::DeleteEnvp(envp);
             close(req.client->GetRDPipe());

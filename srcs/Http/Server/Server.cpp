@@ -59,7 +59,7 @@ void    Server::SetAddrInfo(std::string host) {
         &this->result
     );
     if (status != 0) {
-        throw (Except("Configuration File Not Found!" )); //gai_strerror(status)
+        throw (Except("Configuration File Not Found!" ));
     }
 }
 
