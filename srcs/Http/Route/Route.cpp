@@ -301,6 +301,7 @@ HttpStatusCode::Code Route::_errorHandler(HttpStatusCode::Code code) {
 
 HttpStatusCode::Code Route::cgiAction(HttpRequest &req, std::string absPath) {
     req.client->CreatePair();
+    req.client->CreatePair2();
 
     char **envp = req.GetEnvp(Utils::SanitizePath(_root, _upload_on));
     const char *phpInterpreter = "/usr/bin/python3";

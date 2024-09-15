@@ -29,6 +29,13 @@ class Client : public IClient {
             return true;
         }
 
+        bool CreatePair2(void) {
+            if (socketpair(AF_UNIX, SOCK_STREAM, 0, this->cgiPair) == -1) {
+                return false;
+            }
+            return true;
+        }
+
         int GetWRPipe(void) {
             return cgiPair[3];
         }
@@ -63,7 +70,7 @@ class Client : public IClient {
     }
 
     bool CheckIfExpire(void) {
-        if (time(NULL) - _lastUpdate > 60) {
+        if (time(NULL) - _lastUpdate > 2) {
             return true;
         }
         return false;

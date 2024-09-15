@@ -116,6 +116,7 @@ void Http::Process(void) {
                 std::vector<char> requestBytes = ReadRequest(epollFD, clientEvents[i]);
                 if (requestBytes.empty())
                     break;
+
                 HttpRequest req;
                 _clientFDToClient[clientEvents[i].data.fd].Request.insert(
                     _clientFDToClient[clientEvents[i].data.fd].Request.end(),
@@ -181,61 +182,28 @@ bool Http::CGIWriteRequest(int EpollFD, struct epoll_event &clientEvent) {
 
         ModifyClientFDState(EpollFD, clientEvent.data.fd, EPOLLIN);
         _clientFDToClient[clientEvent.data.fd].UpdateLastUpdate();
-        int	status;
-        int exit_code = 0;
 
-        if (!waitpid(_clientFDToClient[it->second].GetPid(), &status, WNOHANG)) {
-            while (_clientFDToClient[it->second].CheckIfExpire()) {
-                if (waitpid(_clientFDToClient[it->second].GetPid(), &status, WNOHANG))
-                    break ;
-            }
-            if (!waitpid(_clientFDToClient[it->second].GetPid(), &status, WNOHANG)) {
+        int status;
+        while (true) {
+            status = waitpid(_clientFDToClient[it->second].GetPid(), &status, WNOHANG);
+            if (_clientFDToClient[it->second].CheckIfExpire()) {
                 kill(_clientFDToClient[it->second].GetPid(), SIGKILL);
-                waitpid(_clientFDToClient[it->second].GetPid(), &status, 0);
-                exit_code = 1;
+            }
+            if (status == 0) {
+                continue;
+            }
+            else if (status == -1) {
+                // Error bad gateway
+            }
+            else {
+                if (WIFEXITED(status))
+                    return true; // success
+                else if (WIFSIGNALED(status))
+                    return true; // timeout
+                else
+                    return true; // bad gateway
             }
         }
-        if (WIFEXITED(status))
-            exit_code = WEXITSTATUS(status);
-        if (exit_code) {
-
-        }
-        // int status;
-        // while (true) {
-        //     // Usar waitpid com WNOHANG para não bloquear o processo pai
-        //     pid_t result = waitpid(_clientFDToClient[it->second].GetPid(), &status, WNOHANG);
-            
-        //     if (result == 0) {
-        //         // O processo filho ainda está rodando
-        //         std::cout << "O processo filho ainda está em execução." << std::endl;
-        //         if (_clientFDToClient[it->second].CheckIfExpire()) {
-        //            kill(_clientFDToClient[it->second].GetPid(), SIGKILL); 
-        //         }
-        //         if (clientEvent.events & EPOLLERR || clientEvent.events & EPOLLHUP) {
-        //             std::cerr << "Erro ou inatividade detectada no CGI." << std::endl;
-        //             kill(_clientFDToClient[it->second].GetPid(), SIGKILL);  // Enviar sinal para terminar o processo
-        //             CloseConnection(EpollFD, clientEvent.data.fd);
-        //         }
-        //         //usleep(500000);  // Dorme por 500ms para evitar alto uso de CPU
-        //     } else if (result == -1) {
-        //         // Houve um erro no waitpid
-        //         perror("Erro ao monitorar processo filho com waitpid");
-        //         break;
-        //     } else {
-        //         // O processo filho terminou
-        //         if (WIFEXITED(status)) {
-        //             std::cout << "O processo filho terminou normalmente com status: " << WEXITSTATUS(status) << std::endl;
-        //         } else if (WIFSIGNALED(status)) {
-        //             std::cout << "O processo filho foi terminado por um sinal: " << WTERMSIG(status) << std::endl;
-        //         } else {
-        //             std::cout << "O processo filho terminou de forma inesperada." << std::endl;
-        //         }
-        //         break;
-        //     }
-        // }
-        
-
-        // CloseConnection(EpollFD, clientEvent.data.fd);
         return true;
     }
     return false;
@@ -246,7 +214,6 @@ bool Http::CGIReadResponse(int EpollFD, struct epoll_event &clientEvent) {
     if ((clientEvent.events & EPOLLIN) && (it = _cgis.find(clientEvent.data.fd)) != _cgis.end()) {
         std::cout << _logger->Log(&Logger::LogInformation, "Entered CGI pollout: [", clientEvent.data.fd, "].");
         _clientFDToClient[it->second].Server->CreateCGIResponse(EpollFD, it->first, it->second);
-        //clientFD_Server[it->second]->CreateCGIResponse(EpollFD, it->first, it->second);
         _cgis.erase(clientEvent.data.fd);
         close(clientEvent.data.fd);
         return true;
@@ -286,15 +253,8 @@ bool Http::ProcessResponse(int EpollFD, struct epoll_event &clientEvent, size_t 
         if (Continue && Req._payload.find("Expect:") != Req._payload.end()) {
             Req._payload.erase("Expect:");
         }
-        
-        if (socketpair(AF_UNIX, SOCK_STREAM, 0, _clientFDToClient[clientEvent.data.fd].cgiPair) == -1) {
-            std::cerr << _logger->Log(&Logger::LogWarning, "Problem to open socketpair: [", clientEvent.data.fd, "].") << std::endl;
-        }
-        
-        int isCGI = (_clientFDToClient[clientEvent.data.fd].Server->ProcessRequest(Req, clientEvent.data.fd) == HttpStatusCode::_CGI);
-        // int isCGI = (clientFD_Server[clientEvent.data.fd]->ProcessRequest(Req, clientEvent.data.fd, sv, EpollFD) == HttpStatusCode::_CGI);
 
-        // MODIFICA PARA EPOLLOUT
+        int isCGI = (_clientFDToClient[clientEvent.data.fd].Server->ProcessRequest(Req, clientEvent.data.fd) == HttpStatusCode::_CGI);
         ModifyClientFDState(EpollFD, clientEvent.data.fd, EPOLLOUT);
 
         std::cout << _logger->Log(&Logger::LogInformation, "Client [",  clientEvent.data.fd, "] connected on", "localhost", "8081");
@@ -303,9 +263,7 @@ bool Http::ProcessResponse(int EpollFD, struct epoll_event &clientEvent, size_t 
             AddConnection(EpollFD, _clientFDToClient[clientEvent.data.fd].cgiPair[1]);
             ModifyClientFDState(EpollFD, _clientFDToClient[clientEvent.data.fd].cgiPair[1], EPOLLOUT);
             _clientFDToClient[clientEvent.data.fd].UpdateLastUpdate();
-            // AddConnection(EpollFD, _clientFDToClient[clientEvent.data.fd].cgiPair[0]);
             this->_cgis[_clientFDToClient[clientEvent.data.fd].cgiPair[1]] = clientEvent.data.fd;
-            // this->_cgis[_clientFDToClient[clientEvent.data.fd].cgiPair[0]] = clientEvent.data.fd;
             return true;
         }
     }
@@ -313,12 +271,9 @@ bool Http::ProcessResponse(int EpollFD, struct epoll_event &clientEvent, size_t 
 }
 
 bool Http::WriteResponse(int EpollFD, struct epoll_event &clientEvent) {
-    // ESCREVO PARA O CLIENTE, DELETO FD DO EPOLL E FECHO O FD 
-    // if ((clientEvent.events & EPOLLOUT) && clientFD_Server[clientEvent.data.fd]->FindResponse(clientEvent.data.fd)) {
     if ((clientEvent.events & EPOLLOUT) && _clientFDToClient[clientEvent.data.fd].Server->FindResponse(clientEvent.data.fd)) {
         std::cout << _logger->Log(&Logger::LogInformation, "Entered pollout: [", clientEvent.data.fd, "].");
         IHttpResponse* res = _clientFDToClient[clientEvent.data.fd].Server->ProcessResponse(clientEvent.data.fd);
-        // IHttpResponse* res = clientFD_Server[clientEvent.data.fd]->ProcessResponse(clientEvent.data.fd);
         
         std::vector<char> response = res->CreateResponse();
         // TRY TO SEND MESSAGE
@@ -352,8 +307,6 @@ void Http::CloseConnection(int EpollFD, int clientEvents_fd) {
     }
     _clientFDToClient.erase(clientEvents_fd);
     _cgis.erase(clientEvents_fd);
-    //_clientFDToRequest.erase(clientEvents_fd);
-    //clientFD_Server.erase(clientEvents_fd);
     close(clientEvents_fd);
 }
 
@@ -424,7 +377,6 @@ Http::Http(ILogger *logger) {
     HttpResponse::SetDefaultHTTPResponse();
     _serversPointer.clear();
     _clientFDToClient.clear();
-    // _clientFDToRequest.clear();
     _cgis.clear();
     _logger = logger;
     _result = NULL;
