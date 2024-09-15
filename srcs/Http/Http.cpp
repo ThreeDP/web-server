@@ -27,7 +27,7 @@ void Http::Process(void) {
             std::string port_label = (*itServer)->GetListenPort();
             std::cout << _logger->Log(&Logger::LogInformation, "Set Host:", host_label, "and Port:", port_label);
 
-            int status = getaddrinfo(host_label.c_str(), port_label.c_str(), &hints, &_result);
+            int status = getaddrinfo("127.0.0.1", port_label.c_str(), &hints, &_result);
             if (status != 0) {
                 CleanFds(epollFD);
                 freeaddrinfo(_result);

@@ -3,30 +3,6 @@
 
 # TODO
 
-- [x] Check [0, -1] for recv and send
-- [x] Ignore signals before Parser
-- [x] Ajustar Variaveis a parametros CGI
-- [x] Add path download to the parser
-- [x] Set CGI in the correct path
-- [X] Ajustar CGI For Write
-- [X] Add CGI Write in epoll
-- [X] Check Possible status code
-- [x] Check DELETE Status Code Flow
-- [X] Check POST Status Code Flow
-- [X] Check GET Status Code Flow
-- [X] Check UNKNOWN Method
-- [X] Upload a File in the server and get back
-- [X] Test A CGI with a infinite loop
-- [X] Test a CGI with crash script
-- [x] Add timeout function in the correct form.
-- [X] Check Status Code For Server Error
-- [X] Check Status For CGI
-- [ ] Add CGI Read in epoll
-- [ ] Adjust the hostname part
-- [ ] Definir para que quando o server não for encontrado seja o primeiro server configurado.
-- [ ] Definir para que quando o route não for encontrado seja o primeiro route configurado.
-- [x] Check Problem in image render
-- [ ] Check Leaks
 
 
 # Request Before Method
