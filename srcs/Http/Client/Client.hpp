@@ -80,7 +80,7 @@ class Client : public IClient {
     }
 
     bool CheckIfExpire(void) {
-        if (time(NULL) - _lastUpdate > 4) {
+        if (time(NULL) - _lastUpdate > 60) {
             return true;
         }
         return false;

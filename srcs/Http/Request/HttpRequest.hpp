@@ -66,7 +66,7 @@ class HttpRequest {
         std::string                         GetPath(void) const;
         std::string                         GetHTTPVersion(void) const;
         std::string                         GetBody(void) const;
-        int                              GetBodySize(void) const;
+        ssize_t                              GetBodySize(void) const;
         std::string                     GetQueryParams(void) const {
             return _queryStrings;
         }

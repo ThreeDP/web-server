@@ -123,7 +123,7 @@ void Http::Process(void) {
                 req.client = &_clientFDToClient[clientEvents[i].data.fd];
                 
                 std::cout << _logger->Log(&Logger::LogInformation, "Request received from client [",  clientEvents[i].data.fd, "] connected on", "localhost", "8081");
-                if (ProcessResponse(epollFD, clientEvents[i], requestBytes.size(), req, Continue) == true)
+                if (ProcessResponse(epollFD, clientEvents[i], _clientFDToClient[clientEvents[i].data.fd].Request.size(), req, Continue) == true)
                     continue;
             }
             if (WriteResponse(epollFD, clientEvents[i]) == true)
@@ -232,6 +232,7 @@ std::vector<char> Http::ReadRequest(int EpollFD, struct epoll_event &clientEvent
     memset(request, '\0', sizeof(char) * BUFFER_SIZE);
 
     std::cout << _logger->Log(&Logger::LogInformation, "Entered pollin: [", clientEvent.data.fd, "].");
+    
     int numbytes = recv(clientEvent.data.fd, request, sizeof(char) * BUFFER_SIZE, 0);
     std::cout << _logger->Log(&Logger::LogTrace, "'", request, "'", "\nNumber of Bytes:", numbytes);
     
@@ -253,9 +254,9 @@ std::vector<char> Http::ReadRequest(int EpollFD, struct epoll_event &clientEvent
     return std::vector<char>();
 }
 
-bool Http::ProcessResponse(int EpollFD, struct epoll_event &clientEvent, size_t numbytes, HttpRequest &Req, bool Continue) {
+bool Http::ProcessResponse(int EpollFD, struct epoll_event &clientEvent, ssize_t numbytes, HttpRequest &Req, bool Continue) {
 
-    if (numbytes < BUFFER_SIZE) {
+    if (numbytes >= Req.GetBodySize()) {
         if (Continue && Req._payload.find("Expect:") != Req._payload.end()) {
             Req._payload.erase("Expect:");
         }

@@ -25,7 +25,7 @@
 - [ ] Adjust the hostname part
 - [ ] Definir para que quando o server não for encontrado seja o primeiro server configurado.
 - [ ] Definir para que quando o route não for encontrado seja o primeiro route configurado.
-- [ ] Check Problem in image render
+- [x] Check Problem in image render
 - [ ] Check Leaks
 
 

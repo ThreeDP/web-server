@@ -74,7 +74,7 @@ std::string         HttpRequest::GetBody(void) const {
     return this->_body;
 }
 
-int              HttpRequest::GetBodySize(void) const {
+ssize_t              HttpRequest::GetBodySize(void) const {
     return this->_bodySize;
 }
 
