@@ -67,7 +67,7 @@ class Route : public IRoute {
         // );
         IHttpResponse *ProcessRequest(
             HttpRequest &request,
-            int* cgifd,
+            int **cgifd,
             int epoll
         );
     
@@ -156,7 +156,7 @@ class Route : public IRoute {
          */
 
         // HttpStatusCode::Code Post(HttpRequest &request, std::string absPath);
-        HttpStatusCode::Code Post(HttpRequest &request, std::string absPath, int* cgifd, int epoll);
+        HttpStatusCode::Code Post(HttpRequest &request, std::string absPath, int **cgifd, int epoll);
 
         /**!
          * 
@@ -176,10 +176,10 @@ class Route : public IRoute {
          * Use in Post for produces they rules.
          * 
          */
-        HttpStatusCode::Code        cgiAction(HttpRequest &req, std::string absPath, int* cgifd);
+        HttpStatusCode::Code        cgiAction(HttpRequest &req, std::string absPath);
 
         // HttpStatusCode::Code Get(HttpRequest &request, std::string absPath);
-        HttpStatusCode::Code Get(HttpRequest &request, std::string absPath, int* cgifd, int epoll);
+        HttpStatusCode::Code Get(HttpRequest &request, std::string absPath, int **cgifd, int epoll);
     
     private:
         /// @brief Checks if there is any file

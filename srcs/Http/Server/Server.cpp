@@ -71,7 +71,7 @@ void    Server::CreateSocketAndBind(void) {
     for (; result != NULL; result = result->ai_next) {
         listener = socket(
             result->ai_family,
-            result->ai_socktype,
+            result->ai_socktype | SOCK_NONBLOCK,
             result->ai_protocol
         );
         if (listener == - 1)
@@ -172,7 +172,7 @@ void Server::CreateCGIResponse(int epollfd, int cgifd, int clientfd) {
     (void)epollfd;
 }
 
-HttpStatusCode::Code                Server::ProcessRequest(HttpRequest &request, int client_fd, int* cgifd, int epoll) {
+HttpStatusCode::Code                Server::ProcessRequest(HttpRequest &request, int client_fd, int **cgifd, int epoll) {
     BuilderResponse builder = BuilderResponse(_logger, _handler);
     std::string keyPath = this->FindMatchRoute(request);
     std::cout << _logger->Log(&ILogger::LogInformation, "Request", "Route", keyPath, request.GetMethod(), request.GetPath());

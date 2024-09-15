@@ -7,34 +7,9 @@
  * 
  */
 
-// IHttpResponse *Route::ProcessRequest(
-//     HttpRequest &request
-// ) {
-//     std::string     absolutePath;
-    
-//     absolutePath = Utils::SanitizePath(this->_root, request.GetPath());
-//     if (this->_checkAllowMethod(request.GetMethod())) {
-//         return _builder->GetResult(); 
-//     }
-//     if (this->_checkRedirectPath(this->GetRedirectPath())) {
-//         return _builder->GetResult();
-//     }
-//     if (((this->*_httpMethods[request.GetMethod()])( request, absolutePath ) )) {
-//         return _builder->GetResult();
-//     }
-//     _builder
-//         ->SetupResponse()
-//         .WithStatusCode(HttpStatusCode::_INTERNAL_SERVER_ERROR)
-//         .WithContentType(".html")
-//         .WithDefaultPage()
-//         .GetResult();
-//     std::cout << _logger->Log(&Logger::LogInformation, "Route Not Found or Configurated", HttpStatusCode::_INTERNAL_SERVER_ERROR);
-//     return _builder->GetResult();
-// }
-
 IHttpResponse *Route::ProcessRequest(
     HttpRequest &request,
-    int* cgifd,
+    int** cgifd,
     int epoll
 ) {
     std::string     absolutePath;
@@ -211,7 +186,7 @@ HttpStatusCode::Code Route::_notFound(void) {
  * 
  */
 
-HttpStatusCode::Code Route::Post(HttpRequest &request, std::string absPath, int* cgifd, int epoll) {
+HttpStatusCode::Code Route::Post(HttpRequest &request, std::string absPath) {
     HttpStatusCode::Code result = HttpStatusCode::_DO_NOTHING;
     if ((result = this->_checkBodyLimit(request.GetBodySize()))) { return result; }
     if (this->_handler->PathExist(absPath)) {
@@ -230,7 +205,7 @@ HttpStatusCode::Code Route::Post(HttpRequest &request, std::string absPath, int*
                     .WithStatusCode(HttpStatusCode::_CONTINUE);
                 return HttpStatusCode::_CONTINUE; 
             }
-            return this->cgiAction(request, absPath, cgifd);
+            return this->cgiAction(request, absPath);
         }
         else if (allow) {
             return this->_errorHandler(HttpStatusCode::_BAD_REQUEST);
@@ -239,10 +214,8 @@ HttpStatusCode::Code Route::Post(HttpRequest &request, std::string absPath, int*
             return this->_errorHandler(HttpStatusCode::_FORBIDDEN);
         }
     }
-    (void)epoll;
     return this->_notFound();
 }
-
 
 /**!
  * 
@@ -335,71 +308,45 @@ HttpStatusCode::Code Route::_errorHandler(HttpStatusCode::Code code) {
  * 
  */
 
-HttpStatusCode::Code Route::cgiAction(HttpRequest &req, std::string absPath, int* cgifd) {
- // Criação de um pipe para enviar o corpo da requisição
-    int pipefd[2];
-    if (pipe(pipefd) == -1) {
-        return _errorHandler(HttpStatusCode::_INTERNAL_SERVER_ERROR);
-    }
+HttpStatusCode::Code Route::cgiAction(HttpRequest &req, std::string absPath) {
+    req.client->CreatePair();
 
     char **envp = req.GetEnvp(Utils::SanitizePath(_root, _upload_on));
     const char *phpInterpreter = "/usr/bin/python3";
     const char *scriptPath = absPath.c_str();
     const char *argv[] = {phpInterpreter, scriptPath, NULL};
 
-    pid_t pid = fork();
-    if (pid == 0) {  // Processo filho
+    req.client->SetPid(fork());
+    if (req.client->GetPid() == 0) {  // Processo filho
         if (chdir(absPath.substr(0, absPath.find_last_of('/')).c_str()) != 0) {
-            close(pipefd[1]);
-            close(pipefd[0]);
-            close(cgifd[1]);
+            Utils::DeleteEnvp(envp);
+            close(req.client->GetRDPipe());
+            close(req.client->GetWRPipe());
+            close(req.client->GetWRPipe2());
+            close(req.client->GetRDPipe2());
             exit(EXIT_FAILURE);
         }
-        
-        close(pipefd[1]);
-        dup2(pipefd[0], STDIN_FILENO);
-        dup2(cgifd[1], STDOUT_FILENO);
-        dup2(cgifd[1], STDERR_FILENO);
 
-        close(pipefd[0]);
-        close(cgifd[1]);
+        close(req.client->GetWRPipe());
+        dup2(req.client->GetRDPipe(), STDIN_FILENO);
+        dup2(req.client->GetRDPipe2(), STDOUT_FILENO);
+        dup2(req.client->GetRDPipe2(), STDERR_FILENO);
+ 
+        close(req.client->GetRDPipe());
+        close(req.client->GetRDPipe2());
 
         execve(phpInterpreter, (char**)argv, envp);
+        Utils::DeleteEnvp(envp);
         perror("execve falhou");
         exit(EXIT_FAILURE);
-    } else {
-        Utils::DeleteEnvp(envp);
-        close(pipefd[0]);
-        close(cgifd[1]);
-
-        ssize_t numbytes = write(pipefd[1], &req._bodyBinary[0], req._bodyBinary.size());
-        if (numbytes == 0 || numbytes == -1) {
-
-            close(pipefd[1]);
-        }
-        close(pipefd[1]);
-
-        int status;
-        if (waitpid(pid, &status, 0) == -1) {
-            return _errorHandler(HttpStatusCode::_INTERNAL_SERVER_ERROR);
-        }
-
-        if (WIFEXITED(status)) {
-            int exitStatus = WEXITSTATUS(status);
-            if (exitStatus != 0) {
-                std::cerr << "O processo filho terminou com status de erro: " << exitStatus << std::endl;
-            }
-        } else if (WIFSIGNALED(status)) {
-            int signal = WTERMSIG(status);
-            std::cerr << "O processo filho foi terminado por um sinal: " << signal << std::endl;
-        } else {
-            std::cerr << "O processo filho terminou de maneira inesperada." << std::endl;
-        }
     }
+    Utils::DeleteEnvp(envp);
+    close(req.client->GetRDPipe2());
+    close(req.client->GetRDPipe());
     return HttpStatusCode::_CGI;
 }
 
-HttpStatusCode::Code Route::Get(HttpRequest &request, std::string absPath, int* cgifd, int epoll) {
+HttpStatusCode::Code Route::Get(HttpRequest &request, std::string absPath) {
     HttpStatusCode::Code result = HttpStatusCode::_DO_NOTHING;
     if ( request.GetBodySize() > 0 ) { return HttpStatusCode::_BAD_REQUEST; }
     if (this->_handler->PathExist(absPath)) {
@@ -411,8 +358,7 @@ HttpStatusCode::Code Route::Get(HttpRequest &request, std::string absPath, int* 
             if (( result = this->_checkAutoIndex(absPath) )) { return result; }
         }
         else if (allow && Utils::GetFileExtension(absPath) == ".py") {
-            this->cgiAction(request, absPath, cgifd);
-            return HttpStatusCode::_CGI;
+            return this->cgiAction(request, absPath);
         }
         else if (allow && (result = this->_checkActionInFile(absPath)) ) { return result; }
         else if (!allow) {
@@ -420,7 +366,6 @@ HttpStatusCode::Code Route::Get(HttpRequest &request, std::string absPath, int* 
             return this->_errorHandlerDefault(HttpStatusCode::_FORBIDDEN);
         }
     }
-    (void)epoll;
     return this->_notFound();
 }
 

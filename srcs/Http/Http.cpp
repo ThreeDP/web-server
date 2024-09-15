@@ -41,7 +41,7 @@ void Http::Process(void) {
             int listener = 1;
             std::cout << _logger->Log(&Logger::LogInformation, "Try to bind Host:", host_label, "and Port:", port_label);
             for (; _result != NULL; _result = _result->ai_next) {
-                listener = socket(_result->ai_family, _result->ai_socktype, _result->ai_protocol);
+                listener = socket(_result->ai_family, _result->ai_socktype | SOCK_NONBLOCK, _result->ai_protocol);
                 if (listener == -1)
                     continue;
                 if (setsockopt(listener, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &optval, sizeof(int)) == -1) {
@@ -124,6 +124,7 @@ void Http::Process(void) {
                 );
                 // _clientFDToRequest[clientEvents[i].data.fd].insert(_clientFDToRequest[clientEvents[i].data.fd].end(), requestBytes.begin(), requestBytes.end());
                 req.ParserRequest(_clientFDToClient[clientEvents[i].data.fd].Request);
+                req.client = &_clientFDToClient[clientEvents[i].data.fd];
                 // req.ParserRequest(_clientFDToRequest[clientEvents[i].data.fd]);
                 
                 std::cout << _logger->Log(&Logger::LogInformation, "Request received from client [",  clientEvents[i].data.fd, "] connected on", "localhost", "8081");
@@ -169,9 +170,31 @@ bool Http::HandShake(int EpollFD, struct epoll_event &clientEvent) {
 
 bool Http::CGIWriteRequest(int EpollFD, struct epoll_event &clientEvent) {
     std::map<int, int>::iterator it;
-    if ((clientEvent.events & EPOLLIN) && (it = _cgis.find(clientEvent.data.fd)) != _cgis.end()) {
+    if ((clientEvent.events & EPOLLOUT) && (it = _cgis.find(clientEvent.data.fd)) != _cgis.end()) {
         std::cout << _logger->Log(&Logger::LogInformation, "Entered CGI pollin: [", clientEvent.data.fd, "].");
-        ModifyClientFDState(EpollFD, clientEvent.data.fd, EPOLLOUT);
+        
+        HttpRequest req;
+        req.ParserRequest(_clientFDToClient[it->second].Request);
+        ssize_t numbytes = write(_clientFDToClient[it->second].cgiPair[3], &req._bodyBinary[0], req._bodyBinary.size());
+        (void)numbytes;
+        close(_clientFDToClient[it->second].cgiPair[3]);
+        int status;
+        if (waitpid(_clientFDToClient[it->second]._pid, &status, 0) == -1) {
+            //return _errorHandler(HttpStatusCode::_INTERNAL_SERVER_ERROR);
+        }
+        if (WIFEXITED(status)) {
+            int exitStatus = WEXITSTATUS(status);
+            if (exitStatus != 0) {
+                std::cerr << "O processo filho terminou com status de erro: " << exitStatus << std::endl;
+            }
+        } else if (WIFSIGNALED(status)) {
+            int signal = WTERMSIG(status);
+            std::cerr << "O processo filho foi terminado por um sinal: " << signal << std::endl;
+        } else {
+            std::cerr << "O processo filho terminou de maneira inesperada." << std::endl;
+        }
+        // CloseConnection(EpollFD, clientEvent.data.fd);
+        ModifyClientFDState(EpollFD, clientEvent.data.fd, EPOLLIN);
         return true;
     }
     return false;
@@ -179,7 +202,7 @@ bool Http::CGIWriteRequest(int EpollFD, struct epoll_event &clientEvent) {
 
 bool Http::CGIReadResponse(int EpollFD, struct epoll_event &clientEvent) {
     std::map<int, int>::iterator it;
-    if ((clientEvent.events & EPOLLOUT) && (it = _cgis.find(clientEvent.data.fd)) != _cgis.end()) {
+    if ((clientEvent.events & EPOLLIN) && (it = _cgis.find(clientEvent.data.fd)) != _cgis.end()) {
         std::cout << _logger->Log(&Logger::LogInformation, "Entered CGI pollout: [", clientEvent.data.fd, "].");
         _clientFDToClient[it->second].Server->CreateCGIResponse(EpollFD, it->first, it->second);
         //clientFD_Server[it->second]->CreateCGIResponse(EpollFD, it->first, it->second);
@@ -191,7 +214,6 @@ bool Http::CGIReadResponse(int EpollFD, struct epoll_event &clientEvent) {
 }
 
 std::vector<char> Http::ReadRequest(int EpollFD, struct epoll_event &clientEvent) {
-    HttpRequest req;
     char request[BUFFER_SIZE];
     memset(request, '\0', sizeof(char) * BUFFER_SIZE);
 
@@ -218,8 +240,7 @@ std::vector<char> Http::ReadRequest(int EpollFD, struct epoll_event &clientEvent
 }
 
 bool Http::ProcessResponse(int EpollFD, struct epoll_event &clientEvent, size_t numbytes, HttpRequest &Req, bool Continue) {
-    int sv[2];
-    memset(&sv, '\0', sizeof(sv));
+
     if (numbytes < BUFFER_SIZE) {
         if (Continue && Req._payload.find("Expect:") != Req._payload.end()) {
             Req._payload.erase("Expect:");
@@ -229,7 +250,7 @@ bool Http::ProcessResponse(int EpollFD, struct epoll_event &clientEvent, size_t 
             std::cerr << _logger->Log(&Logger::LogWarning, "Problem to open socketpair: [", clientEvent.data.fd, "].") << std::endl;
         }
         
-        int isCGI = (_clientFDToClient[clientEvent.data.fd].Server->ProcessRequest(Req, clientEvent.data.fd, _clientFDToClient[clientEvent.data.fd].cgiPair, EpollFD) == HttpStatusCode::_CGI);
+        int isCGI = (_clientFDToClient[clientEvent.data.fd].Server->ProcessRequest(Req, clientEvent.data.fd, (int **)&_clientFDToClient[clientEvent.data.fd].cgiPair, EpollFD) == HttpStatusCode::_CGI);
         // int isCGI = (clientFD_Server[clientEvent.data.fd]->ProcessRequest(Req, clientEvent.data.fd, sv, EpollFD) == HttpStatusCode::_CGI);
 
         // MODIFICA PARA EPOLLOUT
@@ -237,12 +258,14 @@ bool Http::ProcessResponse(int EpollFD, struct epoll_event &clientEvent, size_t 
 
         std::cout << _logger->Log(&Logger::LogInformation, "Client [",  clientEvent.data.fd, "] connected on", "localhost", "8081");
         if (isCGI) {
-            AddConnection(EpollFD, _clientFDToClient[clientEvent.data.fd].cgiPair[0]);
-            this->_cgis[_clientFDToClient[clientEvent.data.fd].cgiPair[0]] = clientEvent.data.fd;
+            std::cout << _logger->Log(&Logger::LogInformation, "IS CGI [",  clientEvent.data.fd, "].");
+            AddConnection(EpollFD, _clientFDToClient[clientEvent.data.fd].cgiPair[1]);
+            ModifyClientFDState(EpollFD, _clientFDToClient[clientEvent.data.fd].cgiPair[1], EPOLLOUT);
+            // AddConnection(EpollFD, _clientFDToClient[clientEvent.data.fd].cgiPair[0]);
+            this->_cgis[_clientFDToClient[clientEvent.data.fd].cgiPair[1]] = clientEvent.data.fd;
+            // this->_cgis[_clientFDToClient[clientEvent.data.fd].cgiPair[0]] = clientEvent.data.fd;
             return true;
         }
-        close(_clientFDToClient[clientEvent.data.fd].cgiPair[0]);
-        close(_clientFDToClient[clientEvent.data.fd].cgiPair[1]);
     }
     return false;
 }
@@ -327,32 +350,6 @@ void    Http::CheckTimeout(int EpollFD)
         }
     }
 }
-
-// ssize_t    Http::HandleRequest(int clientEvents[i].data.fd, int poll_fd) {
-//     char            buffer[1000000];
-//     HttpRequest     res;
-//     IServer         *server = this->clientFD_Server[clientEvents[i].data.fd];
-
-//     memset(&buffer, 0, sizeof(char) * 1000000);
-//     ssize_t numbytes = recv(clientEvents[i].data.fd, &buffer, sizeof(char) * 1000000, 0);
-//     res.ParserRequest(buffer);
-
-//     int sv[2]; 
-//     if (socketpair(AF_UNIX, SOCK_STREAM, 0, sv) == -1) {
-//         std::cerr << "Erro ao criar socket pair: " << strerror(errno) << std::endl;
-//         return -1;
-//     }
-//     this->_cgis[sv[0]] = clientEvents[i].data.fd;
-//     if (server->ProcessRequest(res, clientEvents[i].data.fd, sv, this->GetEPollFD()) == HttpStatusCode::_CGI) {
-//         return numbytes;
-//     } else {
-//         close(sv[0]);
-//         close(sv[1]);
-//     }
-//     (void)poll_fd;
-//     delete server;
-//     return numbytes;
-// }
 
 /* Geters
 =================================================*/

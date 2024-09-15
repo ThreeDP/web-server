@@ -19,7 +19,7 @@ class IRoute {
 
         virtual IHttpResponse *ProcessRequest(
             HttpRequest &request,
-            int* cgifd,
+            int **cgifd,
             int epoll
         ) = 0;
 

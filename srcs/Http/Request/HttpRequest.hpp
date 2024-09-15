@@ -8,6 +8,7 @@
 # include <cstring>
 # include <vector>
 # include "define.hpp"
+# include "IClient.hpp"
 
 class HttpRequest {
     public:
@@ -20,6 +21,7 @@ class HttpRequest {
         std::vector<char>                   _bodyBinary;
 
     public:
+        IClient *client;
         // AllowMethod:          GET
         std::map<std::string, std::string>  _payload;
         

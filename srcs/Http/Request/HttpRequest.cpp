@@ -142,7 +142,7 @@ HttpRequest::HttpRequest(void) :
     _HTTPVersion(""),
     _body(""),
     _bodySize(0) {
-
+    client = NULL;
 }
 
 HttpRequest::~HttpRequest(void) {
