@@ -36,7 +36,6 @@ void Http::Process(void) {
                 throw std::runtime_error(_logger->Log(&Logger::LogCaution, "Error: Host <", host_label, "Port:", port_label, "> not found."));
             }
 
-            // BIND DA FD DO SERVER COM A PORTA E HOST
             int optval = 1;
             int listener = 1;
             std::cout << _logger->Log(&Logger::LogInformation, "Try to bind Host:", host_label, "and Port:", port_label);
@@ -67,7 +66,6 @@ void Http::Process(void) {
             std::cout << _logger->Log(&Logger::LogInformation, "Server: [", listener, "] bind Host:", host_label, "and Port:", port_label);
             std::cout << _logger->Log(&Logger::LogInformation, "Server: [", listener, "] try to starting listing on Host:", host_label, "and Port:", port_label);
 
-        	// COMEÇA A OUVIR NO HOST E PORTA
             if (listen(listener, 10) == -1) {
                 CleanFds(epollFD);
                 close(listener);
@@ -75,7 +73,6 @@ void Http::Process(void) {
             }
             std::cout << _logger->Log(&Logger::LogInformation, "Server: [", listener, "] listining on Host:", host_label, "and Port:", port_label);
 
-            // ADICIONA O SERVER NO EPOLL
             struct epoll_event event;
             memset(&event, '\0', sizeof(struct epoll_event));
             event.events = EPOLLIN;
@@ -112,7 +109,6 @@ void Http::Process(void) {
                 break;
             if ((clientEvents[i].events & EPOLLIN)) {
                 bool Continue = (!_clientFDToClient[clientEvents[i].data.fd].Request.empty()) ? true : false;
-                //bool Continue = (_clientFDToRequest.find(clientEvents[i].data.fd) != _clientFDToRequest.end()) ? true : false;
                 std::vector<char> requestBytes = ReadRequest(epollFD, clientEvents[i]);
                 if (requestBytes.empty())
                     break;
@@ -123,10 +119,8 @@ void Http::Process(void) {
                     requestBytes.begin(),
                     requestBytes.end()
                 );
-                // _clientFDToRequest[clientEvents[i].data.fd].insert(_clientFDToRequest[clientEvents[i].data.fd].end(), requestBytes.begin(), requestBytes.end());
                 req.ParserRequest(_clientFDToClient[clientEvents[i].data.fd].Request);
                 req.client = &_clientFDToClient[clientEvents[i].data.fd];
-                // req.ParserRequest(_clientFDToRequest[clientEvents[i].data.fd]);
                 
                 std::cout << _logger->Log(&Logger::LogInformation, "Request received from client [",  clientEvents[i].data.fd, "] connected on", "localhost", "8081");
                 if (ProcessResponse(epollFD, clientEvents[i], requestBytes.size(), req, Continue) == true)
@@ -159,7 +153,6 @@ bool Http::HandShake(int EpollFD, struct epoll_event &clientEvent) {
         if ((new_socket = accept(itListener->first, (struct sockaddr *) &client_saddr, &addrlen)) > 0) {
             AddConnection(EpollFD, new_socket);
             _clientFDToClient[new_socket].Server = _serverFDToServer[itListener->first];
-            // clientFD_Server[new_socket] = _serverFDToServer[itListener->first];
             std::cout << _logger->Log(&Logger::LogInformation, "HandShake client [",  new_socket, "] connected on", "localhost", "8081");
             return true;
         }
@@ -175,9 +168,11 @@ bool Http::CGIWriteRequest(int EpollFD, struct epoll_event &clientEvent) {
         HttpRequest req;
         req.ParserRequest(_clientFDToClient[it->second].Request);
         ssize_t numbytes = write(_clientFDToClient[it->second].cgiPair[3], &req._bodyBinary[0], req._bodyBinary.size());
-        (void)numbytes;
         close(_clientFDToClient[it->second].cgiPair[3]);
         _clientFDToClient[it->second].SetStatus(WaitProcess(req, it->second));
+        if (numbytes == -1) {
+            _clientFDToClient[it->second].SetStatus(HttpStatusCode::_INTERNAL_SERVER_ERROR);
+        }
         ModifyClientFDState(EpollFD, clientEvent.data.fd, EPOLLIN);
         _clientFDToClient[clientEvent.data.fd].UpdateLastUpdate();
         return true;
@@ -218,12 +213,12 @@ HttpStatusCode::Code Http::WaitProcess(HttpRequest &req, int clientfd) {
 bool Http::CGIReadResponse(int EpollFD, struct epoll_event &clientEvent) {
     std::map<int, int>::iterator it;
     if ((clientEvent.events & EPOLLIN) && (it = _cgis.find(clientEvent.data.fd)) != _cgis.end()) {
+        HttpRequest req;
+        req.ParserRequest(_clientFDToClient[it->second].Request);
         std::cout << _logger->Log(&Logger::LogInformation, "Entered CGI pollout: [", clientEvent.data.fd, "].");
         if (_clientFDToClient[it->second].GetStatus() == HttpStatusCode::_DO_NOTHING)
-            _clientFDToClient[it->second].Server->CreateCGIResponse(EpollFD, it->first, it->second);
+            _clientFDToClient[it->second].Server->CreateCGIResponse(EpollFD, it->first, it->second, req);
         else {
-            HttpRequest req;
-            req.ParserRequest(_clientFDToClient[it->second].Request);
             _clientFDToClient[it->second].Server->GenerateErrorPage(it->second, req, _clientFDToClient[it->second].GetStatus());
         }
         CloseConnection(EpollFD, clientEvent.data.fd);

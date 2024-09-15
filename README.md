@@ -19,8 +19,8 @@
 - [X] Test A CGI with a infinite loop
 - [X] Test a CGI with crash script
 - [x] Add timeout function in the correct form.
-- [ ] Check Status Code For Server Error
-- [ ] Check Status For CGI
+- [X] Check Status Code For Server Error
+- [X] Check Status For CGI
 - [ ] Add CGI Read in epoll
 - [ ] Adjust the hostname part
 - [ ] Definir para que quando o server não for encontrado seja o primeiro server configurado.

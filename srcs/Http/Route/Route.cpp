@@ -304,13 +304,14 @@ HttpStatusCode::Code Route::cgiAction(HttpRequest &req, std::string absPath) {
     req.client->CreatePair2();
 
     char **envp = req.GetEnvp(Utils::SanitizePath(_root, _upload_on));
-    const char *phpInterpreter = "/usr/bin/python3";
-    const char *scriptPath = absPath.c_str();
-    const char *argv[] = {phpInterpreter, scriptPath, NULL};
+    const char *bin = "/usr/bin/python3";
+    std::string script = absPath.substr(0, absPath.find_last_of('/'));
+    const char *scriptPath = absPath.substr(absPath.find_last_of('/') + 1, absPath.size()).c_str();
+    const char *argv[] = {bin, scriptPath, NULL};
 
     req.client->SetPid(fork());
     if (req.client->GetPid() == 0) {  // Processo filho
-        if (chdir(absPath.substr(0, absPath.find_last_of('/')).c_str()) != 0) {
+        if (chdir(script.c_str()) != 0) {
             Utils::DeleteEnvp(envp);
             close(req.client->GetRDPipe());
             close(req.client->GetWRPipe());
@@ -327,7 +328,7 @@ HttpStatusCode::Code Route::cgiAction(HttpRequest &req, std::string absPath) {
         close(req.client->GetRDPipe());
         close(req.client->GetRDPipe2());
 
-        execve(phpInterpreter, (char**)argv, envp);
+        execve(argv[0], (char**)argv, envp);
         Utils::DeleteEnvp(envp);
         perror("execve falhou");
         exit(EXIT_FAILURE);

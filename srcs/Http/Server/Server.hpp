@@ -101,7 +101,7 @@ class Server : public IServer {
         HttpStatusCode::Code    ProcessRequest(HttpRequest &request, int client_fd);
         std::string             FindMatchRoute(HttpRequest &res);
         
-        void                    CreateCGIResponse(int epoll, int cgifd, int clientfd);
+        void                    CreateCGIResponse(int epoll, int cgifd, int clientfd, HttpRequest &req);
 
         // Geters
 

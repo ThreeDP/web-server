@@ -37,9 +37,9 @@ class HttpRequest {
 
             std::map<std::string, std::string>::iterator it = _payload.begin();
             ev.push_back("REQUEST_METHOD=" + _method);
+            ev.push_back("QUERY_STRING=" + _queryStrings);
             size_t fileStart = _path.find_last_of('/');
-            std::cout << "Sring dentro de script file: " << _path.substr(fileStart, _path.size()) << std::endl;
-            ev.push_back("SCRIPT_FILE=" + _path.substr(fileStart, _path.size()));
+            ev.push_back("SCRIPT_FILE=" + _path.substr(fileStart + 1, _path.size()));
             ev.push_back("SAVE_INTO=" + saveon);
             for ( ;  it != _payload.end(); ++it) {
                 std::string key = it->first.substr(0, it->first.size() - 1);
