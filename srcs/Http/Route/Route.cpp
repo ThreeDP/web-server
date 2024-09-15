@@ -7,36 +7,7 @@
  * 
  */
 
-// IHttpResponse *Route::ProcessRequest(
-//     HttpRequest &request
-// ) {
-//     std::string     absolutePath;
-    
-//     absolutePath = Utils::SanitizePath(this->_root, request.GetPath());
-//     if (this->_checkAllowMethod(request.GetMethod())) {
-//         return _builder->GetResult(); 
-//     }
-//     if (this->_checkRedirectPath(this->GetRedirectPath())) {
-//         return _builder->GetResult();
-//     }
-//     if (((this->*_httpMethods[request.GetMethod()])( request, absolutePath ) )) {
-//         return _builder->GetResult();
-//     }
-//     _builder
-//         ->SetupResponse()
-//         .WithStatusCode(HttpStatusCode::_INTERNAL_SERVER_ERROR)
-//         .WithContentType(".html")
-//         .WithDefaultPage()
-//         .GetResult();
-//     std::cout << _logger->Log(&Logger::LogInformation, "Route Not Found or Configurated", HttpStatusCode::_INTERNAL_SERVER_ERROR);
-//     return _builder->GetResult();
-// }
-
-IHttpResponse *Route::ProcessRequest(
-    HttpRequest &request,
-    int* cgifd,
-    int epoll
-) {
+IHttpResponse *Route::ProcessRequest(HttpRequest &request) {
     std::string     absolutePath;
     absolutePath = Utils::SanitizePath(this->_root, request.GetPath());
     if (this->_checkAllowMethod(request.GetMethod())) {
@@ -45,20 +16,18 @@ IHttpResponse *Route::ProcessRequest(
     if (this->_checkRedirectPath(this->GetRedirectPath())) {
         return _builder->GetResult();
     }
-
     if (request.GetMethod() == "GET") {
-
-        if (this->Get( request, absolutePath, cgifd, epoll ) == HttpStatusCode::_CGI) {
+        if (this->Get( request, absolutePath) == HttpStatusCode::_CGI) {
             return NULL;
         }
         return _builder->GetResult();
     } else if (request.GetMethod() == "POST") {
-        if (this->Post( request, absolutePath, cgifd, epoll ) == HttpStatusCode::_CGI) {
+        if (this->Post( request, absolutePath) == HttpStatusCode::_CGI) {
             return NULL;
         }
         return _builder->GetResult();
     } else if (request.GetMethod() == "DELETE") {
-        if (this->Delete( request, absolutePath, epoll ) == HttpStatusCode::_CGI) {
+        if (this->Delete( request, absolutePath) == HttpStatusCode::_CGI) {
             return NULL;
         }
         return _builder->GetResult();
@@ -211,7 +180,7 @@ HttpStatusCode::Code Route::_notFound(void) {
  * 
  */
 
-HttpStatusCode::Code Route::Post(HttpRequest &request, std::string absPath, int* cgifd, int epoll) {
+HttpStatusCode::Code Route::Post(HttpRequest &request, std::string absPath) {
     HttpStatusCode::Code result = HttpStatusCode::_DO_NOTHING;
     if ((result = this->_checkBodyLimit(request.GetBodySize()))) { return result; }
     if (this->_handler->PathExist(absPath)) {
@@ -230,7 +199,7 @@ HttpStatusCode::Code Route::Post(HttpRequest &request, std::string absPath, int*
                     .WithStatusCode(HttpStatusCode::_CONTINUE);
                 return HttpStatusCode::_CONTINUE; 
             }
-            return this->cgiAction(request, absPath, cgifd);
+            return this->cgiAction(request, absPath);
         }
         else if (allow) {
             return this->_errorHandler(HttpStatusCode::_BAD_REQUEST);
@@ -239,10 +208,8 @@ HttpStatusCode::Code Route::Post(HttpRequest &request, std::string absPath, int*
             return this->_errorHandler(HttpStatusCode::_FORBIDDEN);
         }
     }
-    (void)epoll;
     return this->_notFound();
 }
-
 
 /**!
  * 
@@ -281,16 +248,14 @@ bool	Route::removeDirectory(std::string dirPath)
 	return true;
 }
 
-HttpStatusCode::Code Route::Delete(HttpRequest &request, std::string absPath, int epoll) {
+HttpStatusCode::Code Route::Delete(HttpRequest &request, std::string absPath) {
     HttpStatusCode::Code result = HttpStatusCode::_DO_NOTHING;
     if ((result = this->_checkBodyLimit(request.GetBodySize()))) { return result; }
     if (this->_handler->PathExist(absPath)) {
         bool isDirectory = this->_handler->FileIsDirectory(absPath);
-        bool allow = this->_handler->IsAllowToDeleteFile(absPath); // ToDelete
+        bool allow = this->_handler->IsAllowToDeleteFile(absPath);
 
         if (allow && isDirectory) {
-            // Delete directory recursion
-			std::cout << "Delete directory" << std::endl;
 			if (removeDirectory(absPath))
             {
                 _builder
@@ -301,8 +266,7 @@ HttpStatusCode::Code Route::Delete(HttpRequest &request, std::string absPath, in
             }
 			return this->_errorHandler(HttpStatusCode::_INTERNAL_SERVER_ERROR);
         }
-        else if (allow){
-            // Delete file
+        else if (allow) {
             if (remove(absPath.c_str()) == 0)
             {
                 _builder
@@ -317,7 +281,6 @@ HttpStatusCode::Code Route::Delete(HttpRequest &request, std::string absPath, in
             return this->_errorHandler(HttpStatusCode::_FORBIDDEN);
         }
     }
-    (void)epoll;
     return this->_notFound();
 }
 
@@ -335,80 +298,45 @@ HttpStatusCode::Code Route::_errorHandler(HttpStatusCode::Code code) {
  * 
  */
 
-HttpStatusCode::Code Route::cgiAction(HttpRequest &req, std::string absPath, int* cgifd) {
- // Criação de um pipe para enviar o corpo da requisição
-    int pipefd[2];
-    if (pipe(pipefd) == -1) {
-        return _errorHandler(HttpStatusCode::_INTERNAL_SERVER_ERROR);
-    }
+HttpStatusCode::Code Route::cgiAction(HttpRequest &req, std::string absPath) {
+    req.client->CreatePair();
 
-    // Obtenha o corpo da requisição (imagem)
-    std::vector<char> requestBody = req._bodyBinary;  // Supondo que você tenha um método GetBody() que retorna o corpo da requisição
-    //size_t bodySize = requestBody.size();
-
-    // Criar o ambiente para o CGI
-    std::vector<std::string> ev = req.GetEnvp();
-    char **envp = new char*[ev.size() + 1];
-    for (size_t i = 0; i < ev.size(); ++i) {
-        envp[i] = new char[ev[i].size() + 1];
-        std::strcpy(envp[i], ev[i].c_str());
-    }
-    envp[ev.size()] = NULL;
-
+    char **envp = req.GetEnvp(Utils::SanitizePath(_root, _upload_on));
     const char *phpInterpreter = "/usr/bin/python3";
     const char *scriptPath = absPath.c_str();
     const char *argv[] = {phpInterpreter, scriptPath, NULL};
 
-    pid_t pid = fork();
-    if (pid == 0) {  // Processo filho
-        close(pipefd[1]);  // Fecha a extremidade de escrita do pipe no filho
+    req.client->SetPid(fork());
+    if (req.client->GetPid() == 0) {  // Processo filho
+        if (chdir(absPath.substr(0, absPath.find_last_of('/')).c_str()) != 0) {
+            Utils::DeleteEnvp(envp);
+            close(req.client->GetRDPipe());
+            close(req.client->GetWRPipe());
+            close(req.client->GetWRPipe2());
+            close(req.client->GetRDPipe2());
+            exit(EXIT_FAILURE);
+        }
 
-        dup2(pipefd[0], STDIN_FILENO);  // Redireciona a entrada padrão para o pipe
-        dup2(cgifd[1], STDOUT_FILENO);  // Redireciona a saída padrão para o pipe CGI
-        dup2(cgifd[1], STDERR_FILENO);  // Redireciona a saída de erro padrão para o pipe CGI
-
-        close(pipefd[0]);  // Fecha a extremidade de leitura do pipe
-        close(cgifd[1]);
+        close(req.client->GetWRPipe());
+        dup2(req.client->GetRDPipe(), STDIN_FILENO);
+        dup2(req.client->GetRDPipe2(), STDOUT_FILENO);
+        dup2(req.client->GetRDPipe2(), STDERR_FILENO);
+ 
+        close(req.client->GetRDPipe());
+        close(req.client->GetRDPipe2());
 
         execve(phpInterpreter, (char**)argv, envp);
+        Utils::DeleteEnvp(envp);
         perror("execve falhou");
         exit(EXIT_FAILURE);
-    } else {  // Processo pai
-        close(pipefd[0]);  // Fecha a extremidade de leitura do pipe no pai
-        close(cgifd[1]);
-
-        // Envia o corpo da requisição (imagem) para o pipe
-        ssize_t test = write(pipefd[1], &req._bodyBinary[0], req._bodyBinary.size());
-        (void)test;
-        close(pipefd[1]);  // Fecha a extremidade de escrita do pipe após o envio
-
-        int status;
-        if (waitpid(pid, &status, 0) == -1) {
-            return _errorHandler(HttpStatusCode::_INTERNAL_SERVER_ERROR);
-        }
-
-        if (WIFEXITED(status)) {
-            int exitStatus = WEXITSTATUS(status);
-            if (exitStatus != 0) {
-                std::cerr << "O processo filho terminou com status de erro: " << exitStatus << std::endl;
-            }
-        } else if (WIFSIGNALED(status)) {
-            int signal = WTERMSIG(status);
-            std::cerr << "O processo filho foi terminado por um sinal: " << signal << std::endl;
-        } else {
-            std::cerr << "O processo filho terminou de maneira inesperada." << std::endl;
-        }
     }
-
-    // Liberar memória alocada para o ambiente
-    for (size_t i = 0; i < ev.size(); ++i) {
-        delete[] envp[i];
-    }
-    delete[] envp;
+    Utils::DeleteEnvp(envp);
+    close(req.client->GetRDPipe2());
+    close(req.client->GetRDPipe());
     return HttpStatusCode::_CGI;
 }
 
-HttpStatusCode::Code Route::Get(HttpRequest &request, std::string absPath, int* cgifd, int epoll) {
+HttpStatusCode::Code Route::Get(HttpRequest &request, std::string absPath) {
     HttpStatusCode::Code result = HttpStatusCode::_DO_NOTHING;
     if ( request.GetBodySize() > 0 ) { return HttpStatusCode::_BAD_REQUEST; }
     if (this->_handler->PathExist(absPath)) {
@@ -420,8 +348,7 @@ HttpStatusCode::Code Route::Get(HttpRequest &request, std::string absPath, int* 
             if (( result = this->_checkAutoIndex(absPath) )) { return result; }
         }
         else if (allow && Utils::GetFileExtension(absPath) == ".py") {
-            this->cgiAction(request, absPath, cgifd);
-            return HttpStatusCode::_CGI;
+            return this->cgiAction(request, absPath);
         }
         else if (allow && (result = this->_checkActionInFile(absPath)) ) { return result; }
         else if (!allow) {
@@ -429,7 +356,6 @@ HttpStatusCode::Code Route::Get(HttpRequest &request, std::string absPath, int* 
             return this->_errorHandlerDefault(HttpStatusCode::_FORBIDDEN);
         }
     }
-    (void)epoll;
     return this->_notFound();
 }
 

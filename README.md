@@ -5,24 +5,25 @@
 
 - [x] Check [0, -1] for recv and send
 - [x] Ignore signals before Parser
-- [] Ajustar Variaveis a parametros CGI
-- [] Check Possible status code
-- [] Check DELETE Status Code Flow
-- [] Check POST Status Code Flow
-- [] Check GET Status Code Flow
-- [] Add path download to the parser
-- [] Check UNKNOWN Method
-- [] Upload a File in the server and get back
-- [] Set CGI in the correct path
-- [] Test A CGI with a infinite loop
-- [] Test a CGI with crash script
-- [] Adjust the hostname part
-- [] Definir para que quando o server não for encontrado seja o primeiro server configurado.
-- [] Definir para que quando o route não for encontrado seja o primeiro route configurado.
-- [] Add timeout function in the correct form.
-- [] Check Problem in image render
-- [] Add CGI Write in epoll
-- [] Check Leaks
+- [x] Ajustar Variaveis a parametros CGI
+- [x] Add path download to the parser
+- [x] Set CGI in the correct path
+- [ ] Ajustar CGI For Write
+- [ ] Add CGI Write in epoll
+- [ ] Check Possible status code
+- [ ] Check DELETE Status Code Flow
+- [ ] Check POST Status Code Flow
+- [ ] Check GET Status Code Flow
+- [ ] Check UNKNOWN Method
+- [ ] Upload a File in the server and get back
+- [ ] Test A CGI with a infinite loop
+- [ ] Test a CGI with crash script
+- [ ] Adjust the hostname part
+- [ ] Definir para que quando o server não for encontrado seja o primeiro server configurado.
+- [ ] Definir para que quando o route não for encontrado seja o primeiro route configurado.
+- [ ] Add timeout function in the correct form.
+- [ ] Check Problem in image render
+- [ ] Check Leaks
 
 
 # Request Before Method
