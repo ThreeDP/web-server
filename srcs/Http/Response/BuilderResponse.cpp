@@ -38,7 +38,7 @@ IBuilderResponse &BuilderResponse::WithHeader(std::pair<std::string, std::string
 }
 
 IBuilderResponse &BuilderResponse::WithDirectoryFile(DIR *directory, std::string path) {
-    if (directory != NULL && _response->GetBody() == "") {
+    if (directory != NULL && _response->GetBodySize() == 0) {
         std::set<std::string> directories = _handler->ReadDirectory(directory);
         _response->_createBodyByDirectory(directories, path, *_handler);
     }
@@ -60,9 +60,10 @@ IBuilderResponse &BuilderResponse::WithBody(std::vector<char> body) {
     return *this;
 }
 IBuilderResponse &BuilderResponse::WithFileDescriptor(std::ifstream *fd) {
-    if (fd != NULL && _response->GetBody() == "") {
+    if (fd != NULL && _response->GetBodySize() == 0) {
         _response->SetBody(_handler->ReadRegularFile(fd));
-
+        if (_response->GetBodySize() == 0)
+            _response->SetStatusCode(HttpStatusCode::_NO_CONTENT);
         if (_logger->Env()) {
             std::cerr << _logger->Log(&Logger::LogDebug, "Create A Body File Descriptor: ");
             std::cerr << _logger->Log(&Logger::LogTrace, "Payload File Descriptor {\n", _response->_toString(), "\n}");
@@ -74,7 +75,7 @@ IBuilderResponse &BuilderResponse::WithFileDescriptor(std::ifstream *fd) {
 }
 
 IBuilderResponse &BuilderResponse::WithDefaultPage(void) {
-    if (_response->GetBody() == "") {
+    if (_response->GetBodySize() == 0) {
         _response->_defaultErrorPage();
     }
     return *this;

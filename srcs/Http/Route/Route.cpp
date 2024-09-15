@@ -189,7 +189,6 @@ HttpStatusCode::Code Route::Post(HttpRequest &request, std::string absPath) {
         if (allow && isDirectory) {
             if ((result = this->_checkDirectory(absPath, request))) { return result; }
             if (( result = this->_checkExistIndex(request.GetPath(), absPath) )) { return result; }
-            if (( result = this->_checkAutoIndex(absPath) )) { return result; }
         }
         else if (allow && Utils::GetFileExtension(absPath) == ".py") {
             if (request._payload.find("Expect:") != request._payload.end()) {

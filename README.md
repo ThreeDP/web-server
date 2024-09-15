@@ -8,14 +8,15 @@
 - [x] Ajustar Variaveis a parametros CGI
 - [x] Add path download to the parser
 - [x] Set CGI in the correct path
-- [ ] Ajustar CGI For Write
-- [ ] Add CGI Write in epoll
+- [X] Ajustar CGI For Write
+- [X] Add CGI Write in epoll
+- [ ] Add CGI Read in epoll
 - [ ] Check Possible status code
-- [ ] Check DELETE Status Code Flow
-- [ ] Check POST Status Code Flow
-- [ ] Check GET Status Code Flow
-- [ ] Check UNKNOWN Method
-- [ ] Upload a File in the server and get back
+- [x] Check DELETE Status Code Flow
+- [X] Check POST Status Code Flow
+- [X] Check GET Status Code Flow
+- [X] Check UNKNOWN Method
+- [X] Upload a File in the server and get back
 - [ ] Test A CGI with a infinite loop
 - [ ] Test a CGI with crash script
 - [ ] Adjust the hostname part

@@ -22,6 +22,7 @@ class HttpResponse : public IHttpResponse {
         std::pair<std::string, std::string> GetHeader(std::string key);
         std::map<std::string, std::string>  GetHeaders(void) const;
         std::string                         GetBody(void) const;
+        ssize_t                             GetBodySize(void) const;
         std::string                         GetTextContent(std::string extension);
         std::string                         GetStatusMessage(void) const;
         std::string                         GetStatusCode(void) const;
@@ -82,10 +83,13 @@ class HttpResponse : public IHttpResponse {
             _mapStatusCode[HttpStatusCode::_FORBIDDEN] = "Forbidden";
             _mapStatusCode[HttpStatusCode::_NOT_FOUND] = "Not Found";
             _mapStatusCode[HttpStatusCode::_METHOD_NOT_ALLOWED] = "Method Not Allowed";
+            _mapStatusCode[HttpStatusCode::_LENGTH_REQUIRED] = "Length Required";
+            _mapStatusCode[HttpStatusCode::_URI_TOO_LONG] = "URI Too Long";
             _mapStatusCode[HttpStatusCode::_CONTENT_TOO_LARGE] = "Content Too Large";
             _mapStatusCode[HttpStatusCode::_UNSUPPORTED_MEDIA_TYPE] = "Unsupported Media Type";
             _mapStatusCode[HttpStatusCode::_INTERNAL_SERVER_ERROR] = "Internal Server Error";
-            _mapStatusCode[HttpStatusCode::_BAD_REQUEST] = "Bad Gateway";
+            _mapStatusCode[HttpStatusCode::_NOT_IMPLEMENTED] = "Not Implemented";
+            _mapStatusCode[HttpStatusCode::_BAD_GATEWAY] = "Bad Gateway";
             _mapStatusCode[HttpStatusCode::_GATEWAY_TIMEOUT] = "Gateway Timeout";
             _mapStatusCode[HttpStatusCode::_HTTP_VERSION_NOT_SUPPORTED] = "HTTP Version Not Supported";
         }
