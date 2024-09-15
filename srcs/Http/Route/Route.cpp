@@ -7,11 +7,7 @@
  * 
  */
 
-IHttpResponse *Route::ProcessRequest(
-    HttpRequest &request,
-    int** cgifd,
-    int epoll
-) {
+IHttpResponse *Route::ProcessRequest(HttpRequest &request) {
     std::string     absolutePath;
     absolutePath = Utils::SanitizePath(this->_root, request.GetPath());
     if (this->_checkAllowMethod(request.GetMethod())) {
@@ -20,20 +16,18 @@ IHttpResponse *Route::ProcessRequest(
     if (this->_checkRedirectPath(this->GetRedirectPath())) {
         return _builder->GetResult();
     }
-
     if (request.GetMethod() == "GET") {
-
-        if (this->Get( request, absolutePath, cgifd, epoll ) == HttpStatusCode::_CGI) {
+        if (this->Get( request, absolutePath) == HttpStatusCode::_CGI) {
             return NULL;
         }
         return _builder->GetResult();
     } else if (request.GetMethod() == "POST") {
-        if (this->Post( request, absolutePath, cgifd, epoll ) == HttpStatusCode::_CGI) {
+        if (this->Post( request, absolutePath) == HttpStatusCode::_CGI) {
             return NULL;
         }
         return _builder->GetResult();
     } else if (request.GetMethod() == "DELETE") {
-        if (this->Delete( request, absolutePath, epoll ) == HttpStatusCode::_CGI) {
+        if (this->Delete( request, absolutePath) == HttpStatusCode::_CGI) {
             return NULL;
         }
         return _builder->GetResult();
@@ -254,16 +248,14 @@ bool	Route::removeDirectory(std::string dirPath)
 	return true;
 }
 
-HttpStatusCode::Code Route::Delete(HttpRequest &request, std::string absPath, int epoll) {
+HttpStatusCode::Code Route::Delete(HttpRequest &request, std::string absPath) {
     HttpStatusCode::Code result = HttpStatusCode::_DO_NOTHING;
     if ((result = this->_checkBodyLimit(request.GetBodySize()))) { return result; }
     if (this->_handler->PathExist(absPath)) {
         bool isDirectory = this->_handler->FileIsDirectory(absPath);
-        bool allow = this->_handler->IsAllowToDeleteFile(absPath); // ToDelete
+        bool allow = this->_handler->IsAllowToDeleteFile(absPath);
 
         if (allow && isDirectory) {
-            // Delete directory recursion
-			std::cout << "Delete directory" << std::endl;
 			if (removeDirectory(absPath))
             {
                 _builder
@@ -274,8 +266,7 @@ HttpStatusCode::Code Route::Delete(HttpRequest &request, std::string absPath, in
             }
 			return this->_errorHandler(HttpStatusCode::_INTERNAL_SERVER_ERROR);
         }
-        else if (allow){
-            // Delete file
+        else if (allow) {
             if (remove(absPath.c_str()) == 0)
             {
                 _builder
@@ -290,7 +281,6 @@ HttpStatusCode::Code Route::Delete(HttpRequest &request, std::string absPath, in
             return this->_errorHandler(HttpStatusCode::_FORBIDDEN);
         }
     }
-    (void)epoll;
     return this->_notFound();
 }
 

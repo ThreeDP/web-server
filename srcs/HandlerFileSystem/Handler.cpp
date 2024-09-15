@@ -58,8 +58,8 @@ bool Handler::IsAllowToGetFile(std::string path) {
             path += "/";
         if (stat(path.c_str(), &file) != 0
             || (!(file.st_mode & S_IRUSR)
-            && !(file.st_mode & S_IRGRP))
-            || (!(file.st_mode & S_IXUSR)
+            && !(file.st_mode & S_IXUSR))
+            || (!(file.st_mode & S_IRGRP)
             && !(file.st_mode & S_IXGRP))) {
             return false;
         }
@@ -81,8 +81,8 @@ bool Handler::IsAllowToDeleteFile(std::string path) {
             path += "/";
         if (stat(path.c_str(), &file) != 0
             || (!(file.st_mode & S_IWUSR)
-            && !(file.st_mode & S_IWGRP))
-            || (!(file.st_mode & S_IXUSR)
+            && !(file.st_mode & S_IXUSR))
+            || (!(file.st_mode & S_IWGRP)
             && !(file.st_mode & S_IXGRP))) {
             return false;
         }

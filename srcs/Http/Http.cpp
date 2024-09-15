@@ -250,7 +250,7 @@ bool Http::ProcessResponse(int EpollFD, struct epoll_event &clientEvent, size_t 
             std::cerr << _logger->Log(&Logger::LogWarning, "Problem to open socketpair: [", clientEvent.data.fd, "].") << std::endl;
         }
         
-        int isCGI = (_clientFDToClient[clientEvent.data.fd].Server->ProcessRequest(Req, clientEvent.data.fd, (int **)&_clientFDToClient[clientEvent.data.fd].cgiPair, EpollFD) == HttpStatusCode::_CGI);
+        int isCGI = (_clientFDToClient[clientEvent.data.fd].Server->ProcessRequest(Req, clientEvent.data.fd) == HttpStatusCode::_CGI);
         // int isCGI = (clientFD_Server[clientEvent.data.fd]->ProcessRequest(Req, clientEvent.data.fd, sv, EpollFD) == HttpStatusCode::_CGI);
 
         // MODIFICA PARA EPOLLOUT

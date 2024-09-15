@@ -65,11 +65,7 @@ class Route : public IRoute {
         // IHttpResponse *ProcessRequest(
         //     HttpRequest &request
         // );
-        IHttpResponse *ProcessRequest(
-            HttpRequest &request,
-            int **cgifd,
-            int epoll
-        );
+        IHttpResponse *ProcessRequest(HttpRequest &request);
     
         Route(void) {}
         Route(ILogger *logger, IServer *server, IHandler *handler, std::string route_name);
@@ -156,7 +152,7 @@ class Route : public IRoute {
          */
 
         // HttpStatusCode::Code Post(HttpRequest &request, std::string absPath);
-        HttpStatusCode::Code Post(HttpRequest &request, std::string absPath, int **cgifd, int epoll);
+        HttpStatusCode::Code Post(HttpRequest &request, std::string absPath);
 
         /**!
          * 
@@ -166,7 +162,7 @@ class Route : public IRoute {
          */
 
         // HttpStatusCode::Code Delete(HttpRequest &request, std::string absPath);
-        HttpStatusCode::Code Delete(HttpRequest &request, std::string absPath, int epoll);
+        HttpStatusCode::Code Delete(HttpRequest &request, std::string absPath);
         bool	removeDirectory(std::string dirPath);
 
 
@@ -179,7 +175,7 @@ class Route : public IRoute {
         HttpStatusCode::Code        cgiAction(HttpRequest &req, std::string absPath);
 
         // HttpStatusCode::Code Get(HttpRequest &request, std::string absPath);
-        HttpStatusCode::Code Get(HttpRequest &request, std::string absPath, int **cgifd, int epoll);
+        HttpStatusCode::Code Get(HttpRequest &request, std::string absPath);
     
     private:
         /// @brief Checks if there is any file
