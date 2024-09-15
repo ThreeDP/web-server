@@ -10,8 +10,7 @@
 - [x] Set CGI in the correct path
 - [X] Ajustar CGI For Write
 - [X] Add CGI Write in epoll
-- [ ] Add CGI Read in epoll
-- [ ] Check Possible status code
+- [X] Check Possible status code
 - [x] Check DELETE Status Code Flow
 - [X] Check POST Status Code Flow
 - [X] Check GET Status Code Flow
@@ -19,10 +18,13 @@
 - [X] Upload a File in the server and get back
 - [ ] Test A CGI with a infinite loop
 - [ ] Test a CGI with crash script
+- [ ] Add timeout function in the correct form.
+- [ ] Check Status Code For Server Error
+- [ ] Check Status For CGI
+- [ ] Add CGI Read in epoll
 - [ ] Adjust the hostname part
 - [ ] Definir para que quando o server não for encontrado seja o primeiro server configurado.
 - [ ] Definir para que quando o route não for encontrado seja o primeiro route configurado.
-- [ ] Add timeout function in the correct form.
 - [ ] Check Problem in image render
 - [ ] Check Leaks
 

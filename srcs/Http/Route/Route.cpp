@@ -10,6 +10,22 @@
 IHttpResponse *Route::ProcessRequest(HttpRequest &request) {
     std::string     absolutePath;
     absolutePath = Utils::SanitizePath(this->_root, request.GetPath());
+    if (request._flag != HttpStatusCode::_DO_NOTHING) {
+        _errorHandler(request._flag);
+        return _builder->GetResult(); 
+    }
+    if (request.GetHTTPVersion() != "HTTP/1.1") {
+        _errorHandler(HttpStatusCode::_HTTP_VERSION_NOT_SUPPORTED);
+        return _builder->GetResult(); 
+    }
+    if (request._payload.find("Content-Length:") == request._payload.end()) {
+        _errorHandler(HttpStatusCode::_LENGTH_REQUIRED);
+        return _builder->GetResult(); 
+    }
+    if (request.GetPath().size() + request.GetQueryParams().size() > 4096) {
+        _errorHandler(HttpStatusCode::_URI_TOO_LONG);
+        return _builder->GetResult(); 
+    }
     if (this->_checkAllowMethod(request.GetMethod())) {
         return _builder->GetResult(); 
     }
@@ -32,12 +48,7 @@ IHttpResponse *Route::ProcessRequest(HttpRequest &request) {
         }
         return _builder->GetResult();
     }
-
-    _builder->SetupResponse()
-        .WithStatusCode(HttpStatusCode::_INTERNAL_SERVER_ERROR)
-        .WithContentType(".html")
-        .WithDefaultPage()
-        .GetResult();
+    _errorHandler(HttpStatusCode::_INTERNAL_SERVER_ERROR);
     std::cout << _logger->Log(&Logger::LogInformation, "Route Not Found or Configurated", HttpStatusCode::_INTERNAL_SERVER_ERROR);
     return _builder->GetResult();
 }
@@ -53,8 +64,8 @@ HttpStatusCode::Code Route::_checkAllowMethod(std::string method) {
     HttpStatusCode::Code status = HttpStatusCode::_METHOD_NOT_ALLOWED;
     HttpStatusCode::Code result = HttpStatusCode::_DO_NOTHING;
     if (Utils::SanitizeOneMethod(method)) {
-        if ((result = this->_errorHandlerWithFile(HttpStatusCode::_BAD_REQUEST))) { return result; }
-        return this->_errorHandlerDefault(HttpStatusCode::_BAD_REQUEST);
+        if ((result = this->_errorHandlerWithFile(HttpStatusCode::_NOT_IMPLEMENTED))) { return result; }
+        return this->_errorHandlerDefault(HttpStatusCode::_NOT_IMPLEMENTED);
     }
     if (!this->IsAllowMethod(method)) {
 
@@ -165,14 +176,6 @@ HttpStatusCode::Code Route::_checkActionInFile(std::string absolutePath) {
     return (HttpStatusCode::_OK);
 }
 
-HttpStatusCode::Code Route::_notFound(void) {
-    HttpStatusCode::Code status = HttpStatusCode::_NOT_FOUND;
-    HttpStatusCode::Code result = HttpStatusCode::_DO_NOTHING;
-    
-    if ((result = this->_errorHandlerWithFile(status))) { return result; }
-    return this->_errorHandlerDefault(status);
-}
-
 /**!
  * 
  * POST Assets
@@ -207,7 +210,7 @@ HttpStatusCode::Code Route::Post(HttpRequest &request, std::string absPath) {
             return this->_errorHandler(HttpStatusCode::_FORBIDDEN);
         }
     }
-    return this->_notFound();
+    return _errorHandler(HttpStatusCode::_NOT_FOUND);
 }
 
 /**!
@@ -226,7 +229,6 @@ bool	Route::removeDirectory(std::string dirPath)
         if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
             continue;
         }
-        std::cout << "d_name: " << entry->d_name << std::endl;
 		std::string	fullPath = dirPath + "/" + entry->d_name;
 		if (entry->d_type == DT_DIR) {
             if (!removeDirectory(fullPath)) {
@@ -280,7 +282,7 @@ HttpStatusCode::Code Route::Delete(HttpRequest &request, std::string absPath) {
             return this->_errorHandler(HttpStatusCode::_FORBIDDEN);
         }
     }
-    return this->_notFound();
+    return _errorHandler(HttpStatusCode::_NOT_FOUND);
 }
 
 HttpStatusCode::Code Route::_errorHandler(HttpStatusCode::Code code) {
@@ -355,7 +357,7 @@ HttpStatusCode::Code Route::Get(HttpRequest &request, std::string absPath) {
             return this->_errorHandlerDefault(HttpStatusCode::_FORBIDDEN);
         }
     }
-    return this->_notFound();
+    return _errorHandler(HttpStatusCode::_NOT_FOUND);
 }
 
 HttpStatusCode::Code Route::_checkExistIndex(std::string reqPath, std::string absPath) {

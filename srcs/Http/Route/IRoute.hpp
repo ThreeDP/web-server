@@ -12,10 +12,6 @@ class IRoute {
 
     public:
         virtual ~IRoute(void) { }
-        
-        // virtual IHttpResponse *ProcessRequest(
-        //     HttpRequest &request
-        // ) = 0;
 
         virtual IHttpResponse *ProcessRequest(HttpRequest &request) = 0;
 

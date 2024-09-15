@@ -9,6 +9,7 @@
 # include <vector>
 # include "define.hpp"
 # include "IClient.hpp"
+# include "EHttpStatusCode.hpp"
 
 class HttpRequest {
     public:
@@ -24,9 +25,7 @@ class HttpRequest {
         IClient *client;
         // AllowMethod:          GET
         std::map<std::string, std::string>  _payload;
-        
-        void                ParserRequest(std::string request);
-
+        HttpStatusCode::Code                _flag;
         char **             GetEnvp(std::string saveon) {
             std::vector<std::string> ev;
             std::stringstream str(_queryStrings);
