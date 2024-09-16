@@ -303,11 +303,11 @@ HttpStatusCode::Code Route::cgiAction(HttpRequest &req, std::string absPath) {
     req.client->CreatePair();
     req.client->CreatePair2();
 
-    char **envp = req.GetEnvp(_upload_on);
+    char **envp = req.GetEnvp(Utils::SanitizePath(Utils::SanitizePath("./", _upload_on), "/"));
     const char *bin = "/usr/bin/python3";
     std::string script = absPath.substr(0, absPath.find_last_of('/'));
-    const char *scriptPath = absPath.substr(absPath.find_last_of('/') + 1, absPath.size()).c_str();
-    const char *argv[] = {bin, scriptPath, NULL};
+    std::string scriptPath = absPath.substr(absPath.find_last_of('/') + 1, absPath.size());
+    const char *argv[] = {bin, scriptPath.c_str(), NULL};
 
     req.client->SetPid(fork());
     if (req.client->GetPid() == 0) {

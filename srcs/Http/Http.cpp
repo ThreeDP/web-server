@@ -2,6 +2,7 @@
 
 void Http::Process(void) {
     int epollFD = epoll_create(1);
+    this->SaveEpoll = epollFD;
     if (epollFD == -1) {
         throw std::runtime_error(_logger->Log(&Logger::LogCaution, "Error: On start EPOLL."));
     }
@@ -384,6 +385,7 @@ Http::Http(ILogger *logger) {
     _cgis.clear();
     _logger = logger;
     _result = NULL;
+    SaveEpoll = 120;
 }
 
 Http::~Http(void) {
@@ -395,6 +397,18 @@ Http::~Http(void) {
             delete *it;
         }
     }
+    std::map<int, Client>::iterator itc = _clientFDToClient.begin();
+    for ( ; itc != _clientFDToClient.end(); ++itc) {
+        close(itc->second.cgiPair[0]);
+        close(itc->second.cgiPair[1]);
+        close(itc->second.cgiPair[2]);
+        close(itc->second.cgiPair[3]);
+    }
+    std::map<int, IServer *>::iterator itFD = _serverFDToServer.begin();
+    for ( ; itFD != _serverFDToServer.end(); ++itFD) {
+        close(itFD->first);
+    }
+    close(SaveEpoll);
     if (_result != NULL) {
         freeaddrinfo(_result);
         _result = NULL;

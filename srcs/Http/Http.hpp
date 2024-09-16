@@ -15,6 +15,7 @@ class Http {
     std::map<int, IServer *>            _serverFDToServer;
     std::map<int, std::vector<char> >          _clientFDToRequest;
     std::map<int, Client>               _clientFDToClient;
+    int                                 SaveEpoll;
 
     // Parser Response
     std::map<int, int>            _cgis;

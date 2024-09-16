@@ -41,6 +41,20 @@ class HttpRequest {
             size_t fileStart = _path.find_last_of('/');
             ev.push_back("SCRIPT_FILE=" + _path.substr(fileStart + 1, _path.size()));
             ev.push_back("SAVE_INTO=" + saveon);
+            std::map<std::string, std::string>::iterator itp = _payload.find("Content-Disposition:");
+            if (itp != _payload.end()) {
+                std::stringstream ss(itp->second);
+                std::string line;
+                while (ss >> line) {
+                    size_t varEnd = line.find('=');
+                    size_t start = line.find_first_of("\"");
+                    size_t end = line.find_last_of("\"");
+
+                    if (varEnd != std::string::npos && start < end && start != std::string::npos && end != std::string::npos) {
+                        ev.push_back(line.substr(0, varEnd) + "=" + line.substr(start + 1, end - start - 1));
+                    }
+                }
+            }
             for ( ;  it != _payload.end(); ++it) {
                 std::string key = it->first.substr(0, it->first.size() - 1);
                 ev.push_back(key + "=" + it->second);

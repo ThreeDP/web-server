@@ -77,6 +77,7 @@ class HttpResponse : public IHttpResponse {
             _mapStatusCode[HttpStatusCode::_MUILTIPLE_CHOICE] = "Multiple Choice";
             _mapStatusCode[HttpStatusCode::_MOVED_PERMANENTLY] = "Moved Permanently";
             _mapStatusCode[HttpStatusCode::_FOUND] = "Found";
+            _mapStatusCode[HttpStatusCode::_TEMPORARY_REDIRECT] = "Temporary Redirect";
             _mapStatusCode[HttpStatusCode::_PERMANENT_REDIRECT] = "Permanent Redirect";
             _mapStatusCode[HttpStatusCode::_BAD_REQUEST] = "Bad Request";
             _mapStatusCode[HttpStatusCode::_UNAUTHORIZED] = "Unauthorized";
