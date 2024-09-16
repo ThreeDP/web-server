@@ -59,6 +59,7 @@ IBuilderResponse &BuilderResponse::WithBody(std::vector<char> body) {
     }
     return *this;
 }
+
 IBuilderResponse &BuilderResponse::WithFileDescriptor(std::ifstream *fd) {
     if (fd != NULL && _response->GetBodySize() == 0) {
         _response->SetBody(_handler->ReadRegularFile(fd));
@@ -115,4 +116,46 @@ bool BuilderResponse::CompareResponses(IHttpResponse &left, IHttpResponse &right
     std::cout << "Left: " << left.GetBody() << "\n\n";
     std::cout << "Right: " << right.GetBody() << "\n\n";
     return res && left.GetBody() == right.GetBody();
+}
+
+IBuilderResponse &BuilderResponse::ParserResponse(std::vector<char> response) {
+       std::string str(response.begin(), response.end());
+    size_t firstHeaderEnd = str.find("\r\n\r\n");
+    if (firstHeaderEnd == std::string::npos) {
+        firstHeaderEnd = str.size();
+    } else {
+        firstHeaderEnd += 4;
+    }
+
+    ssize_t firstSizeLine = 0;
+    std::stringstream srequest(str.substr(firstSizeLine, firstHeaderEnd));
+    std::string line;
+
+    if (std::getline(srequest, line, '\n')) {
+        firstSizeLine = line.size();
+        std::stringstream requestLine(line);
+        std::string label;
+        std::getline(requestLine, label, ' ');
+        std::getline(requestLine, label, ' ');
+        HttpStatusCode::Code status = (label == "201" ? HttpStatusCode::_CREATED : label == "500" ? HttpStatusCode::_BAD_GATEWAY : HttpStatusCode::_OK);
+        WithStatusCode(status);
+        std::getline(requestLine, label, '\r');
+    }
+
+    std::stringstream headers(str.substr(firstSizeLine, firstHeaderEnd));
+    while (std::getline(headers, line, '\n')) {
+        std::string key;
+        std::string value;
+        std::stringstream headerLine(line);
+        if (std::getline(std::getline(headerLine, key, ':'), value)) {
+            value.erase(0, value.find_first_not_of(" \r"));
+            WithHeader(make_pair(key + ":", value));
+        }
+    }
+    std::vector<char> body;
+    if (response.size() > firstHeaderEnd) {
+        body.assign(response.begin() + firstHeaderEnd, response.end());
+        WithBody(body);
+    }
+    return *this;
 }
