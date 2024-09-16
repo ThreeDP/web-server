@@ -21,6 +21,7 @@ class IBuilderResponse {
         
         virtual IHttpResponse *GetResult(void) = 0;
         virtual bool CompareResponses(IHttpResponse &left, IHttpResponse &right) = 0;
+        virtual IBuilderResponse &ParserResponse(std::vector<char> response) = 0;
 };
 
 #endif

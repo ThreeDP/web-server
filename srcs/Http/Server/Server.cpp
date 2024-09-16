@@ -164,9 +164,7 @@ void Server::CreateCGIResponse(int epollfd, int cgifd, int clientfd, HttpRequest
     BuilderResponse builderResponse(_logger, _handler);
     this->ResponsesMap[clientfd] = builderResponse
                                     .SetupResponse()
-                                    .WithStatusCode(HttpStatusCode::_CREATED)
-                                    .WithContentType(".html")
-                                    .WithBody(responseBody)
+                                    .ParserResponse(responseBody)
                                     .GetResult();
 
     (void)epollfd;
